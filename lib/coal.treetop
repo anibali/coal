@@ -1,0 +1,411 @@
+grammar CoalTreetop
+  rule body
+    ws? statement_list ws? {
+      def translate(t)
+        statement_list.translate(t)
+      end
+    }
+  end  
+  
+  rule statement_list
+    statement statement_separator statement_list {
+      def translate(t)
+        statement.translate(t)
+        statement_list.translate(t)
+      end
+    }
+    /
+    statement
+  end
+  
+  rule statement_separator
+    ws? ';' ws? statement_separator?
+    /
+    gap? [\r\n] ws?
+  end
+  
+  rule statement
+    assignment
+    /
+    declaration
+    /
+    while_loop / until_loop
+    /
+    if_statement / unless_statement
+    /
+    block
+    /
+    function_call
+    /
+    break
+  end
+  
+  rule block
+    '{' ws? statement_list ws? '}' {
+      def translate(t)
+        statement_list.translate(t)
+      end
+    }
+    /
+    '{' ws? '}' {
+      def translate(t)
+        ""
+      end
+    }
+  end
+  
+  rule break
+    'break' {
+      def translate(t)
+        t.break
+      end
+    }
+  end
+  
+  rule while_loop
+    'while' gap? '(' gap? expression gap? ')' ws? statement {
+      def translate(t)
+        t.while(expression) do
+          statement.translate(t)
+        end
+      end
+    }
+  end
+  
+  rule until_loop
+    'until' gap? '(' gap? expression gap? ')' ws? statement {
+      def translate(t)
+        t.until(expression) do
+          statement.translate(t)
+        end
+      end
+    }
+  end
+  
+  rule if_statement
+    'if' gap? '(' gap? expression gap? ')' ws? statement ws? else_statement {
+      def translate(t)
+        t.if(expression, else_statement) do
+          statement.translate(t)
+        end
+      end
+    }
+    /
+    'if' gap? '(' gap? expression gap? ')' ws? statement {
+      def translate(t)
+        t.if(expression) do
+          statement.translate(t)
+        end
+      end
+    }
+  end
+  
+  rule else_statement
+    'else' ws? statement {
+      def translate(t)
+        statement.translate(t)
+      end
+    }
+  end
+  
+  rule unless_statement
+    'unless' gap? '(' gap? expression gap? ')' ws? statement ws? else_statement {
+      def translate(t)
+        t.unless(expression, else_statement) do
+          statement.translate(t)
+        end
+      end
+    }
+    /
+    'unless' gap? '(' gap? expression gap? ')' ws? statement {
+      def translate(t)
+        t.unless(expression) do
+          statement.translate(t)
+        end
+      end
+    }
+  end
+  
+  rule assignment
+    declaration gap? '=' gap? expression {
+      def translate(t)
+        t.assign(declaration.translate(t), expression.translate(t))
+      end
+    }
+    /
+    variable_name gap? '=' gap? expression {
+      def translate(t)
+        t.assign(variable_name.translate(t), expression.translate(t))
+      end
+    }
+  end
+  
+  rule declaration
+    type gap variable_name {
+      def translate(t)
+        var = variable_name.text_value
+        t.declare(type.translate(t), var)
+        #var
+      end
+    }
+  end
+  
+  rule function_call
+    function_name '(' gap? argument_list gap? ')' {
+      def translate(t)
+        args = argument_list.translate(t)
+        t.send function_name.translate(t), *args
+      end
+    }
+  end
+  
+  # Rule for a list of comma-separated arguments. Whitespace before and after
+  # the list should be trimmed beforehand.
+  rule argument_list
+    argument gap? ',' gap? argument_list {
+      def translate(t)
+        [argument.translate(t)] + argument_list.translate(t)
+      end
+    }
+    /
+    argument {
+      def translate(t)
+        [super]
+      end
+    }
+    /
+    '' {
+      def translate(t)
+        []
+      end
+    }
+  end
+  
+  rule argument
+    expression
+  end
+
+  rule expression
+    equality
+  end
+  
+  rule equality_op
+    '==' / '!='
+  end
+  
+  rule equality
+    comparison gap? equality_op gap? equality {
+      def translate(t, x=nil)
+        x ||= comparison.translate(t)
+        
+        method = case equality_op.text_value
+        when '=='
+          :equal
+        when '!='
+          :not_equal
+        end
+        
+        if equality.respond_to? :equality_op
+          x = t.send method, x, equality.comparison.translate(t)
+          equality.translate t, x
+        else
+          t.send method, x, equality.translate(t)
+        end
+      end
+    }
+    /
+    comparison
+  end
+  
+  rule comparison_op
+    '>=' / '>' / '<=' / '<'
+  end
+  
+  rule comparison
+    sum gap? comparison_op gap? comparison {
+      def translate(t, x=nil)
+        x ||= sum.translate(t)
+        
+        method = case comparison_op.text_value
+        when '>'
+          :greater
+        when '>='
+          :greater_or_equal
+        when '<'
+          :less
+        when '<='
+          :less_or_equal
+        end
+        
+        if comparison.respond_to? :comparison_op
+          x = t.send method, x, comparison.sum.translate(t)
+          comparison.translate t, x
+        else
+          t.send method, x, comparison.translate(t)
+        end
+      end
+    }
+    /
+    sum
+  end
+  
+  rule sum_op
+    '+' / '-'
+  end
+  
+  rule sum
+    product gap? sum_op gap? sum {
+      def translate(t, x = nil)
+        x ||= product.translate(t)
+        
+        method = case sum_op.text_value
+        when '+'
+          :add
+        when '-'
+          :subtract
+        end
+        
+        if sum.respond_to? :sum_op
+          x = t.send method, x, sum.product.translate(t)
+          sum.translate t, x
+        else
+          t.send method, x, sum.translate(t)
+        end
+      end
+    }
+    /
+    product
+  end
+  
+  rule product_op
+    '*' / '/' / '%'
+  end
+  
+  rule product
+    primary gap? product_op gap? product {
+      def translate(t, x = nil)
+        x ||= primary.translate(t)
+        
+        method = case product_op.text_value
+        when '*'
+          :multiply
+        when '/'
+          :divide
+        when '%'
+          :modulus
+        end
+        
+        if product.respond_to? :product_op
+          x = t.send method, x, product.primary.translate(t)
+          product.translate t, x
+        else
+          t.send method, x, product.translate(t)
+        end
+      end
+    }
+    /
+    primary
+  end
+
+  rule primary
+    function_call 
+    /
+    '(' expression ')' {
+      def translate(t)
+        expression.translate(t)
+      end
+    }
+    /
+    constant
+    /
+    variable_name
+  end
+  
+  rule function_name
+    name {
+      def translate(t)
+        text_value
+      end
+    }
+  end
+  
+  rule variable_name
+    name {
+      def translate(t)
+        t.variable(text_value)
+      end
+    }
+  end
+  
+  rule name
+    [a-zA-Z_] [0-9a-zA-Z_]*
+  end
+  
+  rule constant
+    null_constant
+    /
+    boolean_constant
+    /
+    integer_constant
+  end
+  
+  rule null_constant
+    'null' {
+      def translate(t)
+        t.null
+      end
+    }
+  end
+  
+  rule boolean_constant
+    'true' {
+      def translate(t)
+        t.true
+      end
+    }
+    /
+    'false' {
+      def translate(t)
+        t.false
+      end
+    }
+  end
+  
+  rule integer_constant
+    '0' {
+      def translate(t)
+        t.integer_constant(0)
+      end
+    }
+    /
+    [\-\+]? [1-9] [0-9]* {
+      def translate(t)
+        t.integer_constant(text_value.to_i)
+      end
+    }
+  end
+  
+  rule type
+    type_name {
+      def translate(t)
+        raise "Parsing failed" if nil?
+        t.type text_value
+      end
+    }
+  end
+  
+  rule type_name
+    'uint64' / 'int64' / 'uint32' / 'int32' / 'uint16' / 'int16' / 'uint8' / 'int8'
+  end
+  
+  # Rule matches one or more tabs and/or spaces
+  rule gap
+    [ \t]+
+  end
+  
+  # Rule matches one or more whitespace characters
+  rule ws
+    [\s]+
+  end
+end
+
