@@ -22,6 +22,14 @@ class LibJIT
     JIT::Type.new str.to_sym
   end
   
+  def bitshift_left(a, b)
+    a << b
+  end
+  
+  def bitshift_right(a, b)
+    a >> b
+  end
+  
   def add(a, b)
     a + b
   end
@@ -135,7 +143,7 @@ class LibJIT
   end
   
   def method_missing name, *args
-    p "#{name}(#{args.join ", "})"
+    puts "METHOD MISSING: #{name}(#{args.join ", "})"
   end
 end
 end

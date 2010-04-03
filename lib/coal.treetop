@@ -222,9 +222,9 @@ grammar CoalTreetop
   end
   
   rule comparison
-    sum gap? comparison_op gap? comparison {
+    bitshift gap? comparison_op gap? comparison {
       def translate(t, x=nil)
-        x ||= sum.translate(t)
+        x ||= bitshift.translate(t)
         
         method = case comparison_op.text_value
         when '>'
@@ -238,10 +238,38 @@ grammar CoalTreetop
         end
         
         if comparison.respond_to? :comparison_op
-          x = t.send method, x, comparison.sum.translate(t)
+          x = t.send method, x, comparison.bitshift.translate(t)
           comparison.translate t, x
         else
           t.send method, x, comparison.translate(t)
+        end
+      end
+    }
+    /
+    bitshift
+  end
+  
+  rule bitshift_op
+    '<<' / '>>'
+  end
+  
+  rule bitshift
+    sum gap? bitshift_op gap? bitshift {
+      def translate(t, x = nil)
+        x ||= sum.translate(t)
+        
+        method = case bitshift_op.text_value
+        when '<<'
+          :bitshift_left
+        when '>>'
+          :bitshift_right
+        end
+        
+        if bitshift.respond_to? :bitshift_op
+          x = t.send method, x, bitshift.sum.translate(t)
+          bitshift.translate t, x
+        else
+          t.send method, x, bitshift.translate(t)
         end
       end
     }

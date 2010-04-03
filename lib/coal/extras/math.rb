@@ -72,5 +72,12 @@ module Coal::Math
 
     return(ans)
   end
+  
+  def_coal 'self.pow_of_2', [:uint32], :uint64, <<-end
+    uint32 n = arg(0)
+    uint64 one = 1
+    
+    return(one << n)
+  end
 end
 

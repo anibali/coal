@@ -18,5 +18,12 @@ class MathTest < Test::Unit::TestCase
     assert_equal 11, Coal::Math.prime(5)
     assert_equal 31, Coal::Math.prime(11)
   end
+  
+  def test_pow_of_2
+    assert_equal 1, Coal::Math.pow_of_2(0)
+    assert_equal 512, Coal::Math.pow_of_2(9)
+    assert_equal 2048, Coal::Math.pow_of_2(11)
+    assert_equal 1099511627776, Coal::Math.pow_of_2(40)
+  end
 end
 

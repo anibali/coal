@@ -19,6 +19,14 @@ class Ruby
     str.to_sym
   end
   
+  def bitshift_left(a, b)
+    "(#{a} << #{b})"
+  end
+  
+  def bitshift_right(a, b)
+    "(#{a} >> #{b})"
+  end
+  
   def add(a, b)
     "(#{a} + #{b})"
   end
