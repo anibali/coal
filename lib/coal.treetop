@@ -184,7 +184,7 @@ grammar CoalTreetop
   end
   
   rule assignment_op
-    '=' / '+=' / '-=' / '*=' / '/=' / '%='
+    '=' / '+=' / '-=' / '*=' / '/=' / '%=' / '&=' / '^=' / '|=' / '<<=' / '>>='
   end
   
   rule assignment
@@ -204,6 +204,16 @@ grammar CoalTreetop
           t.divide(var, assignment.translate(t))
         when '%='
           t.modulus(var, assignment.translate(t))
+        when '&='
+          t.bitwise_and(var, assignment.translate(t))
+        when '^='
+          t.bitwise_xor(var, assignment.translate(t))
+        when '|='
+          t.bitwise_or(var, assignment.translate(t))
+        when '<<='
+          t.bitshift_left(var, assignment.translate(t))
+        when '>>='
+          t.bitshift_right(var, assignment.translate(t))
         end
         t.assign(var, val)
       end
@@ -217,9 +227,9 @@ grammar CoalTreetop
   end
   
   rule equality
-    comparison gap? equality_op gap? equality {
+    bitwise_and gap? equality_op gap? equality {
       def translate(t, x=nil)
-        x ||= comparison.translate(t)
+        x ||= bitwise_and.translate(t)
         
         method = case equality_op.text_value
         when '=='
@@ -229,10 +239,73 @@ grammar CoalTreetop
         end
         
         if equality.respond_to? :equality_op
-          x = t.send method, x, equality.comparison.translate(t)
+          x = t.send method, x, equality.bitwise_and.translate(t)
           equality.translate t, x
         else
           t.send method, x, equality.translate(t)
+        end
+      end
+    }
+    /
+    bitwise_and
+  end
+  
+  rule bitwise_and_op
+    '&'
+  end
+  
+  rule bitwise_and
+    bitwise_xor gap? bitwise_and_op gap? bitwise_and {
+      def translate(t, x=nil)
+        x ||= bitwise_xor.translate(t)
+        
+        if bitwise_and.respond_to? :bitwise_and_op
+          x = t.bitwise_and(x, bitwise_and.bitwise_xor.translate(t))
+          bitwise_and.translate t, x
+        else
+          t.bitwise_and(x, bitwise_and.translate(t))
+        end
+      end
+    }
+    /
+    bitwise_xor
+  end
+  
+  rule bitwise_xor_op
+    '^'
+  end
+  
+  rule bitwise_xor
+    bitwise_or gap? bitwise_xor_op gap? bitwise_xor {
+      def translate(t, x=nil)
+        x ||= bitwise_or.translate(t)
+        
+        if bitwise_xor.respond_to? :bitwise_xor_op
+          x = t.bitwise_xor(x, bitwise_xor.bitwise_or.translate(t))
+          bitwise_xor.translate t, x
+        else
+          t.bitwise_xor(x, bitwise_xor.translate(t))
+        end
+      end
+    }
+    /
+    bitwise_or
+  end
+  
+  rule bitwise_or_op
+    '|'
+  end
+  
+  rule bitwise_or
+    comparison gap? bitwise_or_op gap? bitwise_or {
+      def translate(t, x=nil)
+        x ||= comparison.translate(t)
+        
+        if bitwise_or.respond_to? :bitwise_or_op
+          x = t.bitwise_or(x, bitwise_or.comparison.translate(t))
+          bitwise_or.translate t, x
+        else
+          t.bitwise_or(x, bitwise_or.translate(t))
         end
       end
     }

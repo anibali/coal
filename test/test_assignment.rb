@@ -3,10 +3,6 @@ require 'test/unit'
 require 'coal'
 
 class AssignmentTest < Test::Unit::TestCase
-  def parse code
-     code
-  end
-  
   def make_42 code
     tree = Coal::Parser.new.parse code
     
@@ -15,6 +11,13 @@ class AssignmentTest < Test::Unit::TestCase
       callable = trans.build_callable([], :int8, tree)
       res = callable.call
       assert_equal 42, res
+    end
+  end
+  
+  def test_assign
+    make_42 <<-end
+      int8 x = 42
+      return(x)
     end
   end
   
@@ -33,7 +36,7 @@ class AssignmentTest < Test::Unit::TestCase
       return(x)
     end
   end
-  
+
   def test_assign_product
     make_42 <<-end
       int8 x = 6
@@ -42,7 +45,7 @@ class AssignmentTest < Test::Unit::TestCase
     end
   end
   
-  def test_assign_product
+  def test_assign_quotient
     make_42 <<-end
       int8 x = 126
       x /= 3
@@ -55,6 +58,46 @@ class AssignmentTest < Test::Unit::TestCase
       int8 x = 85
       x %= 43
       return(x)
+    end
+  end
+  
+  def test_assign_bitwise_and
+    make_42 <<-end
+      int8 x = 106
+      x &= 63
+      return(x)
+    end
+  end
+  
+  def test_assign_bitwise_xor
+    make_42 <<-end
+      int8 x = 21
+      x ^= 63
+      return(x)
+    end
+  end
+  
+  def test_assign_bitwise_or
+    make_42 <<-end
+      int8 x = 40
+      x |= 10
+      return(x)
+    end
+  end
+  
+  def test_assign_inline
+    make_42 <<-end
+      int8 x
+      return((x = 2) * 21)
+    end
+  end
+  
+  def test_assign_multiple
+    make_42 <<-end
+      int8 x
+      int8 y
+      x = y = 21
+      return(x + y)
     end
   end
 end

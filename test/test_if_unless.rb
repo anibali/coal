@@ -9,10 +9,6 @@ require 'coal'
 #  else
 #    return false
 class IfUnlessTest < Test::Unit::TestCase
-  def parse code
-     code
-  end
-  
   # Compile and run code, testing the results against Ruby implementation
   def over_9000 code
     tree = Coal::Parser.new.parse code
