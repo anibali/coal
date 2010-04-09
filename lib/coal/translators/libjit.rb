@@ -50,12 +50,23 @@ class LibJIT
     a % b
   end
   
+  def negate(a)
+    -a
+  end
+  
+  def bitwise_not(a)
+    ~a
+  end
+  
   def assign(var, val)
     var.store val
   end
   
   def variable(var_name)
-    @reg[var_name.to_sym]
+    var = @reg[var_name.to_sym]
+    # TODO: create special Coal error classes
+    raise "variable '#{var_name}' has not been declared" if var.nil?
+    var
   end
   
   def integer_constant(n)

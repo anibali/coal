@@ -47,6 +47,14 @@ class Ruby
     "(#{a} % #{b})"
   end
   
+  def negate(a)
+    "(-#{a})"
+  end
+  
+  def bitwise_not(a)
+    "(~#{a})"
+  end
+  
   def assign(var, val)
     append "#{var} = #{val}"
     "#{var} = #{val}"

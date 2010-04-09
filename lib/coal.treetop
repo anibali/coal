@@ -25,7 +25,7 @@ grammar CoalTreetop
   end
   
   rule statement
-    assignment
+    declaration_and_assignment
     /
     declaration
     /
@@ -35,9 +35,27 @@ grammar CoalTreetop
     /
     block
     /
-    function_call
-    /
     break
+    /
+    expression
+  end
+  
+  rule declaration_and_assignment
+    declaration gap? '=' gap? expression {
+      def translate(t)
+        t.assign(declaration.translate(t), expression.translate(t))
+      end
+    }
+  end
+  
+  rule declaration
+    type gap variable {
+      def translate(t)
+        var = variable.text_value
+        t.declare(type.translate(t), var)
+        #var
+      end
+    }
   end
   
   rule block
@@ -126,30 +144,6 @@ grammar CoalTreetop
     }
   end
   
-  rule assignment
-    declaration gap? '=' gap? expression {
-      def translate(t)
-        t.assign(declaration.translate(t), expression.translate(t))
-      end
-    }
-    /
-    variable_name gap? '=' gap? expression {
-      def translate(t)
-        t.assign(variable_name.translate(t), expression.translate(t))
-      end
-    }
-  end
-  
-  rule declaration
-    type gap variable_name {
-      def translate(t)
-        var = variable_name.text_value
-        t.declare(type.translate(t), var)
-        #var
-      end
-    }
-  end
-  
   rule function_call
     function_name '(' gap? argument_list gap? ')' {
       def translate(t)
@@ -186,6 +180,35 @@ grammar CoalTreetop
   end
 
   rule expression
+    assignment
+  end
+  
+  rule assignment_op
+    '=' / '+=' / '-=' / '*=' / '/=' / '%='
+  end
+  
+  rule assignment
+    variable gap? assignment_op gap? assignment {
+      def translate(t)
+        var = variable.translate(t)
+        val = case assignment_op.text_value
+        when '='
+          assignment.translate(t)
+        when '+='
+          t.add(var, assignment.translate(t))
+        when '-='
+          t.subtract(var, assignment.translate(t))
+        when '*='
+          t.multiply(var, assignment.translate(t))
+        when '/='
+          t.divide(var, assignment.translate(t))
+        when '%='
+          t.modulus(var, assignment.translate(t))
+        end
+        t.assign(var, val)
+      end
+    }
+    /
     equality
   end
   
@@ -310,9 +333,9 @@ grammar CoalTreetop
   end
   
   rule product
-    primary gap? product_op gap? product {
+    unary gap? product_op gap? product {
       def translate(t, x = nil)
-        x ||= primary.translate(t)
+        x ||= unary.translate(t)
         
         method = case product_op.text_value
         when '*'
@@ -324,11 +347,32 @@ grammar CoalTreetop
         end
         
         if product.respond_to? :product_op
-          x = t.send method, x, product.primary.translate(t)
+          x = t.send method, x, product.unary.translate(t)
           product.translate t, x
         else
           t.send method, x, product.translate(t)
         end
+      end
+    }
+    /
+    unary
+  end
+  
+  rule unary_op
+    '~' / '-'
+  end
+  
+  rule unary
+    unary_op gap? unary {
+      def translate(t)
+        method = case unary_op.text_value
+        when '~'
+          :bitwise_not
+        when '-'
+          :negate
+        end
+        
+        t.send method, unary.translate(t)
       end
     }
     /
@@ -338,7 +382,7 @@ grammar CoalTreetop
   rule primary
     function_call 
     /
-    '(' expression ')' {
+    '(' gap? expression gap? ')' {
       def translate(t)
         expression.translate(t)
       end
@@ -346,27 +390,23 @@ grammar CoalTreetop
     /
     constant
     /
-    variable_name
+    variable
   end
   
   rule function_name
-    name {
+    [a-zA-Z_] [0-9a-zA-Z_]* {
       def translate(t)
         text_value
       end
     }
   end
   
-  rule variable_name
-    name {
+  rule variable
+    [a-zA-Z_] [0-9a-zA-Z_]* {
       def translate(t)
         t.variable(text_value)
       end
     }
-  end
-  
-  rule name
-    [a-zA-Z_] [0-9a-zA-Z_]*
   end
   
   rule constant
@@ -406,7 +446,7 @@ grammar CoalTreetop
       end
     }
     /
-    [\-\+]? [1-9] [0-9]* {
+    [1-9] [0-9]* {
       def translate(t)
         t.integer_constant(text_value.to_i)
       end

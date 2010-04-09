@@ -8,7 +8,7 @@ require 'coal'
 #    return true
 #  else
 #    return false
-class HasCoalTest < Test::Unit::TestCase
+class IfUnlessTest < Test::Unit::TestCase
   def parse code
      code
   end
