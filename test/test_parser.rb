@@ -34,7 +34,6 @@ class ParserTest < Test::Unit::TestCase
     good "foo = 42"
     good "foo = bar"
     bad  "foo = "
-    bad  "foo"
     bad  "= 42"
     bad  "42 = foo"
     bad  "foo = 42 bar"
@@ -48,9 +47,7 @@ class ParserTest < Test::Unit::TestCase
     good "int32 foo"
     good "int32   foo"
     good "int32\tfoo"
-    bad  "int32\nfoo"
     bad  "x int32"
-    bad  "int32"
   end
   
   def good exp

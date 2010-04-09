@@ -3,7 +3,7 @@ require 'libjit'
 module Coal::Translators
 class LibJIT
   def build_callable(param_types, return_type, tree)
-    context = JIT::Context.new
+    context = JIT::Context.default
     function = nil
     
     context.build do |c|
@@ -19,7 +19,7 @@ class LibJIT
   end
   
   def type(str)
-    JIT::Type.new str.to_sym
+    JIT::Type.create str.to_sym
   end
   
   def bitshift_left(a, b)
