@@ -57,9 +57,9 @@ class ParserTest < Test::Unit::TestCase
   end
   
   def bad exp
-    tree = @parser.parse(exp)
-    text_value = tree.text_value if tree
-    assert_equal nil, text_value
+    assert_raises Coal::SyntaxError do
+      @parser.parse(exp)
+    end
   end
 end
 

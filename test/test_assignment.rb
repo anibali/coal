@@ -85,6 +85,22 @@ class AssignmentTest < Test::Unit::TestCase
     end
   end
   
+  def test_assign_bitshift_left
+    make_42 <<-end
+      int8 x = 21
+      x <<= 1
+      return(x)
+    end
+  end
+  
+  def test_assign_bitshift_right
+    make_42 <<-end
+      int8 x = 84
+      x >>= 1
+      return(x)
+    end
+  end
+  
   def test_assign_inline
     make_42 <<-end
       int8 x

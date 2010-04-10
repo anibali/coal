@@ -11,8 +11,16 @@ module Coal
   def self.translator_class
     @translator_class
   end
+  
+  class SyntaxError < StandardError ; end
 
   class Parser < CoalTreetopParser
+    def parse *args
+      res = super
+      # TODO: custom Coal error class
+      raise SyntaxError.new failure_reason if res.nil?
+      res
+    end
   end
   
   module HasCoal
