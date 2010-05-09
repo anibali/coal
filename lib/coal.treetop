@@ -432,7 +432,7 @@ grammar CoalTreetop
   end
   
   rule unary_op
-    '~' / '-' / '++' / '--'
+    '~' / '-' / '@'
   end
   
   rule unary
@@ -443,6 +443,8 @@ grammar CoalTreetop
           :bitwise_not
         when '-'
           :negate
+        when '@'
+          :address_of
         end
         
         t.send method, unary.translate(t)
@@ -464,6 +466,18 @@ grammar CoalTreetop
     constant
     /
     variable
+    /
+    '*' unary ':' type {
+      def translate(t)
+        t.dereference(unary.translate(t), type.translate(t))
+      end
+    }
+    /
+    '*' unary {
+      def translate(t)
+        t.dereference(unary.translate(t))
+      end
+    }
   end
   
   rule function_name
@@ -527,10 +541,13 @@ grammar CoalTreetop
   end
   
   rule type
-    type_name {
+    '@'* type_name {
       def translate(t)
-        raise "Parsing failed" if nil?
-        t.type text_value
+        pointer_depth = text_value[0...-type_name.text_value.size].size
+        array = []
+        pointer_depth.times { array << 'pointer' }
+        array << type_name.text_value
+        t.type *array
       end
     }
   end

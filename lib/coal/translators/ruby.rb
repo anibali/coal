@@ -15,8 +15,8 @@ class Ruby
     @code
   end
   
-  def type(str)
-    str.to_sym
+  def type(*args)
+    args.first.to_sym
   end
   
   def bitshift_left(a, b)
@@ -25,6 +25,14 @@ class Ruby
   
   def bitshift_right(a, b)
     "(#{a} >> #{b})"
+  end
+  
+  def prefix_increment(a)
+    "(a += 1)"
+  end
+  
+  def prefix_decrement(a)
+    "(a -= 1)"
   end
   
   def add(a, b)
@@ -53,6 +61,14 @@ class Ruby
   
   def bitwise_not(a)
     "(~#{a})"
+  end
+  
+  def address_of(a)
+    raise NotImplementedError.new("TODO: virtual memory for Ruby translator")
+  end
+  
+  def dereference(a, type)
+    raise NotImplementedError.new("TODO: virtual memory for Ruby translator")
   end
   
   def bitwise_and(a, b)
@@ -167,11 +183,6 @@ class Ruby
       indent { els.translate(self) }
     end
     append "end"
-  end
-  
-  def method_missing name, *args
-    append "#{name}(#{args.join ", "})"
-    "#{name}(#{args.join ", "})"
   end
   
   def indent

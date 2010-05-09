@@ -12,12 +12,12 @@ module Coal
     @translator_class
   end
   
-  class SyntaxError < StandardError ; end
+  class Error < StandardError ; end
+  class SyntaxError < Error ; end
 
   class Parser < CoalTreetopParser
     def parse *args
       res = super
-      # TODO: custom Coal error class
       raise SyntaxError.new failure_reason if res.nil?
       res
     end

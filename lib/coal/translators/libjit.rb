@@ -18,8 +18,8 @@ class LibJIT
     function
   end
   
-  def type(str)
-    JIT::Type.create str.to_sym
+  def type(*args)
+    JIT::Type.create *args
   end
   
   def bitshift_left(a, b)
@@ -28,6 +28,14 @@ class LibJIT
   
   def bitshift_right(a, b)
     a >> b
+  end
+  
+  def prefix_increment(a)
+    assign(a, add(a, integer_constant(1)))
+  end
+  
+  def prefix_decrement(a)
+    assign(a, subtract(a, integer_constant(1)))
   end
   
   def add(a, b)
@@ -58,6 +66,14 @@ class LibJIT
     ~a
   end
   
+  def address_of(a)
+    a.address
+  end
+  
+  def dereference(a, type=nil)
+    a.dereference(type)
+  end
+  
   def bitwise_and(a, b)
     a & b
   end
@@ -76,17 +92,18 @@ class LibJIT
   
   def variable(var_name)
     var = @reg[var_name.to_sym]
-    # TODO: create special Coal error classes
-    raise "variable '#{var_name}' has not been declared" if var.nil?
+    if var.nil?
+      raise Coal::Error.new("Variable '#{var_name}' has not been declared")
+    end
     var
   end
   
   def integer_constant(n)
-    @function.const :int32, n
+    @function.const n, :int32
   end
   
   def declare(type, var_name)
-    @reg[var_name.to_sym] = @function.value(type)
+    @reg[var_name.to_sym] = @function.declare(type)
   end
   
   def less a, b
@@ -114,15 +131,15 @@ class LibJIT
   end
   
   def true
-    @function.const :int32, 1 #TODO: use 8-bit int
+    @function.true
   end
   
   def false
-    @function.const :int32, 0 #TODO: use 8-bit int
+    @function.false
   end
   
   def null
-    @function.const :int32, 0 #TODO: use 8-bit int
+    @function.null
   end
   
   def arg(i)
@@ -133,40 +150,36 @@ class LibJIT
     @function.return(val)
   end
   
-  def while(cond)
-    @function.while(proc {cond.translate(self)}) do
-      yield
-    end
+  def while(cond, &block)
+    @function.while { cond.translate(self) }.do(&block).end
   end
   
-  def until(cond)
-    @function.until(proc {cond.translate(self)}) do
-      yield
-    end
+  def until(cond, &block)
+    @function.until { cond.translate(self) }.do(&block).end
   end
   
   def break
     @function.break
   end
   
-  def if(cond, els=nil)
-    else_proc = nil
-    else_proc = proc { els.translate(self) } if els
-    @function.if(proc {cond.translate(self)}, else_proc) do
-      yield
+  def if(cond, els=nil, &block)
+    if els.nil?
+      @function.if { cond.translate(self) }.do(&block).end
+    else
+      @function.if { cond.translate(self) }.do(&block).else {
+        els.translate(self)
+      }.end
     end
   end
   
-  def unless(cond, els=nil)
-    else_proc = nil
-    else_proc = proc { els.translate(self) } if els
-    @function.unless(proc {cond.translate(self)}, else_proc) do
-      yield
+  def unless(cond, els=nil, &block)
+    if els.nil?
+      @function.unless { cond.translate(self) }.do(&block).end
+    else
+      @function.unless { cond.translate(self) }.do(&block).else {
+        els.translate(self)
+      }.end
     end
-  end
-  
-  def method_missing name, *args
-    puts "METHOD MISSING: #{name}(#{args.join ", "})"
   end
 end
 end

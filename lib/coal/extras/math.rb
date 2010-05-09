@@ -18,7 +18,7 @@ module Coal::Math
 	      fib_n = fib_i_take_2 + fib_i_take_1
 	      fib_i_take_2 = fib_i_take_1
 	      fib_i_take_1 = fib_n
-	      i = i + 1
+	      i += 1
       }
     }
 
@@ -32,8 +32,8 @@ module Coal::Math
 
     while(i <= n)
     {
-      factorial = factorial * i
-      i = i + 1
+      factorial *= i
+      i += 1
     }
 
     return(factorial)
@@ -58,16 +58,16 @@ module Coal::Math
           prime = false
           break
         }
-        i = i + 1
+        i += 1
       }
       
       if(prime)
       {
-        cur_n = cur_n + 1
+        cur_n += 1
         ans = num
       }
       
-      num = num + 1
+      num += 1
     }
 
     return(ans)

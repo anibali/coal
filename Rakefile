@@ -1,30 +1,40 @@
 require 'rubygems'
-require 'rake'
+require 'jeweler'
+require 'spec/rake/spectask'
 require 'rake/testtask'
-require 'rake/gempackagetask'
 
-spec = Gem::Specification.new do |s|
+Jeweler::Tasks.new do |s|
   s.name = 'coal'
-  s.version = '0.0.1'
-  s.summary = "Low-level language which may be embedded in Ruby code."
-  s.platform = Gem::Platform::RUBY
+  s.summary = "Low-level language which may be embedded in Ruby code"
+  s.description = s.summary
+  s.author = 'Aiden Nibali'
+  s.email = 'dismal.denizen@gmail.com'
+  
   s.add_dependency 'mixin', '>= 0.7.0'
   s.add_dependency 'treetop', '>= 1.4.0'
   s.requirements << 'libjit'
+  
+  s.files = %w(LICENSE README Rakefile VERSION) + Dir.glob("{lib,spec}/**/*")
   s.require_path = 'lib'
-  s.files = %w(LICENSE README Rakefile) + Dir.glob("{bin,lib}/**/*")
+  s.extra_rdoc_files = ['README', 'LICENSE']
+  s.rdoc_options << '--title' << "#{s.name} #{File.read 'VERSION'}" <<
+                    '--main' << 'README' << '--line-numbers'
 end
+
+Jeweler::GemcutterTasks.new
 
 task :default => ["coal"]
 
-Rake::TestTask.new(spec.name) do |t|
+Rake::TestTask.new('coal') do |t|
   t.pattern = 'test/**/test_*.rb'
   t.ruby_opts = ['-rrubygems']
   t.warning = false
 end
 
-Rake::GemPackageTask.new(spec) do |pkg|
-  pkg.need_zip = true
-  pkg.need_tar = true
+desc "Run all RSpec examples."
+Spec::Rake::SpecTask.new('spec') do |t|
+  t.spec_files = FileList['spec/**/*.rb']
+  t.spec_opts << '--colour --format nested'
+  t.ruby_opts << '-rrubygems'
 end
 
