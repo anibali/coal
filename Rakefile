@@ -1,7 +1,9 @@
 require 'rubygems'
 require 'jeweler'
 require 'spec/rake/spectask'
-require 'rake/testtask'
+require 'yard'
+require 'treetop'
+require 'fileutils'
 
 Jeweler::Tasks.new do |s|
   s.name = 'coal'
@@ -23,18 +25,32 @@ end
 
 Jeweler::GemcutterTasks.new
 
-task :default => ["coal"]
-
-Rake::TestTask.new('coal') do |t|
-  t.pattern = 'test/**/test_*.rb'
-  t.ruby_opts = ['-rrubygems']
-  t.warning = false
-end
-
 desc "Run all RSpec examples."
 Spec::Rake::SpecTask.new('spec') do |t|
   t.spec_files = FileList['spec/**/*.rb']
   t.spec_opts << '--colour --format nested'
   t.ruby_opts << '-rrubygems'
+end
+
+namespace :compile do
+  desc 'Compile Treetop grammar into a parser.'
+  task :grammar do
+    grammar_file = File.join(*%w[lib coal coal.treetop])
+    output_file = File.join(*%w[lib coal parser.rb])
+    
+    FileUtils.remove(output_file) if File.exists? output_file
+    Treetop::Compiler::GrammarCompiler.new.compile(grammar_file, output_file)
+  end
+end
+
+task :build => ['compile:grammar']
+
+YARD::Rake::YardocTask.new do |t|
+  t.options = [
+    '--title', "Coal #{File.read 'VERSION'}",
+    '--readme', 'README',
+    '-m', 'markdown',
+    '--files', 'LICENSE'
+  ]
 end
 

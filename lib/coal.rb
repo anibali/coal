@@ -1,7 +1,8 @@
 require 'treetop'
 require 'mixin'
 
-Treetop.load File.join(File.dirname(File.expand_path(__FILE__)), 'coal.treetop')
+require 'virtmem'
+require 'coal/parser'
 
 module Coal
   def self.translator_class=(clazz)
@@ -18,7 +19,9 @@ module Coal
   class Parser < CoalTreetopParser
     def parse *args
       res = super
-      raise SyntaxError.new failure_reason if res.nil?
+      if res.nil?
+        raise SyntaxError.new failure_reason
+      end
       res
     end
   end

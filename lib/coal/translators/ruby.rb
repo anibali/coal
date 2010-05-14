@@ -1,4 +1,5 @@
 module Coal::Translators
+
 class Ruby
   def build_callable(param_types, return_type, tree)
     @code = ""
@@ -64,11 +65,16 @@ class Ruby
   end
   
   def address_of(a)
-    raise NotImplementedError.new("TODO: virtual memory for Ruby translator")
+    "(#{a}.address)"
   end
   
   def dereference(a, type)
-    raise NotImplementedError.new("TODO: virtual memory for Ruby translator")
+    #TODO: support more types
+    if type == :int8
+      "VirtMem.load(#{a}, VirtMem::Int8)"
+    else
+      raise NotImplementedError.new("TODO: dereference for Ruby translator")
+    end
   end
   
   def bitwise_and(a, b)
@@ -84,8 +90,9 @@ class Ruby
   end
   
   def assign(var, val)
-    append "#{var} = #{val}"
-    "#{var} = #{val}"
+    line = "(#{var} = #{var}.is_a?(VirtMem::Number) ? #{var}.class.new(#{val}) : #{val})"
+    append line
+    line
   end
   
   def variable(var)
@@ -97,7 +104,12 @@ class Ruby
   end
   
   def declare(type, var)
-    append "#{var} = nil"
+    #TODO: support more types
+    if type == :int8
+      append "#{var} = VirtMem::Int8.new(0)"
+    else
+      append "#{var} = nil"
+    end
     var
   end
   
@@ -197,5 +209,6 @@ class Ruby
     @code << "\n"
   end
 end
+
 end
 

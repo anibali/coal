@@ -1,6 +1,7 @@
 require 'libjit'
 
 module Coal::Translators
+
 class LibJIT
   def build_callable(param_types, return_type, tree)
     context = JIT::Context.default
@@ -143,7 +144,7 @@ class LibJIT
   end
   
   def arg(i)
-    @function.arg(i.to_i)
+    @function.arg(i.to_numeric)
   end
   
   def return(val)
@@ -182,5 +183,6 @@ class LibJIT
     end
   end
 end
+
 end
 

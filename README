@@ -1,6 +1,8 @@
-= Coal
+Coal
+====
 
-== Synopsis
+Synopsis
+--------
 
 Ruby is an awesome programming language that makes coding a real pleasure.
 Unfortunately, it isn't great for writing high performance functions. Wouldn't
@@ -12,38 +14,41 @@ for speedy execution, but will fall back to plain Ruby if need be. The idea is
 that library developers can write methods using Coal, and users won't even
 know that anything but Ruby is involved. Here is an example:
 
- require 'coal'
- 
- module AwesomeMath
-   include Coal::HasCoal
-     
-   def_coal 'self.factorial', [:uint32], :uint64, <<-end
-     uint32 n = arg(0)
-     uint64 factorial = 1
-     uint32 i = 1
- 
-     while(i <= n)
-     {
-       factorial *= i
-       i += 1
-     }
- 
-     return(factorial)
-   end
- end
- 
- AwesomeMath.factorial(5) #=> 120
+    !!!rb
+    require 'coal'
+    
+    module AwesomeMath
+      include Coal::HasCoal
+        
+      def_coal 'self.factorial', [:uint32], :uint64, <<-end
+        uint32 n = arg(0)
+        uint64 factorial = 1
+        uint32 i = 1
+    
+        while(i <= n)
+        {
+          factorial *= i
+          i += 1
+        }
+    
+        return(factorial)
+      end
+    end
+    
+    AwesomeMath.factorial(5) #=> 120
 
 You'll notice that Coal is everything that Ruby isn't: it's dirty, static and
 fast. It may not be pretty, but it can be very useful.
 
-== Features
+Features
+--------
 
 * Super-fast JIT compilation via LibJIT
 * Fallback to Ruby interpretation of code when required binaries are absent
 * No need for any native compilation by you or your users
 
-== TODO
+TODO
+----
 
 * Finish a basic implementation!
 
