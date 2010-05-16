@@ -1,3 +1,5 @@
+require 'forwardable'
+
 module VirtMem
 
 MEM = ""
@@ -9,18 +11,23 @@ def self.allocate(size)
 end
 
 def self.load(ptr, clazz)
+  ptr = ptr.to_numeric if ptr.respond_to? :to_numeric
   clazz.unpack MEM[ptr...ptr + clazz::SIZE]
 end
 
 def self.store(ptr, clazz, val)
+  val = val.to_numeric if val.respond_to? :to_numeric
   MEM[ptr...ptr + clazz::SIZE] = clazz.pack val
-  val
 end
 
 class Number
 end
 
 class Int < Number
+  extend Forwardable
+  
+  def_delegators :@num, :to_s, :inspect
+  
   def method_missing(name, *args, &blk)
     ret = @num.send(name, *args, &blk)
     ret.is_a?(Integer) ? self.class.new(ret) : ret
@@ -39,16 +46,7 @@ class Int < Number
       @address = VirtMem.allocate(self.class::SIZE)
       VirtMem.store(@address, self.class, @num)
     end
-    #TODO: store type information in address (ie implement pointer types, yay!)
-    @address
-  end
-
-  def to_s
-    @num.to_s
-  end
-  
-  def inspect
-    @num.inspect
+    Pointer.new(@address)
   end
 end
 
@@ -200,6 +198,22 @@ class IntN < const_get("Int#{[1].pack('i').size * 8}")
 end
 
 class UIntN < const_get("UInt#{[1].pack('I').size * 8}")
+end
+
+class Pointer < UIntN
+  #TODO: ref_type as pointer
+  attr_reader :ref_type
+  
+  def initialize(num, ref_type=nil)
+    super(num)
+    @ref_type = ref_type
+  end
+  
+  def dereference(type=nil)
+    type ||= ref_type
+    raise("TODO: default reference type for pointer") if type.nil?
+    VirtMem.load(@num, type)
+  end
 end
 
 #mem = Memory.new

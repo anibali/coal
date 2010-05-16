@@ -1,5 +1,4 @@
 require 'treetop'
-require 'mixin'
 
 require 'virtmem'
 require 'coal/parser'
@@ -26,44 +25,13 @@ module Coal
     end
   end
   
-  module HasCoal
-    class_mixin do
-      def def_coal name, param_types, return_type, code
-        name = name.to_sym
-        tree = Parser.new.parse code
-        trans = Coal.translator_class.new
-        callable = trans.build_callable param_types, return_type, tree
-        
-        if name.to_s.match /^self\.(.*)/
-          name = $1.to_sym
-          @coal_instance_methods ||= {}
-          @coal_instance_methods[name] = callable
-        else
-          @coal_methods ||= {}
-          @coal_methods[name] = callable
-        end
-      end
-
-      def coal_methods
-        @coal_methods
-      end
-      
-      def coal_instance_methods
-        @coal_instance_methods
-      end
-      
-      def method_missing name, *args
-        name = name.to_sym
-        if @coal_instance_methods and @coal_instance_methods.has_key? name
-          @coal_instance_methods[name].call *args
-        else
-          super
-        end
-      end
+  module Power
+    def self.included(klass)
+      klass.extend ClassMethods
     end
     
-    module_mixin do
-      def def_coal name, param_types, return_type, code
+    module ClassMethods
+      def defc name, param_types, return_type, code
         name = name.to_sym
         tree = Parser.new.parse code
         trans = Coal.translator_class.new
@@ -71,21 +39,17 @@ module Coal
         
         if name.to_s.match /^self\.(.*)/
           name = $1.to_sym
-          @coal_instance_methods ||= {}
-          @coal_instance_methods[name] = callable
+          class_eval "(@@coal_class_methods ||= {})[name] = callable"
         else
-          raise ArgumentError.new("method name should begin with 'self.\'")
+          class_eval "(@@coal_instance_methods ||= {})[name] = callable"
         end
-      end
-      
-      def coal_instance_methods
-        @coal_instance_methods
       end
       
       def method_missing name, *args
         name = name.to_sym
-        if @coal_instance_methods and @coal_instance_methods.has_key? name
-          @coal_instance_methods[name].call *args
+        coal_methods = class_eval("@@coal_class_methods") rescue nil
+        if coal_methods and coal_methods.has_key? name
+          coal_methods[name].call *args
         else
           super
         end
@@ -94,8 +58,9 @@ module Coal
     
     def method_missing name, *args
       name = name.to_sym
-      if self.class.coal_methods and self.class.coal_methods.has_key? name
-        self.class.coal_methods[name].call *args
+      coal_methods = self.class.class_eval("@@coal_instance_methods") rescue nil
+      if coal_methods and coal_methods.has_key? name
+        coal_methods[name].call *args
       else
         super
       end

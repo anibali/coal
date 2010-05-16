@@ -20,7 +20,7 @@ end
 
 describe "int8 x = 42 ; @int8 ptr = @x ; @@int8 pptr = @ptr ; return(*(*pptr:@int8):int8)" do
   it { should eval_with_libjit_to_int32(42) }
-  it("should evaluate to 42 using the Ruby translator") { pending }
+  it { should eval_with_ruby_to_int32(42) }
 end
 
 describe "int8 x = 42 ; @int8 ptr = @x ; @@int8 pptr = @ptr ; return(**pptr)" do

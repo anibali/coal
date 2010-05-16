@@ -17,7 +17,21 @@ class Ruby
   end
   
   def type(*args)
-    args.first.to_sym
+    case args.first.to_sym
+    when :uint8, :uint16, :uint32, :uint64
+      VirtMem.const_get("UI#{args.first.to_s[2..-1]}")
+    when :int8, :int16, :int32, :int64
+      VirtMem.const_get(args.first.to_s.capitalize)
+    when :uintn
+      VirtMem::UIntN
+    when :intn
+      VirtMem::IntN
+    when :pointer
+      #TODO: use information on pointer reference type
+      VirtMem::Pointer
+    else
+      nil
+    end
   end
   
   def bitshift_left(a, b)
@@ -69,11 +83,10 @@ class Ruby
   end
   
   def dereference(a, type)
-    #TODO: support more types
-    if type == :int8
-      "VirtMem.load(#{a}, VirtMem::Int8)"
+    if type.nil?
+      "#{a}.dereference"
     else
-      raise NotImplementedError.new("TODO: dereference for Ruby translator")
+      "#{a}.dereference(#{type.name})"
     end
   end
   
@@ -104,11 +117,10 @@ class Ruby
   end
   
   def declare(type, var)
-    #TODO: support more types
-    if type == :int8
-      append "#{var} = VirtMem::Int8.new(0)"
-    else
+    if type.nil?
       append "#{var} = nil"
+    else
+      append "#{var} = #{type.name}.new(0)"
     end
     var
   end
@@ -197,6 +209,7 @@ class Ruby
     append "end"
   end
   
+  private
   def indent
     @indent << "  "
       yield

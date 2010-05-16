@@ -1,7 +1,5 @@
 require 'rubygems'
 require 'jeweler'
-require 'spec/rake/spectask'
-require 'yard'
 require 'treetop'
 require 'fileutils'
 
@@ -12,9 +10,7 @@ Jeweler::Tasks.new do |s|
   s.author = 'Aiden Nibali'
   s.email = 'dismal.denizen@gmail.com'
   
-  s.add_dependency 'mixin', '>= 0.7.0'
   s.add_dependency 'treetop', '>= 1.4.0'
-  s.requirements << 'libjit'
   
   s.files = %w(LICENSE README Rakefile VERSION) + Dir.glob("{lib,spec}/**/*")
   s.require_path = 'lib'
@@ -25,11 +21,16 @@ end
 
 Jeweler::GemcutterTasks.new
 
-desc "Run all RSpec examples."
-Spec::Rake::SpecTask.new('spec') do |t|
-  t.spec_files = FileList['spec/**/*.rb']
-  t.spec_opts << '--colour --format nested'
-  t.ruby_opts << '-rrubygems'
+begin
+  require 'spec/rake/spectask'
+
+  desc "Run all RSpec examples."
+  Spec::Rake::SpecTask.new('spec') do |t|
+    t.spec_files = FileList['spec/**/*.rb']
+    t.spec_opts << '--colour --format nested'
+    t.ruby_opts << '-rrubygems'
+  end
+rescue LoadError
 end
 
 namespace :compile do
@@ -45,12 +46,28 @@ end
 
 task :build => ['compile:grammar']
 
-YARD::Rake::YardocTask.new do |t|
-  t.options = [
-    '--title', "Coal #{File.read 'VERSION'}",
-    '--readme', 'README',
-    '-m', 'markdown',
-    '--files', 'LICENSE'
-  ]
+begin
+  require 'yard'
+
+  YARD::Rake::YardocTask.new do |t|
+    t.options = [
+      '--title', "Coal #{File.read 'VERSION'}",
+      '--readme', 'README',
+      '-m', 'markdown',
+      '--files', 'LICENSE'
+    ]
+  end
+rescue LoadError
+end
+
+#TODO: get reek's rake task working
+begin
+  require 'reek/cli/application'
+  
+  task :reek do
+    files = Dir['lib/**/*.rb'] - ['lib/coal/parser.rb']
+    Reek::Cli::Application.new(files).execute
+  end
+rescue LoadError
 end
 
