@@ -7,8 +7,8 @@ require File.dirname(__FILE__) + "/../lib/coal"
     Spec::Matchers.define "eval_with_#{class_name.downcase}_to_#{type}" do |expected|
       match do |actual|
         JIT::Context.default.build_end unless JIT::Context.default.nil?
-        tree = Coal::Parser.new.parse actual
-        callable = clazz.new.build_callable([], type, tree)
+        tree = Coal::Parser.parse(actual)
+        callable = clazz.new.compile_func([], type, tree)
         @result = callable.call
         @result == expected
       end

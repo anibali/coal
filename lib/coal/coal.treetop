@@ -1,569 +1,331 @@
 grammar CoalTreetop
-  rule body
-    ws? statement_list ws? {
-      def translate(t)
-        statement_list.translate(t)
+  rule root
+    ws? statements ws? {
+      def tree
+        statements.tree
       end
     }
-  end  
-  
-  rule statement_list
-    statement statement_separator statement_list {
-      def translate(t)
-        statement.translate(t)
-        statement_list.translate(t)
+  end
+
+  rule statements
+    statement ((ws? comment)+ / statement_separator) statements {
+      def tree
+        [statement.tree].compact.concat(statements.tree)
       end
     }
     /
-    statement
+    statement (ws comment)* {
+      def tree
+        [statement.tree].compact
+      end
+    }
   end
   
   rule statement_separator
-    ws? ';' ws? statement_separator?
+    [ \t\r]* "\n" ws?
     /
-    gap? [\r\n] ws?
+    ws? ";" ws?
   end
   
   rule statement
-    declaration_and_assignment
-    /
-    declaration
-    /
-    while_loop / until_loop
-    /
-    if_statement / unless_statement
-    /
-    block
+    return
     /
     break
     /
+    if_unless
+    /
+    while_until
+    /
+    declaration
+    /
     expression
-  end
-  
-  rule declaration_and_assignment
-    declaration gap? '=' gap? expression {
-      def translate(t)
-        t.assign(declaration.translate(t), expression.translate(t))
+    /
+    '' {
+      def tree
+        nil
       end
     }
   end
   
-  rule declaration
-    type gap variable {
-      def translate(t)
-        var = variable.text_value
-        t.declare(type.translate(t), var)
-        #var
+  rule if_unless
+    type:('if'/'unless') gap? '(' gap? expression gap? ')' ws? then_block:block ws? 'else' ws? else_block:block {
+      def tree
+        [type.text_value.to_sym, expression.tree, then_block.tree, else_block.tree]
+      end
+    }
+    /
+    type:('if'/'unless') gap? '(' gap? expression gap? ')' ws? block {
+      def tree
+        [type.text_value.to_sym, expression.tree, block.tree]
+      end
+    }
+  end
+  
+  rule while_until
+    type:('while'/'until') gap? '(' gap? expression gap? ')' ws? block {
+      def tree
+        [type.text_value.to_sym, expression.tree, block.tree]
       end
     }
   end
   
   rule block
-    '{' ws? statement_list ws? '}' {
-      def translate(t)
-        statement_list.translate(t)
+    '{' ws? statements ws? '}' {
+      def tree
+        statements.tree
       end
     }
     /
-    '{' ws? '}' {
-      def translate(t)
-        ""
+    statement {
+      def tree
+        [super].compact
       end
     }
   end
   
-  rule break
-    'break' {
-      def translate(t)
-        t.break
-      end
-    }
-  end
-  
-  rule while_loop
-    'while' gap? '(' gap? expression gap? ')' ws? statement {
-      def translate(t)
-        t.while(expression) do
-          statement.translate(t)
-        end
-      end
-    }
-  end
-  
-  rule until_loop
-    'until' gap? '(' gap? expression gap? ')' ws? statement {
-      def translate(t)
-        t.until(expression) do
-          statement.translate(t)
-        end
-      end
-    }
-  end
-  
-  rule if_statement
-    'if' gap? '(' gap? expression gap? ')' ws? statement ws? else_statement {
-      def translate(t)
-        t.if(expression, else_statement) do
-          statement.translate(t)
-        end
-      end
-    }
-    /
-    'if' gap? '(' gap? expression gap? ')' ws? statement {
-      def translate(t)
-        t.if(expression) do
-          statement.translate(t)
-        end
-      end
-    }
-  end
-  
-  rule else_statement
-    'else' ws? statement {
-      def translate(t)
-        statement.translate(t)
-      end
-    }
-  end
-  
-  rule unless_statement
-    'unless' gap? '(' gap? expression gap? ')' ws? statement ws? else_statement {
-      def translate(t)
-        t.unless(expression, else_statement) do
-          statement.translate(t)
-        end
-      end
-    }
-    /
-    'unless' gap? '(' gap? expression gap? ')' ws? statement {
-      def translate(t)
-        t.unless(expression) do
-          statement.translate(t)
-        end
-      end
-    }
-  end
-  
-  rule function_call
-    function_name '(' gap? argument_list gap? ')' {
-      def translate(t)
-        args = argument_list.translate(t)
-        t.send function_name.translate(t), *args
-      end
-    }
-  end
-  
-  # Rule for a list of comma-separated arguments. Whitespace before and after
-  # the list should be trimmed beforehand.
-  rule argument_list
-    argument gap? ',' gap? argument_list {
-      def translate(t)
-        [argument.translate(t)] + argument_list.translate(t)
-      end
-    }
-    /
-    argument {
-      def translate(t)
-        [super]
-      end
-    }
-    /
-    '' {
-      def translate(t)
-        []
-      end
-    }
-  end
-  
-  rule argument
-    expression
-  end
-
   rule expression
     assignment
   end
   
-  rule assignment_op
-    '=' / '+=' / '-=' / '*=' / '/=' / '%=' / '&=' / '^=' / '|=' / '<<=' / '>>='
+  rule declaration
+    type gap identifier gap? '=' gap? expression {
+      def tree
+        [:decl, type.tree, identifier.tree, expression.tree]
+      end
+    }
+    /
+    type gap identifier {
+      def tree
+        [:decl, type.tree, identifier.tree]
+      end
+    }
+  end
+  
+  rule pre_assign_op
+    '**'/'+'/'-'/'*'/'/'/'%'/'&'/'^'/'|'/'<<'/'>>'
   end
   
   rule assignment
-    variable gap? assignment_op gap? assignment {
-      def translate(t)
-        var = variable.translate(t)
-        val = case assignment_op.text_value
-        when '='
-          assignment.translate(t)
-        when '+='
-          t.add(var, assignment.translate(t))
-        when '-='
-          t.subtract(var, assignment.translate(t))
-        when '*='
-          t.multiply(var, assignment.translate(t))
-        when '/='
-          t.divide(var, assignment.translate(t))
-        when '%='
-          t.modulus(var, assignment.translate(t))
-        when '&='
-          t.bitwise_and(var, assignment.translate(t))
-        when '^='
-          t.bitwise_xor(var, assignment.translate(t))
-        when '|='
-          t.bitwise_or(var, assignment.translate(t))
-        when '<<='
-          t.bitshift_left(var, assignment.translate(t))
-        when '>>='
-          t.bitshift_right(var, assignment.translate(t))
-        end
-        t.assign(var, val)
+    identifier gap? '=' gap? assignment {
+      def tree
+        [:sto, identifier.tree, assignment.tree]
       end
     }
     /
-    equality
-  end
-  
-  rule equality_op
-    '==' / '!='
-  end
-  
-  rule equality
-    bitwise_and gap? equality_op gap? equality {
-      def translate(t, x=nil)
-        x ||= bitwise_and.translate(t)
-        
-        method = case equality_op.text_value
-        when '=='
-          :equal
-        when '!='
-          :not_equal
-        end
-        
-        if equality.respond_to? :equality_op
-          x = t.send method, x, equality.bitwise_and.translate(t)
-          equality.translate t, x
-        else
-          t.send method, x, equality.translate(t)
-        end
+    identifier gap? pre_assign_op '=' gap? assignment {
+      def tree
+        var = identifier.tree
+        [:sto, var, [BINARY_SYMS[pre_assign_op.text_value], var, assignment.tree]]
       end
     }
     /
-    bitwise_and
+    or
   end
   
-  rule bitwise_and_op
-    '&'
-  end
-  
-  rule bitwise_and
-    bitwise_xor gap? bitwise_and_op gap? bitwise_and {
-      def translate(t, x=nil)
-        x ||= bitwise_xor.translate(t)
-        
-        if bitwise_and.respond_to? :bitwise_and_op
-          x = t.bitwise_and(x, bitwise_and.bitwise_xor.translate(t))
-          bitwise_and.translate t, x
-        else
-          t.bitwise_and(x, bitwise_and.translate(t))
-        end
-      end
-    }
+  rule or
+    (and gap? '&&' gap?)+ or <BinaryOpLTR>
     /
-    bitwise_xor
+    and
   end
   
-  rule bitwise_xor_op
-    '^'
-  end
-  
-  rule bitwise_xor
-    bitwise_or gap? bitwise_xor_op gap? bitwise_xor {
-      def translate(t, x=nil)
-        x ||= bitwise_or.translate(t)
-        
-        if bitwise_xor.respond_to? :bitwise_xor_op
-          x = t.bitwise_xor(x, bitwise_xor.bitwise_or.translate(t))
-          bitwise_xor.translate t, x
-        else
-          t.bitwise_xor(x, bitwise_xor.translate(t))
-        end
-      end
-    }
+  rule and
+    (bitwise_or gap? '&&' gap?)+ and <BinaryOpLTR>
     /
     bitwise_or
   end
   
-  rule bitwise_or_op
-    '|'
+  rule bitwise_or
+    (bitwise_xor gap? '|' gap?)+ bitwise_or <BinaryOpLTR>
+    /
+    bitwise_xor
   end
   
-  rule bitwise_or
-    comparison gap? bitwise_or_op gap? bitwise_or {
-      def translate(t, x=nil)
-        x ||= comparison.translate(t)
-        
-        if bitwise_or.respond_to? :bitwise_or_op
-          x = t.bitwise_or(x, bitwise_or.comparison.translate(t))
-          bitwise_or.translate t, x
-        else
-          t.bitwise_or(x, bitwise_or.translate(t))
-        end
-      end
-    }
+  rule bitwise_xor
+    (bitwise_and gap? '^' gap?)+ bitwise_xor <BinaryOpLTR>
+    /
+    bitwise_and
+  end
+  
+  rule bitwise_and
+    (equality gap? '&' gap?)+ bitwise_and <BinaryOpLTR>
+    /
+    equality
+  end
+  
+  rule equality
+    comparison gap? ('=='/'!=') gap? equality <BinaryOpRTL>
     /
     comparison
   end
   
-  rule comparison_op
-    '>=' / '>' / '<=' / '<'
-  end
-  
   rule comparison
-    bitshift gap? comparison_op gap? comparison {
-      def translate(t, x=nil)
-        x ||= bitshift.translate(t)
-        
-        method = case comparison_op.text_value
-        when '>'
-          :greater
-        when '>='
-          :greater_or_equal
-        when '<'
-          :less
-        when '<='
-          :less_or_equal
-        end
-        
-        if comparison.respond_to? :comparison_op
-          x = t.send method, x, comparison.bitshift.translate(t)
-          comparison.translate t, x
-        else
-          t.send method, x, comparison.translate(t)
-        end
-      end
-    }
+    shift gap? ('<='/'<'/'>='/'>') gap? comparison <BinaryOpRTL>
     /
-    bitshift
+    shift
   end
   
-  rule bitshift_op
-    '<<' / '>>'
-  end
-  
-  rule bitshift
-    sum gap? bitshift_op gap? bitshift {
-      def translate(t, x = nil)
-        x ||= sum.translate(t)
-        
-        method = case bitshift_op.text_value
-        when '<<'
-          :bitshift_left
-        when '>>'
-          :bitshift_right
-        end
-        
-        if bitshift.respond_to? :bitshift_op
-          x = t.send method, x, bitshift.sum.translate(t)
-          bitshift.translate t, x
-        else
-          t.send method, x, bitshift.translate(t)
-        end
-      end
-    }
+  rule shift
+    (sum gap? ('<<'/'>>') gap?)+ shift <BinaryOpLTR>
     /
     sum
   end
   
-  rule sum_op
-    '+' / '-'
-  end
-  
   rule sum
-    product gap? sum_op gap? sum {
-      def translate(t, x = nil)
-        x ||= product.translate(t)
-        
-        method = case sum_op.text_value
-        when '+'
-          :add
-        when '-'
-          :subtract
-        end
-        
-        if sum.respond_to? :sum_op
-          x = t.send method, x, sum.product.translate(t)
-          sum.translate t, x
-        else
-          t.send method, x, sum.translate(t)
-        end
-      end
-    }
+    (term gap? [+-] gap?)+ sum <BinaryOpLTR>
     /
-    product
+    term
+  end
+
+  rule term
+    (power gap? [*/%] gap?)+ term <BinaryOpLTR>
+    /
+    power
   end
   
-  rule product_op
-    '*' / '/' / '%'
-  end
-  
-  rule product
-    unary gap? product_op gap? product {
-      def translate(t, x = nil)
-        x ||= unary.translate(t)
-        
-        method = case product_op.text_value
-        when '*'
-          :multiply
-        when '/'
-          :divide
-        when '%'
-          :modulus
-        end
-        
-        if product.respond_to? :product_op
-          x = t.send method, x, product.unary.translate(t)
-          product.translate t, x
-        else
-          t.send method, x, product.translate(t)
-        end
-      end
-    }
+  rule power
+    unary gap? '**' gap? power <BinaryOpRTL>
     /
     unary
   end
   
-  rule unary_op
-    '~' / '-' / '@'
-  end
-  
   rule unary
-    unary_op gap? unary {
-      def translate(t)
-        method = case unary_op.text_value
-        when '~'
-          :bitwise_not
-        when '-'
-          :negate
-        when '@'
-          :address_of
-        end
-        
-        t.send method, unary.translate(t)
+    '*' unary ':' type {
+      def tree
+        [UNARY_SYMS['*'], unary.tree, type.tree]
+      end
+    }
+    /
+    op:[-~@*] unary {
+      def tree
+        [UNARY_SYMS[op.text_value], unary.tree]
       end
     }
     /
     primary
   end
-
+  
   rule primary
-    function_call 
-    /
     '(' gap? expression gap? ')' {
-      def translate(t)
-        expression.translate(t)
+      def tree
+        expression.tree
       end
     }
     /
-    constant
+    arg
     /
-    variable
+    integer
     /
-    '*' unary ':' type {
-      def translate(t)
-        t.dereference(unary.translate(t), type.translate(t))
+    boolean
+    /
+    identifier
+  end
+  
+  rule boolean
+    'true' {
+      def tree ; true ; end
+    }
+    /
+    'false' {
+      def tree ; false ; end
+    }
+  end
+  
+  rule integer
+    # Binary
+    '0b' [01]+ {
+      def tree
+        text_value.to_i(2)
       end
     }
     /
-    '*' unary {
-      def translate(t)
-        t.dereference(unary.translate(t))
+    # Hex
+    '0x' [0-9a-fA-F]+ {
+      def tree
+        text_value.to_i(16)
+      end
+    }
+    /
+    # Arbitrary radix (must be between 2 and 36 inclusive)
+    radix:([0-9]+) 'r' num:([0-9a-zA-Z]+) {
+      def tree
+        num.text_value.to_i(radix.text_value.to_i)
+      end
+    }
+    /
+    # Decimal
+    [0-9]+ {
+      def tree
+        text_value.to_i
       end
     }
   end
   
-  rule function_name
-    [a-zA-Z_] [0-9a-zA-Z_]* {
-      def translate(t)
+  rule identifier
+    [a-z_] [a-zA-Z_0-9]* {
+      def tree
         text_value
       end
     }
   end
   
-  rule variable
-    [a-zA-Z_] [0-9a-zA-Z_]* {
-      def translate(t)
-        t.variable(text_value)
-      end
-    }
-  end
-  
-  rule constant
-    null_constant
-    /
-    boolean_constant
-    /
-    integer_constant
-  end
-  
-  rule null_constant
-    'null' {
-      def translate(t)
-        t.null
-      end
-    }
-  end
-  
-  rule boolean_constant
-    'true' {
-      def translate(t)
-        t.true
-      end
-    }
-    /
-    'false' {
-      def translate(t)
-        t.false
-      end
-    }
-  end
-  
-  rule integer_constant
-    '0' {
-      def translate(t)
-        t.integer_constant(0)
-      end
-    }
-    /
-    [1-9] [0-9]* {
-      def translate(t)
-        t.integer_constant(text_value.to_i)
-      end
-    }
-  end
-  
   rule type
-    '@'* type_name {
-      def translate(t)
-        pointer_depth = text_value[0...-type_name.text_value.size].size
-        array = []
-        pointer_depth.times { array << 'pointer' }
-        array << type_name.text_value
-        t.type *array
+    ptrs:('@'*) base:('u'? 'int' ('64'/'32'/'16'/'8'/'n')) {
+      def tree
+        if ptrs.nil? || ptrs.text_value.empty?
+          base.text_value
+        else
+          typ = []
+          ptrs.text_value.length.times { typ << :pointer }
+          typ << base.text_value
+        end
       end
     }
   end
   
-  rule type_name
-    'uint64' / 'int64' / 'uint32' / 'int32' / 'uint16' / 'int16' / 'uint8' / 'int8'
+  rule arg
+    'arg(' gap? integer gap? ')' {
+      def tree
+        [:arg, integer.tree]
+      end
+    }
   end
   
-  # Rule matches one or more tabs and/or spaces
+  rule break
+    'break' ![a-zA-Z_0-9] {
+      def tree
+        [:break]
+      end
+    }
+  end
+  
+  rule return
+    'return(' gap? expression gap? ')' {
+      def tree
+        [:ret, expression.tree]
+      end
+    }
+  end
+  
+  rule eoc
+    "\n" / eof
+  end
+
+  rule comment
+    '#' (!eoc .)* eoc
+  end
+  
+  rule eof
+    !.
+  end
+  
+  # Horizontal whitespace
   rule gap
     [ \t]+
   end
   
-  # Rule matches one or more whitespace characters
+  # Any whitespace
   rule ws
-    [\s]+
+    [ \t\n\r]+
   end
 end
 

@@ -3,184 +3,165 @@ require 'libjit'
 module Coal::Translators
 
 class LibJIT
-  def build_callable(param_types, return_type, tree)
+  def compile_func(param_types, return_type, tree)
     context = JIT::Context.default
     function = nil
     
-    context.build do |c|
-      c.function(param_types, return_type) do |f|
-        @reg = {}
-        @function = function = f
-        tree.translate(self)
-        @reg = @function = nil
+    begin
+      context.build do |c|
+        c.function(param_types, return_type) do |f|
+          @reg = {}
+          @function = function = f
+          statements(tree)
+          @reg = @function = nil
+        end
       end
+    rescue Exception => ex
+      context.build_end
+      raise ex
     end
     
     function
   end
   
-  def type(*args)
-    JIT::Type.create *args
+  def statements(tree)
+    tree.each do |e|
+      statement(e)
+    end
   end
   
-  def bitshift_left(a, b)
-    a << b
+  def statement(tree)
+    case tree.first
+    when :break
+      @function.break
+    when :ret
+      @function.return(expression(tree[1]))
+    when :decl
+      @reg[tree[2].to_sym] = @function.declare(type tree[1])
+      unless tree[3].nil?
+        @reg[tree[2].to_sym].store expression(tree[3])
+      end
+    when :if
+      branch = @function.if {expression tree[1]}.do {
+        statements tree[2]
+      }
+      unless tree[3].nil?
+        branch.else {
+          statements tree[3]
+        }
+      end
+      branch.end
+    when :unless
+      branch = @function.unless {expression tree[1]}.do {
+        statements tree[2]
+      }.end
+      unless tree[3].nil?
+        branch.else {
+          statements tree[3]
+        }
+      end
+      branch.end
+    when :while
+      @function.while {expression tree[1]}.do {
+        statements tree[2]
+      }.end
+    when :until
+      @function.until {expression tree[1]}.do {
+        statements tree[2]
+      }.end
+    else
+      expression(tree)
+    end
   end
   
-  def bitshift_right(a, b)
-    a >> b
+  def expression(tree)
+    if tree.is_a? Array
+      case tree.first
+      when :add
+        expression(tree[1]) + expression(tree[2])
+      when :sub
+        expression(tree[1]) - expression(tree[2])
+      when :mul
+        expression(tree[1]) * expression(tree[2])
+      when :div
+        expression(tree[1]) / expression(tree[2])
+      when :mod
+        expression(tree[1]) % expression(tree[2])
+      when :pow
+        expression(tree[1]) ** expression(tree[2])
+      when :bit_and
+        expression(tree[1]) & expression(tree[2])
+      when :bit_xor
+        expression(tree[1]) ^ expression(tree[2])
+      when :bit_or
+        expression(tree[1]) | expression(tree[2])
+      when :lshift
+        expression(tree[1]) << expression(tree[2])
+      when :rshift
+        expression(tree[1]) >> expression(tree[2])
+      when :lt
+        expression(tree[1]) < expression(tree[2])
+      when :lteq
+        expression(tree[1]) <= expression(tree[2])
+      when :gt
+        expression(tree[1]) > expression(tree[2])
+      when :gteq
+        expression(tree[1]) >= expression(tree[2])
+      when :eq
+        expression(tree[1]).eq expression(tree[2])
+      when :ne
+        expression(tree[1]).ne expression(tree[2])
+      when :bit_neg
+        ~expression(tree[1])
+      when :neg
+        if tree[1].is_a? Fixnum
+          # Small optimisation. Creates a negative constant rather than
+          # creating a positive constant then negating it
+          expression -tree[1]
+        else
+          -expression(tree[1])
+        end
+      when :deref
+        if tree[2].nil?
+          expression(tree[1]).dereference
+        else
+          expression(tree[1]).dereference(type(tree[2]))
+        end
+      when :addr
+        expression(tree[1]).address
+      when :sto
+        variable(tree[1]).store expression(tree[2])
+      when :arg
+        @function.arg(tree[1])
+      else
+        # Oops!
+        raise "Can't translate expression: #{tree.inspect}"
+      end
+    else
+      if tree.is_a? Fixnum
+        @function.const tree, :int32
+      elsif [true, false].include? tree
+        if tree
+          @function.true
+        else
+          @function.false
+        end
+      elsif tree.is_a? String
+        variable(tree)
+      end
+    end
   end
   
-  def prefix_increment(a)
-    assign(a, add(a, integer_constant(1)))
+  def type(tree)
+    JIT::Type.create(*tree)
   end
   
-  def prefix_decrement(a)
-    assign(a, subtract(a, integer_constant(1)))
-  end
-  
-  def add(a, b)
-    a + b
-  end
-  
-  def subtract(a, b)
-    a - b
-  end
-  
-  def multiply(a, b)
-    a * b
-  end
-  
-  def divide(a, b)
-    a / b
-  end
-  
-  def modulus(a, b)
-    a % b
-  end
-  
-  def negate(a)
-    -a
-  end
-  
-  def bitwise_not(a)
-    ~a
-  end
-  
-  def address_of(a)
-    a.address
-  end
-  
-  def dereference(a, type=nil)
-    a.dereference(type)
-  end
-  
-  def bitwise_and(a, b)
-    a & b
-  end
-  
-  def bitwise_xor(a, b)
-    a ^ b
-  end
-  
-  def bitwise_or(a, b)
-    a | b
-  end
-  
-  def assign(var, val)
-    var.store val
-  end
-  
-  def variable(var_name)
-    var = @reg[var_name.to_sym]
+  def variable(tree)
+    var = @reg[tree.to_sym]
     if var.nil?
-      raise Coal::Error.new("Variable '#{var_name}' has not been declared")
+      raise Coal::UndeclaredVariableError.new(tree)
     end
     var
-  end
-  
-  def integer_constant(n)
-    @function.const n, :int32
-  end
-  
-  def declare(type, var_name)
-    @reg[var_name.to_sym] = @function.declare(type)
-  end
-  
-  def less a, b
-    a < b
-  end
-  
-  def less_or_equal a, b
-    a <= b
-  end
-  
-  def greater a, b
-    a > b
-  end
-  
-  def greater_or_equal a, b
-    a >= b
-  end
-  
-  def equal a, b
-    a.eq b
-  end
-  
-  def not_equal a, b
-    a.ne b
-  end
-  
-  def true
-    @function.true
-  end
-  
-  def false
-    @function.false
-  end
-  
-  def null
-    @function.null
-  end
-  
-  def arg(i)
-    @function.arg(i.to_numeric)
-  end
-  
-  def return(val)
-    @function.return(val)
-  end
-  
-  def while(cond, &block)
-    @function.while { cond.translate(self) }.do(&block).end
-  end
-  
-  def until(cond, &block)
-    @function.until { cond.translate(self) }.do(&block).end
-  end
-  
-  def break
-    @function.break
-  end
-  
-  def if(cond, els=nil, &block)
-    if els.nil?
-      @function.if { cond.translate(self) }.do(&block).end
-    else
-      @function.if { cond.translate(self) }.do(&block).else {
-        els.translate(self)
-      }.end
-    end
-  end
-  
-  def unless(cond, els=nil, &block)
-    if els.nil?
-      @function.unless { cond.translate(self) }.do(&block).end
-    else
-      @function.unless { cond.translate(self) }.do(&block).else {
-        els.translate(self)
-      }.end
-    end
   end
 end
 

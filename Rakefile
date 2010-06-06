@@ -37,13 +37,14 @@ namespace :compile do
   desc 'Compile Treetop grammar into a parser.'
   task :grammar do
     grammar_file = File.join(*%w[lib coal coal.treetop])
-    output_file = File.join(*%w[lib coal parser.rb])
+    output_file = File.join(*%w[lib coal coal_treetop.rb])
     
     FileUtils.remove(output_file) if File.exists? output_file
     Treetop::Compiler::GrammarCompiler.new.compile(grammar_file, output_file)
   end
 end
 
+task :spec => ['compile:grammar']
 task :build => ['compile:grammar']
 
 begin
@@ -56,17 +57,6 @@ begin
       '-m', 'markdown',
       '--files', 'LICENSE'
     ]
-  end
-rescue LoadError
-end
-
-#TODO: get reek's rake task working
-begin
-  require 'reek/cli/application'
-  
-  task :reek do
-    files = Dir['lib/**/*.rb'] - ['lib/coal/parser.rb']
-    Reek::Cli::Application.new(files).execute
   end
 rescue LoadError
 end

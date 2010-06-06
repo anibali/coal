@@ -12,16 +12,18 @@ module Coal
     @translator_class
   end
   
+  def self.compile_func param_types, return_type, code
+    tree = Parser.parse code
+    trans = translator_class.new
+    trans.compile_func param_types, return_type, tree
+  end
+  
   class Error < StandardError ; end
   class SyntaxError < Error ; end
-
-  class Parser < CoalTreetopParser
-    def parse *args
-      res = super
-      if res.nil?
-        raise SyntaxError.new failure_reason
-      end
-      res
+  
+  class UndeclaredVariableError < Error
+    def initialize(var_name)
+      super("used variable '#{var_name}' without previous declaration")
     end
   end
   
@@ -33,9 +35,7 @@ module Coal
     module ClassMethods
       def defc name, param_types, return_type, code
         name = name.to_sym
-        tree = Parser.new.parse code
-        trans = Coal.translator_class.new
-        callable = trans.build_callable param_types, return_type, tree
+        callable = Coal.compile_func param_types, return_type, code
         
         if name.to_s.match /^self\.(.*)/
           name = $1.to_sym

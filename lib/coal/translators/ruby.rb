@@ -1,225 +1,118 @@
 module Coal::Translators
 
 class Ruby
-  def build_callable(param_types, return_type, tree)
+  def compile_func(param_types, return_type, tree)
     @code = ""
-    @indent = ""
     
-    tree.translate(self)
+    statements(tree)
     
     lambda do |*args|
       eval @code
     end
   end
   
-  def code
-    @code
+  def statements(tree)
+    tree.each do |e|
+      statement(e)
+    end
   end
   
-  def type(*args)
-    case args.first.to_sym
-    when :uint8, :uint16, :uint32, :uint64
-      VirtMem.const_get("UI#{args.first.to_s[2..-1]}")
-    when :int8, :int16, :int32, :int64
-      VirtMem.const_get(args.first.to_s.capitalize)
-    when :uintn
-      VirtMem::UIntN
-    when :intn
-      VirtMem::IntN
-    when :pointer
-      #TODO: use information on pointer reference type
-      VirtMem::Pointer
+  def statement(tree)
+    case tree.first
+    when :break
+      @code << "break;"
+    when :ret
+      @code << "return(#{expression(tree[1])});"
+    when :decl
+      @code << "#{tree[2]} = #{tree[3].nil? ? 'nil' : expression(tree[3])};"
+    when :if
+      @code << "if(#{expression tree[1]});"
+      statements tree[2]
+      unless tree[3].nil?
+        @code << "else;"
+        statements tree[3]
+      end
+      @code << ";end;"
+    when :unless
+      @code << "unless(#{expression tree[1]});"
+      statements tree[2]
+      unless tree[3].nil?
+        @code << "else;"
+        statements tree[3]
+      end
+      @code << ";end;"
+    when :while
+      @code << "while(#{expression tree[1]});"
+      statements tree[2]
+      @code << ";end;"
+    when :until
+      @code << "until(#{expression tree[1]});"
+      statements tree[2]
+      @code << ";end;"
     else
-      nil
+      @code << "#{expression(tree)};"
     end
   end
   
-  def bitshift_left(a, b)
-    "(#{a} << #{b})"
-  end
-  
-  def bitshift_right(a, b)
-    "(#{a} >> #{b})"
-  end
-  
-  def prefix_increment(a)
-    "(a += 1)"
-  end
-  
-  def prefix_decrement(a)
-    "(a -= 1)"
-  end
-  
-  def add(a, b)
-    "(#{a} + #{b})"
-  end
-  
-  def subtract(a, b)
-    "(#{a} - #{b})"
-  end
-  
-  def multiply(a, b)
-    "(#{a} * #{b})"
-  end
-  
-  def divide(a, b)
-    "(#{a} / #{b})"
-  end
-  
-  def modulus(a, b)
-    "(#{a} % #{b})"
-  end
-  
-  def negate(a)
-    "(-#{a})"
-  end
-  
-  def bitwise_not(a)
-    "(~#{a})"
-  end
-  
-  def address_of(a)
-    "(#{a}.address)"
-  end
-  
-  def dereference(a, type)
-    if type.nil?
-      "#{a}.dereference"
+  def expression(tree)
+    if tree.is_a? Array
+      case tree.first
+      when :add
+        "(#{expression(tree[1])} + #{expression(tree[2])})"
+      when :sub
+        "(#{expression(tree[1])} - #{expression(tree[2])})"
+      when :mul
+        "(#{expression(tree[1])} * #{expression(tree[2])})"
+      when :div
+        "(#{expression(tree[1])} / #{expression(tree[2])})"
+      when :mod
+        "(#{expression(tree[1])} % #{expression(tree[2])})"
+      when :pow
+        "(#{expression(tree[1])} ** #{expression(tree[2])})"
+      when :bit_and
+        "(#{expression(tree[1])} & #{expression(tree[2])})"
+      when :bit_xor
+        "(#{expression(tree[1])} ^ #{expression(tree[2])})"
+      when :bit_or
+        "(#{expression(tree[1])} | #{expression(tree[2])})"
+      when :lshift
+        "(#{expression(tree[1])} << #{expression(tree[2])})"
+      when :rshift
+        "(#{expression(tree[1])} >> #{expression(tree[2])})"
+      when :lt
+        "(#{expression(tree[1])} < #{expression(tree[2])})"
+      when :lteq
+        "(#{expression(tree[1])} <= #{expression(tree[2])})"
+      when :gt
+        "(#{expression(tree[1])} > #{expression(tree[2])})"
+      when :gteq
+        "(#{expression(tree[1])} >= #{expression(tree[2])})"
+      when :eq
+        "(#{expression(tree[1])} == #{expression(tree[2])})"
+      when :ne
+        "(#{expression(tree[1])} != #{expression(tree[2])})"
+      when :bit_neg
+        raise "TODO"
+      when :neg
+        if tree[1].is_a? Fixnum
+          # Small optimisation. Creates a negative constant rather than
+          # creating a positive constant then negating it
+          expression -tree[1]
+        else
+          "(-#{expression tree[1]})"
+        end
+      when :sto
+        "(#{tree[1]} = #{expression tree[2]})"
+      when :arg
+        "args(#{tree[1]})"
+      else
+        # Oops!
+        raise "Can't translate expression: #{tree.inspect}"
+      end
     else
-      "#{a}.dereference(#{type.name})"
+      # Assume literal
+      tree
     end
-  end
-  
-  def bitwise_and(a, b)
-    "(#{a} & #{b})"
-  end
-  
-  def bitwise_xor(a, b)
-    "(#{a} ^ #{b})"
-  end
-  
-  def bitwise_or(a, b)
-    "(#{a} | #{b})"
-  end
-  
-  def assign(var, val)
-    line = "(#{var} = #{var}.is_a?(VirtMem::Number) ? #{var}.class.new(#{val}) : #{val})"
-    append line
-    line
-  end
-  
-  def variable(var)
-    var
-  end
-  
-  def integer_constant(n)
-    n.to_s
-  end
-  
-  def declare(type, var)
-    if type.nil?
-      append "#{var} = nil"
-    else
-      append "#{var} = #{type.name}.new(0)"
-    end
-    var
-  end
-  
-  def less a, b
-    "(#{a} < #{b})"
-  end
-  
-  def less_or_equal a, b
-    "(#{a} <= #{b})"
-  end
-  
-  def greater a, b
-    "(#{a} > #{b})"
-  end
-  
-  def greater_or_equal a, b
-    "(#{a} >= #{b})"
-  end
-  
-  def equal a, b
-    "(#{a} == #{b})"
-  end
-  
-  def not_equal a, b
-    "(#{a} != #{b})"
-  end
-  
-  def true
-    "true"
-  end
-  
-  def false
-    "false"
-  end
-  
-  def null
-    "nil"
-  end
-  
-  def arg(i)
-    "args[#{i}]"
-  end
-  
-  def return(val)
-    append "return(#{val})"
-  end
-  
-  def while(cond)
-    append "while(#{cond.translate(self)})"
-    @indent << "  "
-    yield
-    @indent = @indent[0...-2]
-    append "end"
-  end
-  
-  def until(cond)
-    append "until(#{cond.translate(self)})"
-    @indent << "  "
-    yield
-    @indent = @indent[0...-2]
-    append "end"
-  end
-  
-  def break
-    append "break"
-  end
-  
-  def if(cond, els=nil)
-    append "if(#{cond.translate(self)})"
-    indent { yield }
-    if els
-      append "else"
-      indent { els.translate(self) }
-    end
-    append "end"
-  end
-  
-  def unless(cond, els=nil)
-    append "unless(#{cond.translate(self)})"
-    indent { yield }
-    if els
-      append "else"
-      indent { els.translate(self) }
-    end
-    append "end"
-  end
-  
-  private
-  def indent
-    @indent << "  "
-      yield
-    @indent = @indent[0...-2]
-  end
-  
-  def append(str)
-    @code << @indent
-    @code << str
-    @code << "\n"
   end
 end
 
