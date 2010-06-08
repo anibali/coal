@@ -101,11 +101,11 @@ class LibJIT
         expression(tree[1]) >> expression(tree[2])
       when :lt
         expression(tree[1]) < expression(tree[2])
-      when :lteq
+      when :lte
         expression(tree[1]) <= expression(tree[2])
       when :gt
         expression(tree[1]) > expression(tree[2])
-      when :gteq
+      when :gte
         expression(tree[1]) >= expression(tree[2])
       when :eq
         expression(tree[1]).eq expression(tree[2])

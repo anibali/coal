@@ -1,3 +1,5 @@
+require 'virtmem'
+
 module Coal::Translators
 
 class Ruby
@@ -24,7 +26,9 @@ class Ruby
     when :ret
       @code << "return(#{expression(tree[1])});"
     when :decl
-      @code << "#{tree[2]} = #{tree[3].nil? ? 'nil' : expression(tree[3])};"
+      @code << "#{tree[2]} = VirtMem::Value.create(#{type(tree[1])}"
+      @code << ", #{expression(tree[3])}" unless tree[3].nil?
+      @code << ");"
     when :if
       @code << "if(#{expression tree[1]});"
       statements tree[2]
@@ -81,18 +85,18 @@ class Ruby
         "(#{expression(tree[1])} >> #{expression(tree[2])})"
       when :lt
         "(#{expression(tree[1])} < #{expression(tree[2])})"
-      when :lteq
+      when :lte
         "(#{expression(tree[1])} <= #{expression(tree[2])})"
       when :gt
         "(#{expression(tree[1])} > #{expression(tree[2])})"
-      when :gteq
+      when :gte
         "(#{expression(tree[1])} >= #{expression(tree[2])})"
       when :eq
         "(#{expression(tree[1])} == #{expression(tree[2])})"
       when :ne
         "(#{expression(tree[1])} != #{expression(tree[2])})"
       when :bit_neg
-        raise "TODO"
+        "(~#{expression(tree[1])})"
       when :neg
         if tree[1].is_a? Fixnum
           # Small optimisation. Creates a negative constant rather than
@@ -101,8 +105,16 @@ class Ruby
         else
           "(-#{expression tree[1]})"
         end
+      when :deref
+        if tree[2].nil?
+          "#{expression(tree[1])}.dereference"
+        else
+          "#{expression(tree[1])}.dereference(#{type(tree[2])})"
+        end
+      when :addr
+        "#{expression(tree[1])}.address"
       when :sto
-        "(#{tree[1]} = #{expression tree[2]})"
+        "(#{tree[1]}.store(#{expression tree[2]}))"
       when :arg
         "args(#{tree[1]})"
       else
@@ -113,6 +125,10 @@ class Ruby
       # Assume literal
       tree
     end
+  end
+  
+  def type(tree)
+    "VirtMem::Type.create(#{[*tree].map{|e| e.inspect}.join(', ')})"
   end
 end
 

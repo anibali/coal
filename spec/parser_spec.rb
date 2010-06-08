@@ -30,7 +30,6 @@ subject { Coal::Parser.parse(@code) }
 end
 
 [
-  "sqrt x",
   "add(1 5)",
   "foo(x, y z)",
   "f(x) = 5",
@@ -38,7 +37,6 @@ end
   "= 31",
   "43 = foo",
   "foo = 42 bar",
-  "x int32"
 ].each do |code|
   describe code.inspect do
     it do

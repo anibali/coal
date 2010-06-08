@@ -1,7 +1,17 @@
-require 'forwardable'
+# Warning: This code is not for the faint-hearted
+#
+# VirtMem is a dirty, dirty hack which emulates RAM. That's right folks,
+# I've made my own "virtual memory" with a string because I can't access memory
+# directly with pure Ruby. Some of the heavy lifting is done with the Array#pack
+# and String#unpack methods, but there's some seriously messed up stuff going
+# on here. If anyone asks, Matz made me do it!
 
+# VirtMem enables operations on virtual RAM stored in a string. It is a result
+# of the negative side-effects of high-level abstraction.
 module VirtMem
 
+# This binary string contains the "virtual memory". Don't mess with it unless
+# you *really* know what you're doing.
 MEM = ""
 
 def self.allocate(size)
@@ -10,216 +20,163 @@ def self.allocate(size)
   return addr
 end
 
-def self.load(ptr, clazz)
+def self.load(ptr, type)
   ptr = ptr.to_numeric if ptr.respond_to? :to_numeric
-  clazz.unpack MEM[ptr...ptr + clazz::SIZE]
+  Value.create type, type.unpack(MEM[ptr...ptr + type.size])
 end
 
-def self.store(ptr, clazz, val)
+def self.store(ptr, type, val)
   val = val.to_numeric if val.respond_to? :to_numeric
-  MEM[ptr...ptr + clazz::SIZE] = clazz.pack val
+  MEM[ptr...ptr + type.size] = type.pack(val)
 end
 
-class Number
+class Type
+  def self.create *args
+    if args.first.to_sym == :pointer
+      PointerType.new self.create(*args[1..-1])
+    else
+      NumberType.new *args
+    end
+  end
+end
+
+class NumberType < Type
+  attr_reader :size
+  
+  PACK_CHARS = {
+    :int8 => 'c',
+    :uint8 => 'C',
+    :int16 => 's',
+    :uint16 => 'S',
+    :int32 => 'l',
+    :uint32 => 'L',
+    :int64 => 'q',
+    :uint64 => 'Q',
+    :intn => 'i',
+    :uintn => 'I',
+  }
+  
+  def initialize sym
+    @sym = sym.to_sym
+    
+    @pack_char = PACK_CHARS[@sym]
+    @size = [0].pack(@pack_char).size
+  end
+  
+  def pack(num)
+    [num].pack(@pack_char)
+  end
+  
+  def unpack(str)
+    str.unpack(@pack_char).first
+  end
+  
+  def integer?
+    true
+  end
+  
+  def unsigned?
+    @sym.to_s[0] == ?u
+  end
+  
+  def signed?
+    !unsigned?
+  end
+end
+
+class PointerType < NumberType
+  attr_reader :ref_type
+  
+  def initialize ref_type
+    super(:uintn)
+    
+    @ref_type = ref_type
+  end
+end
+
+class Value
+  def self.create(*args)
+    type = args.first
+    if type.is_a? PointerType
+      Pointer.new *args
+    else
+      Int.new *args
+    end
+  end
+end
+
+class Number < Value
 end
 
 class Int < Number
-  extend Forwardable
-  
-  def_delegators :@num, :to_s, :inspect
-  
+  def initialize type, num=nil
+    num ||= 0
+    @type = type
+    bits = type.size * 8
+    if type.signed?
+      @num = (num + 2**(bits - 1)) % 2**bits - 2**(bits - 1)
+    else
+      @num = num % 2**bits
+    end
+  end
+
   def method_missing(name, *args, &blk)
-    ret = @num.send(name, *args, &blk)
-    ret.is_a?(Integer) ? self.class.new(ret) : ret
+    ret = self.to_numeric.send(name, *args, &blk)
+    ret.is_a?(Integer) ? self.class.new(@type, ret) : ret
+  end
+  
+  def inspect
+    to_numeric.inspect
+  end
+  
+  def to_s
+    to_numeric.to_s
   end
   
   def == other
-    @num == (other.is_a?(Int) ? other.to_numeric : other)
+    self.to_numeric == (other.is_a?(Int) ? other.to_numeric : other)
+  end
+  
+  def eql? other
+    self.to_numeric.eql?(other.is_a?(Int) ? other.to_numeric : other)
+  end
+  
+  def store other
+    @address = nil
+    @num = (other.is_a?(Int) ? other.to_numeric : other)
+    self
   end
   
   def to_numeric
-    @num
+    if @address.nil?
+      @num
+    else
+      @num = self.address.dereference.to_numeric
+    end
   end
   
   def address
     if @address.nil?
-      @address = VirtMem.allocate(self.class::SIZE)
-      VirtMem.store(@address, self.class, @num)
+      num = self.to_numeric
+      @address = VirtMem.allocate(@type.size)
+      VirtMem.store(@address, @type, num)
     end
-    Pointer.new(@address)
+    Pointer.new(PointerType.new(@type), @address)
   end
 end
 
-class UInt8 < Int
-  SIZE = 1
-  
-  def initialize(num)
-    @num = num % 2**8
-  end
-
-  class << self
-    def pack(num)
-      [num].pack('C')
-    end
-
-    def unpack(str)
-      new str.unpack('C').first
-    end
-  end
-end
-
-class Int8 < Int
-  SIZE = 1
-
-  def initialize(num)
-    @num = (num + 2**7) % 2**8 - 2**7
-  end
-
-  class << self
-    def pack(num)
-      [num].pack('c')
-    end
-
-    def unpack(str)
-      new str.unpack('c').first
-    end
-  end
-end
-
-class UInt16 < Int
-  SIZE = 2
-  
-  def initialize(num)
-    @num = num % 2**16
-  end
-
-  class << self
-    def pack(num)
-      [num].pack('S')
-    end
-
-    def unpack(str)
-      new str.unpack('S').first
-    end
-  end
-end
-
-class Int16 < Int
-  SIZE = 2
-  
-  def initialize(num)
-    @num = (num + 2**15) % 2**16 - 2**15
-  end
-
-  class << self
-    def pack(num)
-      [num].pack('s')
-    end
-
-    def unpack(str)
-      new str.unpack('s').first
-    end
-  end
-end
-
-class UInt32 < Int
-  SIZE = 4
-  
-  def initialize(num)
-    @num = num % 2**32
-  end
-
-  class << self
-    def pack(num)
-      [num].pack('L')
-    end
-
-    def unpack(str)
-      new str.unpack('L').first
-    end
-  end
-end
-
-class Int32 < Int
-  SIZE = 4
-  
-  def initialize(num)
-    @num = (num + 2**31) % 2**32 - 2**31
-  end
-
-  class << self
-    def pack(num)
-      [num].pack('l')
-    end
-
-    def unpack(str)
-      new str.unpack('l').first
-    end
-  end
-end
-
-class UInt64 < Int
-  SIZE = 8
-  
-  def initialize(num)
-    @num = num % 2**64
-  end
-
-  class << self
-    def pack(num)
-      [num].pack('Q')
-    end
-
-    def unpack(str)
-      new str.unpack('Q').first
-    end
-  end
-end
-
-class Int64 < Int
-  SIZE = 8
-  
-  def initialize(num)
-    @num = (num + 2**63) % 2**64 - 2**63
-  end
-
-  class << self
-    def pack(num)
-      [num].pack('q')
-    end
-
-    def unpack(str)
-      new str.unpack('q').first
-    end
-  end
-end
-
-class IntN < const_get("Int#{[1].pack('i').size * 8}")
-end
-
-class UIntN < const_get("UInt#{[1].pack('I').size * 8}")
-end
-
-class Pointer < UIntN
-  #TODO: ref_type as pointer
-  attr_reader :ref_type
-  
-  def initialize(num, ref_type=nil)
-    super(num)
-    @ref_type = ref_type
+class Pointer < Int
+  def initialize(type, num=nil)
+    super(type, num)
+    @type = type
   end
   
-  def dereference(type=nil)
-    type ||= ref_type
-    raise("TODO: default reference type for pointer") if type.nil?
-    VirtMem.load(@num, type)
+  def dereference(ref_type=nil)
+    ref_type ||= @type.ref_type
+    raise("TODO: default reference type for pointer") if ref_type.nil?
+    VirtMem.load(self.to_numeric, ref_type)
   end
 end
-
-#mem = Memory.new
-#ptr = mem.allocate 4
-#mem.store ptr, Int64, -12345
-#p mem.load ptr, Int64
 
 end
 

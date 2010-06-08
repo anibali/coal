@@ -9,7 +9,7 @@ Unfortunately, it isn't great for writing high performance functions. Wouldn't
 it be nice to create encapsulated functions in a super-fast, low-level
 language without worrying about compilation and portability?
 
-Coal is language which integrates with Ruby programs. It uses JIT compilation 
+Coal is a language which integrates with Ruby programs. It uses JIT compilation 
 for speedy execution, but will fall back to plain Ruby if need be. The idea is
 that library developers can write methods using Coal, and users won't even
 know that anything but Ruby is involved. Here is an example:

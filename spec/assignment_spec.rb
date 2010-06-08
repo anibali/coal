@@ -40,6 +40,39 @@ describe Coal do
   "int32 x = 2 ; x **= 5 ; return(x)",
   [[:decl, "int32", "x", 2], [:sto, "x", [:pow, "x", 5]], [:ret, "x"]],
   32,
+  
+  "int32 x = 106 ; x &= 63 ; return(x)",
+  [[:decl, "int32", "x", 106], [:sto, "x", [:bit_and, "x", 63]], [:ret, "x"]],
+  42,
+  
+  "int32 x = 21 ; x ^= 63 ; return(x)",
+  [[:decl, "int32", "x", 21], [:sto, "x", [:bit_xor, "x", 63]], [:ret, "x"]],
+  42,
+  
+  "int32 x = 40 ; x |= 10 ; return(x)",
+  [[:decl, "int32", "x", 40], [:sto, "x", [:bit_or, "x", 10]], [:ret, "x"]],
+  42,
+  
+  "int32 x = 21 ; x <<= 1 ; return(x)",
+  [[:decl, "int32", "x", 21], [:sto, "x", [:lshift, "x", 1]], [:ret, "x"]],
+  42,
+  
+  "int32 x = 84 ; x >>= 1 ; return(x)",
+  [[:decl, "int32", "x", 84], [:sto, "x", [:rshift, "x", 1]], [:ret, "x"]],
+  42,
+  
+  "int32 x ; return((x = 2) * 21)",
+  [[:decl, "int32", "x"], [:ret, [:mul, [:sto, "x", 2], 21]]],
+  42,
+  
+  "int32 x ; int32 y ; x = y = 13 ; return(x + y)",
+  [
+    [:decl, "int32", "x"],
+    [:decl, "int32", "y"], 
+    [:sto, "x", [:sto, "y", 13]],
+    [:ret, [:add, "x", "y"]]
+  ],
+  26,
 
 ].each_slice(3) do |code, tree, result|
   describe "code \'#{code}\'" do
@@ -57,41 +90,6 @@ describe Coal do
       func.call().should eql(result)
     end
   end
-end
-
-describe "int32 x = 106 ; x &= 63 ; return(x)" do
-  it { should eval_with_libjit_to_int32(42) }
-  it { should eval_with_ruby_to_int32(42) }
-end
-
-describe "int32 x = 21 ; x ^= 63 ; return(x)" do
-  it { should eval_with_libjit_to_int32(42) }
-  it { should eval_with_ruby_to_int32(42) }
-end
-
-describe "int32 x = 40 ; x |= 10 ; return(x)" do
-  it { should eval_with_libjit_to_int32(42) }
-  it { should eval_with_ruby_to_int32(42) }
-end
-
-describe "int32 x = 21 ; x <<= 1 ; return(x)" do
-  it { should eval_with_libjit_to_int32(42) }
-  it { should eval_with_ruby_to_int32(42) }
-end
-
-describe "int32 x = 84 ; x >>= 1 ; return(x)" do
-  it { should eval_with_libjit_to_int32(42) }
-  it { should eval_with_ruby_to_int32(42) }
-end
-
-describe "int32 x ; return((x = 2) * 21)" do
-  it { should eval_with_libjit_to_int32(42) }
-  it { should eval_with_ruby_to_int32(42) }
-end
-
-describe "int32 x ; int32 y ; x = y = 13 ; return(x + y)" do
-  it { should eval_with_libjit_to_int32(26) }
-  it { should eval_with_ruby_to_int32(26) }
 end
 
 end

@@ -269,13 +269,13 @@ grammar CoalTreetop
   end
   
   rule type
-    ptrs:('@'*) base:('u'? 'int' ('64'/'32'/'16'/'8'/'n')) {
+    ptrs:('@'*) base:([a-zA-Z] [a-zA-Z0-9]*) {
       def tree
         if ptrs.nil? || ptrs.text_value.empty?
           base.text_value
         else
           typ = []
-          ptrs.text_value.length.times { typ << :pointer }
+          ptrs.text_value.length.times { typ << 'pointer' }
           typ << base.text_value
         end
       end

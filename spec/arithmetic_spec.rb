@@ -21,6 +21,9 @@ describe Coal do
   "return(2 * 3 * 4)",    [[:ret, [:mul, [:mul, 2, 3], 4]]],    24,
   "return(2 - 3 + 4)",    [[:ret, [:add, [:sub, 2, 3], 4]]],    3,
   "return(1 << 6)",       [[:ret, [:lshift, 1, 6]]],            64,
+  "return(106 & 63)",     [[:ret, [:bit_and, 106, 63]]],        42,
+  "return(21 ^ 63)",      [[:ret, [:bit_xor, 21, 63]]],         42,
+  "return(40 | 10)",      [[:ret, [:bit_or, 40, 10]]],          42,
 
 ].each_slice(3) do |code, tree, result|
   describe "code \'#{code}\'" do
@@ -40,24 +43,9 @@ describe Coal do
   end
 end
 
-describe "return(106 & 63)" do
-  it { should eval_with_libjit_to_int32(42) }
-  it { should eval_with_ruby_to_int32(42) }
-end
-
-describe "return(21 ^ 63)" do
-  it { should eval_with_libjit_to_int32(42) }
-  it { should eval_with_ruby_to_int32(42) }
-end
-
-describe "return(40 | 10)" do
-  it { should eval_with_libjit_to_int32(42) }
-  it { should eval_with_ruby_to_int32(42) }
-end
-
 describe "uint8 x = 0 ; x = ~x ; return(x)" do
   it { should eval_with_libjit_to_int32(255) }
-  it("should evaluate to 255 using the Ruby translator") { pending }
+  it { should eval_with_ruby_to_int32(255) }
 end
 
 end

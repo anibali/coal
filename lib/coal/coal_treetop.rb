@@ -3186,7 +3186,7 @@ module CoalTreetop
         base.text_value
       else
         typ = []
-        ptrs.text_value.length.times { typ << :pointer }
+        ptrs.text_value.length.times { typ << 'pointer' }
         typ << base.text_value
       end
     end
@@ -3223,89 +3223,30 @@ module CoalTreetop
     s0 << r1
     if r1
       i3, s3 = index, []
-      if has_terminal?('u', false, index)
-        r5 = instantiate_node(SyntaxNode,input, index...(index + 1))
+      if has_terminal?('\G[a-zA-Z]', true, index)
+        r4 = true
         @index += 1
       else
-        terminal_parse_failure('u')
-        r5 = nil
-      end
-      if r5
-        r4 = r5
-      else
-        r4 = instantiate_node(SyntaxNode,input, index...index)
+        r4 = nil
       end
       s3 << r4
       if r4
-        if has_terminal?('int', false, index)
-          r6 = instantiate_node(SyntaxNode,input, index...(index + 3))
-          @index += 3
-        else
-          terminal_parse_failure('int')
-          r6 = nil
-        end
-        s3 << r6
-        if r6
-          i7 = index
-          if has_terminal?('64', false, index)
-            r8 = instantiate_node(SyntaxNode,input, index...(index + 2))
-            @index += 2
+        s5, i5 = [], index
+        loop do
+          if has_terminal?('\G[a-zA-Z0-9]', true, index)
+            r6 = true
+            @index += 1
           else
-            terminal_parse_failure('64')
-            r8 = nil
+            r6 = nil
           end
-          if r8
-            r7 = r8
+          if r6
+            s5 << r6
           else
-            if has_terminal?('32', false, index)
-              r9 = instantiate_node(SyntaxNode,input, index...(index + 2))
-              @index += 2
-            else
-              terminal_parse_failure('32')
-              r9 = nil
-            end
-            if r9
-              r7 = r9
-            else
-              if has_terminal?('16', false, index)
-                r10 = instantiate_node(SyntaxNode,input, index...(index + 2))
-                @index += 2
-              else
-                terminal_parse_failure('16')
-                r10 = nil
-              end
-              if r10
-                r7 = r10
-              else
-                if has_terminal?('8', false, index)
-                  r11 = instantiate_node(SyntaxNode,input, index...(index + 1))
-                  @index += 1
-                else
-                  terminal_parse_failure('8')
-                  r11 = nil
-                end
-                if r11
-                  r7 = r11
-                else
-                  if has_terminal?('n', false, index)
-                    r12 = instantiate_node(SyntaxNode,input, index...(index + 1))
-                    @index += 1
-                  else
-                    terminal_parse_failure('n')
-                    r12 = nil
-                  end
-                  if r12
-                    r7 = r12
-                  else
-                    @index = i7
-                    r7 = nil
-                  end
-                end
-              end
-            end
+            break
           end
-          s3 << r7
         end
+        r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
+        s3 << r5
       end
       if s3.last
         r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
