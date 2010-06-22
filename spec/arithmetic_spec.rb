@@ -7,7 +7,7 @@ describe Coal do
 # 2. Tree evaluates to correct int32 result with both the Ruby and LibJIT
 #    translators
 
-[
+coal_examples [
 
 # Code                    Tree                                  Result
   "return( 7*2)",         [[:ret, [:mul, 7, 2]]],               14,
@@ -24,29 +24,12 @@ describe Coal do
   "return(106 & 63)",     [[:ret, [:bit_and, 106, 63]]],        42,
   "return(21 ^ 63)",      [[:ret, [:bit_xor, 21, 63]]],         42,
   "return(40 | 10)",      [[:ret, [:bit_or, 40, 10]]],          42,
+  
+  "uint8 x = 0 ; x = ~x ; return(x)",
+  [[:decl, 'uint8', 'x', 0], [:sto, 'x', [:bit_neg, 'x']], [:ret, 'x']],
+  255,
 
-].each_slice(3) do |code, tree, result|
-  describe "code \'#{code}\'" do
-    it "should parse to #{tree.inspect}" do
-      Coal::Parser.parse(code).should eql(tree)
-    end
-    
-    it "should evaluate to #{result} with the Ruby translator" do
-      func = Coal::Translators::Ruby.new.compile_func([], :int32, tree)
-      func.call().should eql(result)
-    end
-    
-    it "should evaluate to #{result} with the LibJIT translator" do
-      func = Coal::Translators::LibJIT.new.compile_func([], :int32, tree)
-      func.call().should eql(result)
-    end
-  end
-end
-
-describe "uint8 x = 0 ; x = ~x ; return(x)" do
-  it { should eval_with_libjit_to_int32(255) }
-  it { should eval_with_ruby_to_int32(255) }
-end
+]
 
 end
 

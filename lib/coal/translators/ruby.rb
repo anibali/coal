@@ -8,9 +8,11 @@ class Ruby
     
     statements(tree)
     
-    lambda do |*args|
+    llama = lambda do |*args|
       eval @code
     end
+    
+    Coal::Function.new(llama)
   end
   
   def statements(tree)

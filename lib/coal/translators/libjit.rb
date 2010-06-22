@@ -21,7 +21,7 @@ class LibJIT
       raise ex
     end
     
-    function
+    Coal::Function.new(function)
   end
   
   def statements(tree)

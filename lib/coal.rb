@@ -18,6 +18,38 @@ module Coal
     trans.compile_func param_types, return_type, tree
   end
   
+  ############# UNTESTED
+  @namespaces = {}
+  @scope = @namespaces
+  def self.module name
+    old_scope = @scope
+    @scope = @scope[name.to_s] = {}
+    yield
+    @scope = old_scope
+  end
+  
+  def self.function name, param_types, return_type, code
+    @scope[:functions] ||= {}
+    @scope[:functions][name.to_s] = compile_func(param_types, return_type, code)
+  end
+  ############# END UNTESTED
+  
+  class Function
+    attr_reader :native
+  
+    def initialize(native)
+      @native = native
+    end
+    
+    def call *args
+      @native.call *args
+    end
+    
+    def [] *args
+      call *args
+    end
+  end
+  
   class Error < StandardError ; end
   class SyntaxError < Error ; end
   

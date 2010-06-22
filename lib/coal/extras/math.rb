@@ -1,5 +1,6 @@
 require 'coal'
 
+# TODO: Rename to "FastMath"?
 module Coal::Math
   include Coal::Power
   
