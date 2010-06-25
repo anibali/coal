@@ -15,6 +15,21 @@ coal_examples [
     [[:sto, 'i', [:add, 'i', 1]]]],
   [:ret, 'i']],
   10,
+  
+  "int8 i = 0 ; until(i == 10) { i += 1 }; return(i)",
+  [[:decl, 'int8', 'i', 0],
+  [:until, [:eq, 'i', 10],
+    [[:sto, 'i', [:add, 'i', 1]]]],
+  [:ret, 'i']],
+  10,
+  
+  "int8 i = 0 ; while(true) { i += 10 ; break }; return(i)",
+  [[:decl, 'int8', 'i', 0],
+  [:while, true,
+    [[:sto, 'i', [:add, 'i', 10]],
+     [:break]]],
+  [:ret, 'i']],
+  10,
 
 ]
 
