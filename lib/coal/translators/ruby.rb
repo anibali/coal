@@ -16,17 +16,19 @@ class Ruby
   end
   
   def statements(tree)
+    @code << "VirtMem.narrow_scope;"
     tree.each do |e|
       statement(e)
     end
+    @code << "VirtMem.widen_scope;"
   end
   
   def statement(tree)
     case tree.first
     when :break
-      @code << "break;"
+      @code << "VirtMem.widen_scope;break;"
     when :ret
-      @code << "return(#{expression(tree[1])});"
+      @code << "__tmp_var__=#{expression(tree[1])};VirtMem.widest_scope;return(__tmp_var__);"
     when :decl
       @code << "#{tree[2]} = VirtMem::Value.create(#{type(tree[1])}"
       @code << ", #{expression(tree[3])}" unless tree[3].nil?

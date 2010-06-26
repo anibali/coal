@@ -10,24 +10,55 @@
 # of the negative side-effects of high-level abstraction.
 module VirtMem
 
-# This binary string contains the "virtual memory". Don't mess with it unless
-# you *really* know what you're doing.
-MEM = ""
+STACK_SIZE = 8 * 1024 * 1024 # 8 MiB
+STACK_MEM = ""
 
-def self.allocate(size)
-  addr = MEM.size
-  MEM << "\0" * size
+# TODO: free memory
+
+# Allocate memory from the stack
+def self.stalloc(size)
+  addr = STACK_MEM.size
+  raise "Stack overflow!" if addr + size >= STACK_SIZE
+  STACK_MEM << "\0" * size
   return addr
+end
+
+# Represents heap memory. STACK_SIZE <= heap pointer < RAM capacity
+HEAP_MEM = ""
+
+def self.malloc(size)
+  addr = HEAP_MEM.size
+  HEAP_MEM << "\0" * size
+  return addr
+end
+
+# TODO: better use of scope to manage memory
+
+@scope = -1
+
+def self.narrow_scope
+  @scope += 1
+end
+
+def self.widen_scope
+  @scope -= 1
+  STACK_MEM.replace("") if @scope < 0
+end
+
+def self.widest_scope
+  widen_scope until @scope < 0
 end
 
 def self.load(ptr, type)
   ptr = ptr.to_numeric if ptr.respond_to? :to_numeric
-  Value.create type, type.unpack(MEM[ptr...ptr + type.size])
+  mem = ptr < STACK_SIZE ? STACK_MEM : HEAP_MEM
+  Value.create type, type.unpack(mem[ptr...ptr + type.size])
 end
 
 def self.store(ptr, type, val)
   val = val.to_numeric if val.respond_to? :to_numeric
-  MEM[ptr...ptr + type.size] = type.pack(val)
+  mem = ptr < STACK_SIZE ? STACK_MEM : HEAP_MEM
+  mem[ptr...ptr + type.size] = type.pack(val)
 end
 
 class Type
@@ -158,7 +189,7 @@ class Int < Number
   def address
     if @address.nil?
       num = self.to_numeric
-      @address = VirtMem.allocate(@type.size)
+      @address = VirtMem.stalloc(@type.size)
       VirtMem.store(@address, @type, num)
     end
     Pointer.new(PointerType.new(@type), @address)
