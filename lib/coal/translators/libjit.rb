@@ -3,6 +3,8 @@ require 'libjit'
 module Coal::Translators
 
 class LibJIT
+  # If a block is passed, it will be called with the function as an argument
+  # BEFORE it is compiled (used for recursion)
   def compile_func(param_types, return_type, tree)
     context = JIT::Context.default
     function = nil
@@ -12,6 +14,7 @@ class LibJIT
         c.function(param_types, return_type) do |f|
           @reg = {}
           @function = function = f
+          yield Coal::Function.new(function) if block_given?
           statements(tree)
           @reg = @function = nil
         end
@@ -131,6 +134,8 @@ class LibJIT
         expression(tree[1]).address
       when :sto
         variable(tree[1]).store expression(tree[2])
+      when :call
+        @function.call_other(*[function(tree[1])].concat(arguments(tree[2])))
       when :arg
         @function.arg(tree[1])
       else
@@ -149,6 +154,25 @@ class LibJIT
       elsif tree.is_a? String
         variable(tree)
       end
+    end
+  end
+  
+  def function(tree)
+    modul(tree[1]).get_function(tree[2]).native
+  end
+  
+  def modul(tree)
+    if tree.is_a? Array
+      raise "wtf is this?: #{tree.inspect}" unless tree.first == :mbr
+      modul(tree[1]).const_get(tree[2])
+    else
+      Cl.const_get(tree)
+    end
+  end
+  
+  def arguments(tree)
+    tree.map do |arg|
+      expression(arg)
     end
   end
   

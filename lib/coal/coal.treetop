@@ -213,11 +213,47 @@ grammar CoalTreetop
     /
     arg
     /
+    function_call
+    /
     integer
     /
     boolean
     /
     identifier
+  end
+  
+  rule function
+    (identifier_cap gap? '.' gap?)+ identifier <BinaryOpLTR>
+    /
+    identifier
+  end
+  
+  rule function_call
+    function '(' gap? arguments gap? ')' {
+      def tree
+        [:call, function.tree, arguments.tree]
+      end
+    }
+  end
+  
+  rule arguments
+    expression gap? ',' gap? arguments {
+      def tree
+        [expression.tree].concat(arguments.tree)
+      end
+    }
+    /
+    expression {
+      def tree
+        [super]
+      end
+    }
+    /
+    (gap / '') {
+      def tree
+        []
+      end
+    }
   end
   
   rule boolean
@@ -256,6 +292,14 @@ grammar CoalTreetop
     [0-9]+ {
       def tree
         text_value.to_i
+      end
+    }
+  end
+  
+  rule identifier_cap
+    [a-zA-Z] [a-zA-Z0-9]* {
+      def tree
+        text_value
       end
     }
   end

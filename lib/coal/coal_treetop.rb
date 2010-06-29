@@ -2790,20 +2790,25 @@ module CoalTreetop
       if r9
         r0 = r9
       else
-        r10 = _nt_integer
+        r10 = _nt_function_call
         if r10
           r0 = r10
         else
-          r11 = _nt_boolean
+          r11 = _nt_integer
           if r11
             r0 = r11
           else
-            r12 = _nt_identifier
+            r12 = _nt_boolean
             if r12
               r0 = r12
             else
-              @index = i0
-              r0 = nil
+              r13 = _nt_identifier
+              if r13
+                r0 = r13
+              else
+                @index = i0
+                r0 = nil
+              end
             end
           end
         end
@@ -2811,6 +2816,326 @@ module CoalTreetop
     end
 
     node_cache[:primary][start_index] = r0
+
+    r0
+  end
+
+  module Function0
+    def identifier_cap
+      elements[0]
+    end
+
+  end
+
+  module Function1
+    def identifier
+      elements[1]
+    end
+  end
+
+  def _nt_function
+    start_index = index
+    if node_cache[:function].has_key?(index)
+      cached = node_cache[:function][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0 = index
+    i1, s1 = index, []
+    s2, i2 = [], index
+    loop do
+      i3, s3 = index, []
+      r4 = _nt_identifier_cap
+      s3 << r4
+      if r4
+        r6 = _nt_gap
+        if r6
+          r5 = r6
+        else
+          r5 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s3 << r5
+        if r5
+          if has_terminal?('.', false, index)
+            r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            @index += 1
+          else
+            terminal_parse_failure('.')
+            r7 = nil
+          end
+          s3 << r7
+          if r7
+            r9 = _nt_gap
+            if r9
+              r8 = r9
+            else
+              r8 = instantiate_node(SyntaxNode,input, index...index)
+            end
+            s3 << r8
+          end
+        end
+      end
+      if s3.last
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+        r3.extend(Function0)
+      else
+        @index = i3
+        r3 = nil
+      end
+      if r3
+        s2 << r3
+      else
+        break
+      end
+    end
+    if s2.empty?
+      @index = i2
+      r2 = nil
+    else
+      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+    end
+    s1 << r2
+    if r2
+      r10 = _nt_identifier
+      s1 << r10
+    end
+    if s1.last
+      r1 = instantiate_node(BinaryOpLTR,input, i1...index, s1)
+      r1.extend(Function1)
+    else
+      @index = i1
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      r11 = _nt_identifier
+      if r11
+        r0 = r11
+      else
+        @index = i0
+        r0 = nil
+      end
+    end
+
+    node_cache[:function][start_index] = r0
+
+    r0
+  end
+
+  module FunctionCall0
+    def function
+      elements[0]
+    end
+
+    def arguments
+      elements[3]
+    end
+
+  end
+
+  module FunctionCall1
+    def tree
+      [:call, function.tree, arguments.tree]
+    end
+  end
+
+  def _nt_function_call
+    start_index = index
+    if node_cache[:function_call].has_key?(index)
+      cached = node_cache[:function_call][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0, s0 = index, []
+    r1 = _nt_function
+    s0 << r1
+    if r1
+      if has_terminal?('(', false, index)
+        r2 = instantiate_node(SyntaxNode,input, index...(index + 1))
+        @index += 1
+      else
+        terminal_parse_failure('(')
+        r2 = nil
+      end
+      s0 << r2
+      if r2
+        r4 = _nt_gap
+        if r4
+          r3 = r4
+        else
+          r3 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s0 << r3
+        if r3
+          r5 = _nt_arguments
+          s0 << r5
+          if r5
+            r7 = _nt_gap
+            if r7
+              r6 = r7
+            else
+              r6 = instantiate_node(SyntaxNode,input, index...index)
+            end
+            s0 << r6
+            if r6
+              if has_terminal?(')', false, index)
+                r8 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                @index += 1
+              else
+                terminal_parse_failure(')')
+                r8 = nil
+              end
+              s0 << r8
+            end
+          end
+        end
+      end
+    end
+    if s0.last
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+      r0.extend(FunctionCall0)
+      r0.extend(FunctionCall1)
+    else
+      @index = i0
+      r0 = nil
+    end
+
+    node_cache[:function_call][start_index] = r0
+
+    r0
+  end
+
+  module Arguments0
+    def expression
+      elements[0]
+    end
+
+    def arguments
+      elements[4]
+    end
+  end
+
+  module Arguments1
+    def tree
+      [expression.tree].concat(arguments.tree)
+    end
+  end
+
+  module Arguments2
+    def tree
+      [super]
+    end
+  end
+
+  module Arguments3
+    def tree
+      []
+    end
+  end
+
+  def _nt_arguments
+    start_index = index
+    if node_cache[:arguments].has_key?(index)
+      cached = node_cache[:arguments][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0 = index
+    i1, s1 = index, []
+    r2 = _nt_expression
+    s1 << r2
+    if r2
+      r4 = _nt_gap
+      if r4
+        r3 = r4
+      else
+        r3 = instantiate_node(SyntaxNode,input, index...index)
+      end
+      s1 << r3
+      if r3
+        if has_terminal?(',', false, index)
+          r5 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
+        else
+          terminal_parse_failure(',')
+          r5 = nil
+        end
+        s1 << r5
+        if r5
+          r7 = _nt_gap
+          if r7
+            r6 = r7
+          else
+            r6 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s1 << r6
+          if r6
+            r8 = _nt_arguments
+            s1 << r8
+          end
+        end
+      end
+    end
+    if s1.last
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+      r1.extend(Arguments0)
+      r1.extend(Arguments1)
+    else
+      @index = i1
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      r9 = _nt_expression
+      r9.extend(Arguments2)
+      if r9
+        r0 = r9
+      else
+        i10 = index
+        r11 = _nt_gap
+        if r11
+          r10 = r11
+          r10.extend(Arguments3)
+        else
+          if has_terminal?('', false, index)
+            r12 = instantiate_node(SyntaxNode,input, index...(index + 0))
+            @index += 0
+          else
+            terminal_parse_failure('')
+            r12 = nil
+          end
+          if r12
+            r10 = r12
+            r10.extend(Arguments3)
+          else
+            @index = i10
+            r10 = nil
+          end
+        end
+        if r10
+          r0 = r10
+        else
+          @index = i0
+          r0 = nil
+        end
+      end
+    end
+
+    node_cache[:arguments][start_index] = r0
 
     r0
   end
@@ -3103,6 +3428,66 @@ module CoalTreetop
     end
 
     node_cache[:integer][start_index] = r0
+
+    r0
+  end
+
+  module IdentifierCap0
+  end
+
+  module IdentifierCap1
+    def tree
+      text_value
+    end
+  end
+
+  def _nt_identifier_cap
+    start_index = index
+    if node_cache[:identifier_cap].has_key?(index)
+      cached = node_cache[:identifier_cap][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0, s0 = index, []
+    if has_terminal?('\G[a-zA-Z]', true, index)
+      r1 = true
+      @index += 1
+    else
+      r1 = nil
+    end
+    s0 << r1
+    if r1
+      s2, i2 = [], index
+      loop do
+        if has_terminal?('\G[a-zA-Z0-9]', true, index)
+          r3 = true
+          @index += 1
+        else
+          r3 = nil
+        end
+        if r3
+          s2 << r3
+        else
+          break
+        end
+      end
+      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+      s0 << r2
+    end
+    if s0.last
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+      r0.extend(IdentifierCap0)
+      r0.extend(IdentifierCap1)
+    else
+      @index = i0
+      r0 = nil
+    end
+
+    node_cache[:identifier_cap][start_index] = r0
 
     r0
   end

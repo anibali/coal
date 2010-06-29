@@ -3,6 +3,26 @@ require 'treetop'
 require 'virtmem'
 require 'coal/parser'
 
+Module.module_eval <<END
+  def namespace
+    const_get(self.name.split('::')[0...-1].join('::'))
+  end
+END
+
+module Cl
+  def get_function name
+    @functions[name]
+  end
+  
+  def function name, param_types, return_type, code
+    module_eval("def self.#{name}(*args) ; get_function('#{name}').call(*args) ; end")
+    func = Coal.compile_func(param_types, return_type, code) do |pre_func|
+      (@functions ||= {})[name] = pre_func
+    end
+    (@functions ||= {})[name] = func
+  end
+end
+
 module Coal
   def self.translator_class=(clazz)
     @translator_class = clazz
@@ -12,27 +32,26 @@ module Coal
     @translator_class
   end
   
-  def self.compile_func param_types, return_type, code
+  def self.compile_func param_types, return_type, code, &block
     tree = Parser.parse code
     trans = translator_class.new
-    trans.compile_func param_types, return_type, tree
+    trans.compile_func param_types, return_type, tree, &block
   end
   
-  ############# UNTESTED
-  @namespaces = {}
-  @scope = @namespaces
+  @module = Cl
   def self.module name
-    old_scope = @scope
-    @scope = @scope[name.to_s] = {}
-    yield
-    @scope = old_scope
+    Cl.module_eval("module #{name} ; end") unless Cl.const_defined? name
+    @module = Cl.const_get name
+    @module.extend Cl
+    
+    yield @module
+    
+    @module = @module.namespace
   end
   
-  def self.function name, param_types, return_type, code
-    @scope[:functions] ||= {}
-    @scope[:functions][name.to_s] = compile_func(param_types, return_type, code)
+  def self.function *args
+    @module.function *args
   end
-  ############# END UNTESTED
   
   class Function
     attr_reader :native
