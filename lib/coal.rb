@@ -16,10 +16,20 @@ module Cl
   
   def function name, param_types, return_type, code
     module_eval("def self.#{name}(*args) ; get_function('#{name}').call(*args) ; end")
-    func = Coal.compile_func(param_types, return_type, code) do |pre_func|
-      (@functions ||= {})[name] = pre_func
+    @uncompiled_funcs ||= []
+    trans = Coal.translator_class.new
+    function = trans.declare_func(param_types, return_type)
+    @uncompiled_funcs << [name, function, code]
+    (@functions ||= {})[name] = function
+  end
+  
+  def compile_funcs
+    @uncompiled_funcs.each do |name, func, code|
+      tree = Coal::Parser.parse code
+      trans = Coal.translator_class.new
+      (@functions ||= {})[name] = trans.compile_func(func, Coal::Parser.parse(code))
     end
-    (@functions ||= {})[name] = func
+    @uncompiled_funcs.clear
   end
 end
 
@@ -32,10 +42,10 @@ module Coal
     @translator_class
   end
   
-  def self.compile_func param_types, return_type, code, &block
+  def self.build_func param_types, return_type, code
     tree = Parser.parse code
     trans = translator_class.new
-    trans.compile_func param_types, return_type, tree, &block
+    trans.compile_func(trans.declare_func(param_types, return_type), tree)
   end
   
   @module = Cl
@@ -46,27 +56,12 @@ module Coal
     
     yield @module
     
+    @module.compile_funcs
     @module = @module.namespace
   end
   
   def self.function *args
     @module.function *args
-  end
-  
-  class Function
-    attr_reader :native
-  
-    def initialize(native)
-      @native = native
-    end
-    
-    def call *args
-      @native.call *args
-    end
-    
-    def [] *args
-      call *args
-    end
   end
   
   class Error < StandardError ; end
@@ -86,7 +81,7 @@ module Coal
     module ClassMethods
       def defc name, param_types, return_type, code
         name = name.to_sym
-        callable = Coal.compile_func param_types, return_type, code
+        callable = Coal.build_func param_types, return_type, code
         
         if name.to_s.match /^self\.(.*)/
           name = $1.to_sym

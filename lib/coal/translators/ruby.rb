@@ -3,7 +3,11 @@ require 'virtmem'
 module Coal::Translators
 
 class Ruby
-  def compile_func(param_types, return_type, tree)
+  def declare_func param_types, return_type
+    nil
+  end
+  
+  def compile_func(function, tree)
     @code = ""
     
     statements(tree)
@@ -12,7 +16,7 @@ class Ruby
       eval @code
     end
     
-    Coal::Function.new(llama)
+    llama
   end
   
   def statements(tree)
@@ -20,7 +24,7 @@ class Ruby
     tree.each do |e|
       statement(e)
     end
-    @code << "VirtMem.widen_scope;"
+    @code << "VirtMem.widest_scope;"
   end
   
   def statement(tree)
@@ -119,8 +123,10 @@ class Ruby
         "#{expression(tree[1])}.address"
       when :sto
         "(#{tree[1]}.store(#{expression tree[2]}))"
+      when :call
+        "#{function(tree[1])}(#{arguments tree[2]})"
       when :arg
-        "args(#{tree[1]})"
+        "args[#{tree[1]}]"
       else
         # Oops!
         raise "Can't translate expression: #{tree.inspect}"
@@ -129,6 +135,25 @@ class Ruby
       # Assume literal
       tree
     end
+  end
+  
+  def function(tree)
+    "#{modul(tree[1])}.#{tree[2]}"
+  end
+  
+  def modul(tree)
+    if tree.is_a? Array
+      raise "wtf is this?: #{tree.inspect}" unless tree.first == :mbr
+      "#{modul(tree[1])}::#{tree[2]}"
+    else
+      "Cl::#{tree}"
+    end
+  end
+  
+  def arguments(tree)
+    tree.map do |arg|
+      expression(arg)
+    end.join ", "
   end
   
   def type(tree)

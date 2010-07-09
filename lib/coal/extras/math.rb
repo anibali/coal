@@ -46,23 +46,22 @@ module Coal::Math
     uint32 cur_n = 0
     uint32 num = 2
     uint32 ans = 0
-    int8 running = true
     
     while(cur_n < n)
     {
-      int8 prime = true
+      int8 prime = 1
       int32 i = 2
       while(i < num)
       {
         if(num % i == 0)
         {
-          prime = false
+          prime = 0
           break
         }
         i += 1
       }
       
-      if(prime)
+      if(prime == 1)
       {
         cur_n += 1
         ans = num
@@ -96,6 +95,48 @@ Coal.module 'Math' do |m|
     return(Math.pow(arg(0), 2))
   end
 end
+
+Coal.module 'Hailstone' do |m|
+  m.function 'run', [:uint64], :uint64, <<-end
+    uint64 n = arg(0)
+    uint64 steps
+    
+    if(n % 2 == 0)
+      steps = Hailstone.even(n, 0)
+    else
+      steps = Hailstone.odd(n, 0)
+    
+    return(steps)
+  end
+  
+  m.function 'odd', [:uint64, :uint64], :uint64, <<-end
+    uint64 n = arg(0)
+    uint64 steps = arg(1)
+    
+    if(n > 1)
+      steps = Hailstone.even(3 * n + 1, steps + 1)
+    
+    return(steps)
+  end
+  
+  m.function 'even', [:uint64, :uint64], :uint64, <<-end
+    uint64 n = arg(0)
+    uint64 steps = arg(1)
+    
+    n /= 2
+    
+    if(n % 2 == 0)
+      steps = Hailstone.even(n, steps + 1)
+    else
+      steps = Hailstone.odd(n, steps + 1)
+    
+    return(steps)
+  end
+end
+
+t = Time.now
+p Cl::Hailstone.run(113383)
+p Time.now - t
 
 #p Cl::Math.square(-7)
 

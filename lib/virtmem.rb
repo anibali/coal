@@ -152,6 +152,7 @@ class Int < Number
   end
 
   def method_missing(name, *args, &blk)
+    args.map! {|n| n.is_a?(self.class) ? n.to_numeric : n}
     ret = self.to_numeric.send(name, *args, &blk)
     ret.is_a?(Integer) ? self.class.new(@type, ret) : ret
   end

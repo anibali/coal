@@ -8,12 +8,14 @@ def coal_examples(array)
       end
       
       it "should evaluate to #{result} with the Ruby translator" do
-        func = Coal::Translators::Ruby.new.compile_func([], :int32, tree)
+        trans = Coal::Translators::Ruby.new
+        func = trans.compile_func(trans.declare_func([], :int32), tree)
         func.call().should eql(result)
       end
       
       it "should evaluate to #{result} with the LibJIT translator" do
-        func = Coal::Translators::LibJIT.new.compile_func([], :int32, tree)
+        trans = Coal::Translators::LibJIT.new
+        func = trans.compile_func(trans.declare_func([], :int32), tree)
         func.call().should eql(result)
       end
     end
