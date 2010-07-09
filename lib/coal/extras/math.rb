@@ -81,21 +81,6 @@ module Coal::Math
   end
 end
 
-Coal.module 'Math' do |m|
-  # Example of recursion. It actually works!
-  m.function 'pow', [:int32, :int32], :uint64, <<-end
-    uint64 result = arg(0);
-    if(arg(1) > 1) result *= Math.pow(arg(0), arg(1) - 1)
-    return(result)
-  end
-  
-  # Example of calling another Coal function. Note: it is important that this
-  # comes *after* the definition for pow.
-  m.function 'square', [:int32], :uint64, <<-end
-    return(Math.pow(arg(0), 2))
-  end
-end
-
 Coal.module 'Hailstone' do |m|
   m.function 'run', [:uint64], :uint64, <<-end
     uint64 n = arg(0)
