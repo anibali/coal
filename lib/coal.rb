@@ -2,6 +2,7 @@ require 'treetop'
 
 require 'virtmem'
 require 'coal/parser'
+require 'coal/power'
 
 Module.module_eval <<END
   def namespace
@@ -10,8 +11,21 @@ Module.module_eval <<END
 END
 
 module Cl
+  def get_struct name
+    (@structs ||= {})[name]
+  end  
+  
+  def struct name
+    st = Coal::Struct.new(name)
+    yield st
+    p st.fields
+    trans = Coal.translator_class.new
+    #TODO: implement build_struct for translators
+    (@structs ||= {})[name] = trans.build_struct(st)
+  end
+  
   def get_function name
-    @functions[name]
+    (@functions ||= {})[name]
   end
   
   def function name, param_types, return_type, code
@@ -82,6 +96,10 @@ module Coal
     @module.function *args
   end
   
+  def self.struct *args, &block
+    @module.struct *args, &block
+  end
+  
   class Error < StandardError ; end
   class SyntaxError < Error ; end
   
@@ -91,43 +109,16 @@ module Coal
     end
   end
   
-  module Power
-    def self.included(klass)
-      klass.extend ClassMethods
+  class Struct
+    attr_reader :name, :fields
+    
+    def initialize(name)
+      @name = name
+      @fields = []
     end
     
-    module ClassMethods
-      def defc name, param_types, return_type, code
-        name = name.to_sym
-        callable = Coal.build_func param_types, return_type, code
-        
-        if name.to_s.match /^self\.(.*)/
-          name = $1.to_sym
-          class_eval "(@@coal_class_methods ||= {})[name] = callable"
-        else
-          class_eval "(@@coal_instance_methods ||= {})[name] = callable"
-        end
-      end
-      
-      def method_missing name, *args
-        name = name.to_sym
-        coal_methods = class_eval("@@coal_class_methods") rescue nil
-        if coal_methods and coal_methods.has_key? name
-          coal_methods[name].call *args
-        else
-          super
-        end
-      end
-    end
-    
-    def method_missing name, *args
-      name = name.to_sym
-      coal_methods = self.class.class_eval("@@coal_instance_methods") rescue nil
-      if coal_methods and coal_methods.has_key? name
-        coal_methods[name].call *args
-      else
-        super
-      end
+    def field(name, *type)
+      @fields << [name, type]
     end
   end
 end

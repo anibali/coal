@@ -81,6 +81,13 @@ module Coal::Math
   end
 end
 
+#Coal.module "Math" do |m|
+#  m.struct "point2f" do |s|
+#    s.field 'x', :float32
+#    s.field 'y', :float32
+#  end
+#end
+
 Coal.module 'Hailstone' do |m|
   m.function 'run', [:uint64], :uint64, <<-end
     uint64 n = arg(0)
