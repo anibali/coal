@@ -31,6 +31,24 @@ module Cl
     end
     @uncompiled_funcs.clear
   end
+  
+  module Core
+    extend Cl
+    
+    def self.get_function name
+      if %w[puts putchar malloc free].include? name
+        CFunction.new name
+      else
+        super
+      end
+    end
+    
+    class CFunction
+      attr_reader :c_name
+      
+      def initialize(name) ; @c_name = name ; end
+    end
+  end
 end
 
 module Coal

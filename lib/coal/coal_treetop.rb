@@ -5,7 +5,7 @@ module CoalTreetop
   include Treetop::Runtime
 
   def root
-    @root || :root
+    @root ||= :root
   end
 
   module Root0
@@ -2802,12 +2802,17 @@ module CoalTreetop
             if r12
               r0 = r12
             else
-              r13 = _nt_identifier
+              r13 = _nt_stringz
               if r13
                 r0 = r13
               else
-                @index = i0
-                r0 = nil
+                r14 = _nt_identifier
+                if r14
+                  r0 = r14
+                else
+                  @index = i0
+                  r0 = nil
+                end
               end
             end
           end
@@ -3432,6 +3437,117 @@ module CoalTreetop
     r0
   end
 
+  module Stringz0
+  end
+
+  module Stringz1
+    def tree
+      [:strz, text_value[1...-1].gsub("\\\\", "\\").gsub("\\'", "'").gsub("\\n", "\n")]
+    end
+  end
+
+  def _nt_stringz
+    start_index = index
+    if node_cache[:stringz].has_key?(index)
+      cached = node_cache[:stringz][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0, s0 = index, []
+    if has_terminal?("'", false, index)
+      r1 = instantiate_node(SyntaxNode,input, index...(index + 1))
+      @index += 1
+    else
+      terminal_parse_failure("'")
+      r1 = nil
+    end
+    s0 << r1
+    if r1
+      s2, i2 = [], index
+      loop do
+        i3 = index
+        if has_terminal?('\G[ -&(-\\[\\]-~]', true, index)
+          r4 = true
+          @index += 1
+        else
+          r4 = nil
+        end
+        if r4
+          r3 = r4
+        else
+          if has_terminal?("\\\\", false, index)
+            r5 = instantiate_node(SyntaxNode,input, index...(index + 2))
+            @index += 2
+          else
+            terminal_parse_failure("\\\\")
+            r5 = nil
+          end
+          if r5
+            r3 = r5
+          else
+            if has_terminal?("\\'", false, index)
+              r6 = instantiate_node(SyntaxNode,input, index...(index + 2))
+              @index += 2
+            else
+              terminal_parse_failure("\\'")
+              r6 = nil
+            end
+            if r6
+              r3 = r6
+            else
+              if has_terminal?("\\n", false, index)
+                r7 = instantiate_node(SyntaxNode,input, index...(index + 2))
+                @index += 2
+              else
+                terminal_parse_failure("\\n")
+                r7 = nil
+              end
+              if r7
+                r3 = r7
+              else
+                @index = i3
+                r3 = nil
+              end
+            end
+          end
+        end
+        if r3
+          s2 << r3
+        else
+          break
+        end
+      end
+      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+      s0 << r2
+      if r2
+        if has_terminal?("'", false, index)
+          r8 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
+        else
+          terminal_parse_failure("'")
+          r8 = nil
+        end
+        s0 << r8
+      end
+    end
+    if s0.last
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+      r0.extend(Stringz0)
+      r0.extend(Stringz1)
+    else
+      @index = i0
+      r0 = nil
+    end
+
+    node_cache[:stringz][start_index] = r0
+
+    r0
+  end
+
   module IdentifierCap0
   end
 
@@ -3913,9 +4029,6 @@ module CoalTreetop
   end
 
   module Comment1
-    def eoc
-      elements[2]
-    end
   end
 
   def _nt_comment
@@ -3976,10 +4089,6 @@ module CoalTreetop
       end
       r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
       s0 << r2
-      if r2
-        r7 = _nt_eoc
-        s0 << r7
-      end
     end
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)

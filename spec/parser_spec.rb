@@ -22,6 +22,7 @@ subject { Coal::Parser.parse(@code) }
   '42 # The answer',              [42],
   ';;;;',                         [],
   "# Awesome\n# story\n# bro",    [],
+  "'Hello'",                      [[:strz, "Hello"]],
 ].each_slice(2) do |code, tree|
   describe(code.inspect) do
     before { @code = code }

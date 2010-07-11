@@ -219,6 +219,8 @@ grammar CoalTreetop
     /
     boolean
     /
+    stringz
+    /
     identifier
   end
   
@@ -296,6 +298,14 @@ grammar CoalTreetop
     }
   end
   
+  rule stringz
+    "'" ([ -&(-\[\]-~] / "\\\\" / "\\'" / "\\n")* "'" {
+      def tree
+        [:strz, text_value[1...-1].gsub("\\\\", "\\").gsub("\\'", "'").gsub("\\n", "\n")]
+      end
+    }
+  end
+  
   rule identifier_cap
     [a-zA-Z] [a-zA-Z0-9]* {
       def tree
@@ -355,7 +365,7 @@ grammar CoalTreetop
   end
 
   rule comment
-    '#' (!eoc .)* eoc
+    '#' (!eoc .)*
   end
   
   rule eof

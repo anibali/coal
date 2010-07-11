@@ -119,9 +119,5 @@ Coal.module 'Hailstone' do |m|
   end
 end
 
-t = Time.now
-p Cl::Hailstone.run(113383)
-p Time.now - t
-
 #p Cl::Math.square(-7)
 

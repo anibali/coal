@@ -140,9 +140,17 @@ class LibJIT
       when :sto
         variable(tree[1]).store expression(tree[2])
       when :call
-        @function.call_other(*[function(tree[1])].concat(arguments(tree[2])))
+        other_func = function(tree[1])
+        args = arguments(tree[2])
+        if other_func.respond_to? 'c_name'
+          @function.call_native *(JIT::LibC[other_func.c_name] + args)
+        else
+          @function.call_other *[other_func].concat(args)
+        end
       when :arg
         @function.arg(tree[1])
+      when :strz
+        @function.stringz(tree[1])
       else
         # Oops!
         raise "Can't translate expression: #{tree.inspect}"
