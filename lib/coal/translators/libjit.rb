@@ -156,8 +156,8 @@ class LibJIT
         raise "Can't translate expression: #{tree.inspect}"
       end
     else
-      if tree.is_a? Fixnum
-        @function.const tree, :int32
+      if tree.is_a? Integer
+        @function.const(tree, (tree < 0 ? :int64 : :uint64))
       elsif [true, false].include? tree
         if tree
           @function.true

@@ -10,44 +10,55 @@ Module.module_eval <<END
   end
 END
 
-module Cl
-  def get_struct name
-    (@structs ||= {})[name]
-  end  
-  
-  def struct name
-    st = Coal::Struct.new(name)
-    yield st
-    p st.fields
-    trans = Coal.translator_class.new
-    #TODO: implement build_struct for translators
-    (@structs ||= {})[name] = trans.build_struct(st)
-  end
-  
-  def get_function name
-    (@functions ||= {})[name]
-  end
-  
-  def function name, param_types, return_type, code
-    module_eval("def self.#{name}(*args) ; get_function('#{name}').call(*args) ; end")
-    @uncompiled_funcs ||= []
-    trans = Coal.translator_class.new
-    function = trans.declare_func(param_types, return_type)
-    @uncompiled_funcs << [name, function, code]
-    (@functions ||= {})[name] = function
-  end
-  
-  def compile_funcs
-    @uncompiled_funcs.each do |name, func, code|
-      tree = Coal::Parser.parse code
-      trans = Coal.translator_class.new
-      (@functions ||= {})[name] = trans.compile_func(func, Coal::Parser.parse(code))
+module Coal
+  module ModuleExt
+    def get_class name
+      (@classes ||= {})[name]
+    end  
+    
+    def class *args, &block
+      if args.empty?
+        super
+      else
+        Coal.class *args, &block
+      end
     end
-    @uncompiled_funcs.clear
+    
+    def get_function name
+      (@functions ||= {})[name]
+    end
+    
+    def function name, param_types, return_type, code
+      module_eval("def self.#{name}(*args) ; get_function('#{name}').call(*args) ; end")
+      @uncompiled_funcs ||= []
+      trans = Coal.translator_class.new
+      function = trans.declare_func(param_types, return_type)
+      @uncompiled_funcs << [name, function, code]
+      (@functions ||= {})[name] = function
+    end
+    
+    def compile_funcs
+      return if @uncompiled_funcs.nil?
+      @uncompiled_funcs.each do |name, func, code|
+        tree = Coal::Parser.parse code
+        trans = Coal.translator_class.new
+        (@functions ||= {})[name] = trans.compile_func(func, Coal::Parser.parse(code))
+      end
+      @uncompiled_funcs.clear
+    end
   end
   
+  module ClassExt
+    def properties props
+      # TODO: actually do something
+      p props
+    end
+  end
+end
+
+module Cl
   module Core
-    extend Cl
+    extend Coal::ModuleExt
     
     def self.get_function name
       if %w[puts putchar malloc free].include? name
@@ -82,9 +93,9 @@ module Coal
   
   @module = Cl
   def self.module name
-    Cl.module_eval("module #{name} ; end") unless Cl.const_defined? name
-    @module = Cl.const_get name
-    @module.extend Cl
+    @module.module_eval("module #{name} ; end") unless @module.const_defined? name
+    @module = @module.const_get name
+    @module.extend Coal::ModuleExt
     
     yield @module
     
@@ -92,12 +103,17 @@ module Coal
     @module = @module.namespace
   end
   
-  def self.function *args
-    @module.function *args
-  end
-  
-  def self.struct *args, &block
-    @module.struct *args, &block
+  def self.class *args, &block
+    if args.empty?
+      super
+    else
+      name = args[0]
+      @module.module_eval("class #{name} ; end") unless @module.const_defined? name
+      clazz = @module.const_get name
+      clazz.extend Coal::ClassExt
+      
+      yield clazz
+    end
   end
   
   class Error < StandardError ; end
@@ -106,19 +122,6 @@ module Coal
   class UndeclaredVariableError < Error
     def initialize(var_name)
       super("used variable '#{var_name}' without previous declaration")
-    end
-  end
-  
-  class Struct
-    attr_reader :name, :fields
-    
-    def initialize(name)
-      @name = name
-      @fields = []
-    end
-    
-    def field(name, *type)
-      @fields << [name, type]
     end
   end
 end

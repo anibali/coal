@@ -81,10 +81,64 @@ module Coal::Math
   end
 end
 
+Coal.module 'MurmurHash2' do |m|
+  # This is a working implementation of MurmurHash2.
+  # Original code at: http://sites.google.com/site/murmurhash/MurmurHash2.cpp
+  m.function 'hash', [[:pointer, :uint8], :uintn, :uint32], :uint32, <<-'end'
+    @uint8 data = arg(0)
+    uintn len = arg(1)
+    uint32 seed = arg(2)
+    
+    uint32 m = 0x5bd1e995
+    int32 r = 24
+    
+    uint32 h = seed ^ len
+    
+    while(len >= 4)
+	  {
+		  uint32 k = *data:uint32
+
+		  k *= m
+		  k ^= k >> r
+		  k *= m
+		
+		  h *= m
+		  h ^= k
+
+		  data += 4
+		  len -= 4
+	  }
+    
+    if(len > 0)
+    {
+      uint32 k = *data:uint32
+      if(len == 3) h ^= k & 0xff0000
+      if(len >= 2) h ^= k & 0x00ff00
+      h ^= k & 0x0000ff
+      h *= m
+    }
+
+	  h ^= h >> 13
+	  h *= m
+	  h ^= h >> 15
+
+	  return(h)
+  end
+  
+  # Should always return 2013460684
+  m.function 'hash_hello', [], :uint32, <<-'end'
+    return(MurmurHash2.hash('hello', 5, 42))
+  end
+end
+
+#puts(Cl::MurmurHash2.hash_hello == 2013460684 ? "Passed hash" : "Failed hash")
+
 #Coal.module "Math" do |m|
-#  m.struct "point2f" do |s|
-#    s.field 'x', :float32
-#    s.field 'y', :float32
+#  m.class "Point2i" do |c|
+#    c.properties [
+#      ['x', :int32],
+#      ['y', :int32]
+#    ]
 #  end
 #end
 
