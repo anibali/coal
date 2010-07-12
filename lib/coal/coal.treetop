@@ -299,9 +299,19 @@ grammar CoalTreetop
   end
   
   rule stringz
-    "'" ([ -&(-\[\]-~] / "\\\\" / "\\'" / "\\n")* "'" {
+    "'" ([ -&(-\[\]-~] / "\\" .)* "'" {
       def tree
-        [:strz, text_value[1...-1].gsub("\\\\", "\\").gsub("\\'", "'").gsub("\\n", "\n")]
+        str = text_value[1...-1].gsub(/\\./) do |match|
+          char = match[-1..-1]
+          if ["'", "\\"].include? char
+            char
+          elsif %w[n t r].include? char
+            eval("\"\\#{char}\"")
+          else
+            raise "Invalid stringz escape character: #{match}"
+          end
+        end
+        [:strz, str]
       end
     }
   end

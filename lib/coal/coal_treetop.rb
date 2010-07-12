@@ -3441,8 +3441,21 @@ module CoalTreetop
   end
 
   module Stringz1
+  end
+
+  module Stringz2
     def tree
-      [:strz, text_value[1...-1].gsub("\\\\", "\\").gsub("\\'", "'").gsub("\\n", "\n")]
+      str = text_value[1...-1].gsub(/\\./) do |match|
+        char = match[-1..-1]
+        if ["'", "\\"].include? char
+          char
+        elsif %w[n t r].include? char
+          eval("\"\\#{char}\"")
+        else
+          raise "Invalid stringz escape character: #{match}"
+        end
+      end
+      [:strz, str]
     end
   end
 
@@ -3479,40 +3492,37 @@ module CoalTreetop
         if r4
           r3 = r4
         else
-          if has_terminal?("\\\\", false, index)
-            r5 = instantiate_node(SyntaxNode,input, index...(index + 2))
-            @index += 2
+          i5, s5 = index, []
+          if has_terminal?("\\", false, index)
+            r6 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            @index += 1
           else
-            terminal_parse_failure("\\\\")
+            terminal_parse_failure("\\")
+            r6 = nil
+          end
+          s5 << r6
+          if r6
+            if index < input_length
+              r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
+            else
+              terminal_parse_failure("any character")
+              r7 = nil
+            end
+            s5 << r7
+          end
+          if s5.last
+            r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
+            r5.extend(Stringz0)
+          else
+            @index = i5
             r5 = nil
           end
           if r5
             r3 = r5
           else
-            if has_terminal?("\\'", false, index)
-              r6 = instantiate_node(SyntaxNode,input, index...(index + 2))
-              @index += 2
-            else
-              terminal_parse_failure("\\'")
-              r6 = nil
-            end
-            if r6
-              r3 = r6
-            else
-              if has_terminal?("\\n", false, index)
-                r7 = instantiate_node(SyntaxNode,input, index...(index + 2))
-                @index += 2
-              else
-                terminal_parse_failure("\\n")
-                r7 = nil
-              end
-              if r7
-                r3 = r7
-              else
-                @index = i3
-                r3 = nil
-              end
-            end
+            @index = i3
+            r3 = nil
           end
         end
         if r3
@@ -3536,8 +3546,8 @@ module CoalTreetop
     end
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-      r0.extend(Stringz0)
       r0.extend(Stringz1)
+      r0.extend(Stringz2)
     else
       @index = i0
       r0 = nil
