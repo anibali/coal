@@ -49,19 +49,19 @@ module Coal::Math
     
     while(cur_n < n)
     {
-      int8 prime = 1
+      bool prime = true
       int32 i = 2
       while(i < num)
       {
         if(num % i == 0)
         {
-          prime = 0
+          prime = false
           break
         }
         i += 1
       }
       
-      if(prime == 1)
+      if(prime)
       {
         cur_n += 1
         ans = num

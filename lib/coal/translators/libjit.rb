@@ -142,8 +142,8 @@ class LibJIT
       when :call
         other_func = function(tree[1])
         args = arguments(tree[2])
-        if other_func.respond_to? 'c_name'
-          @function.call_native *(JIT::LibC[other_func.c_name] + args)
+        if other_func.is_a? Coal::SpecialFunction
+          other_func.call_libjit(@function, *args)
         else
           @function.call_other *[other_func].concat(args)
         end

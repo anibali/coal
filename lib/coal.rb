@@ -54,6 +54,9 @@ module Coal
       p props
     end
   end
+  
+  class SpecialFunction
+  end
 end
 
 module Cl
@@ -68,10 +71,32 @@ module Cl
       end
     end
     
-    class CFunction
-      attr_reader :c_name
-      
+    class CFunction < Coal::SpecialFunction
       def initialize(name) ; @c_name = name ; end
+      
+      def call_libjit f, *args
+        f.call_native *(JIT::LibC[@c_name] + args)
+      end
+    end
+  end
+  
+  module Math
+    extend Coal::ModuleExt
+    
+    def self.get_function name
+      if %w[acos asin atan atan2 ceil cos cosh].include? name
+        MathFunction.new name
+      else
+        super
+      end
+    end
+    
+    class MathFunction < Coal::SpecialFunction
+      def initialize(name) ; @name = name ; end
+      
+      def call_libjit f, *args
+        f.send *([@name] + args)
+      end
     end
   end
 end
