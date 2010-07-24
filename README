@@ -4,6 +4,8 @@ Coal
 Synopsis
 --------
 
+Disclaimer: Coal is still under heavy development. Use at own risk!
+
 Ruby is an awesome programming language that makes coding a real pleasure.
 Unfortunately, it isn't great for writing high performance functions. Wouldn't
 it be nice to create encapsulated functions in a super-fast, low-level
