@@ -11,12 +11,13 @@ Jeweler::Tasks.new do |s|
   s.email = 'dismal.denizen@gmail.com'
   
   s.add_dependency 'treetop', '>= 1.4.0'
+  s.add_dependency 'libjit-ffi'
   
-  s.files = %w(LICENSE README Rakefile VERSION) + Dir.glob("{lib,spec}/**/*")
+  s.files = %w(LICENSE README.md Rakefile VERSION) + Dir.glob("{lib,spec}/**/*")
   s.require_path = 'lib'
-  s.extra_rdoc_files = ['README', 'LICENSE']
+  s.extra_rdoc_files = ['README.md', 'LICENSE']
   s.rdoc_options << '--title' << "#{s.name} #{File.read 'VERSION'}" <<
-                    '--main' << 'README' << '--line-numbers'
+                    '--main' << 'README.md' << '--line-numbers'
 end
 
 Jeweler::GemcutterTasks.new
@@ -53,7 +54,7 @@ begin
   YARD::Rake::YardocTask.new do |t|
     t.options = [
       '--title', "Coal #{File.read 'VERSION'}",
-      '--readme', 'README',
+      '--readme', 'README.md',
       '-m', 'markdown',
       '--files', 'LICENSE'
     ]
