@@ -16,10 +16,10 @@ module Coal::Math
 
       while(i <= n)
       {
-	      fib_n = fib_i_take_2 + fib_i_take_1
-	      fib_i_take_2 = fib_i_take_1
-	      fib_i_take_1 = fib_n
-	      i += 1
+        fib_n = fib_i_take_2 + fib_i_take_1
+        fib_i_take_2 = fib_i_take_1
+        fib_i_take_1 = fib_n
+        i += 1
       }
     }
 
@@ -95,19 +95,19 @@ Coal.module 'MurmurHash2' do |m|
     uint32 h = seed ^ len
     
     while(len >= 4)
-	  {
-		  uint32 k = *data:uint32
+    {
+      uint32 k = *data:uint32
 
-		  k *= m
-		  k ^= k >> r
-		  k *= m
-		
-		  h *= m
-		  h ^= k
+      k *= m
+      k ^= k >> r
+      k *= m
+    
+      h *= m
+      h ^= k
 
-		  data += 4
-		  len -= 4
-	  }
+      data += 4
+      len -= 4
+    }
     
     if(len > 0)
     {
@@ -118,11 +118,11 @@ Coal.module 'MurmurHash2' do |m|
       h *= m
     }
 
-	  h ^= h >> 13
-	  h *= m
-	  h ^= h >> 15
+    h ^= h >> 13
+    h *= m
+    h ^= h >> 15
 
-	  return(h)
+    return(h)
   end
   
   # Should always return 2013460684
