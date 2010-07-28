@@ -207,6 +207,12 @@ grammar CoalTreetop
       end
     }
     /
+    '(' gap? type gap? ')' gap? unary {
+      def tree
+        [:cast, unary.tree, type.tree]
+      end
+    }
+    /
     primary
   end
   

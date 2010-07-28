@@ -2728,6 +2728,22 @@ module CoalTreetop
     end
   end
 
+  module Unary4
+    def type
+      elements[2]
+    end
+
+    def unary
+      elements[6]
+    end
+  end
+
+  module Unary5
+    def tree
+      [:cast, unary.tree, type.tree]
+    end
+  end
+
   def _nt_unary
     start_index = index
     if node_cache[:unary].has_key?(index)
@@ -2801,12 +2817,78 @@ module CoalTreetop
       if r6
         r0 = r6
       else
-        r9 = _nt_primary
+        i9, s9 = index, []
+        if has_terminal?('(', false, index)
+          r10 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
+        else
+          terminal_parse_failure('(')
+          r10 = nil
+        end
+        s9 << r10
+        if r10
+          r12 = _nt_gap
+          if r12
+            r11 = r12
+          else
+            r11 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s9 << r11
+          if r11
+            r13 = _nt_type
+            s9 << r13
+            if r13
+              r15 = _nt_gap
+              if r15
+                r14 = r15
+              else
+                r14 = instantiate_node(SyntaxNode,input, index...index)
+              end
+              s9 << r14
+              if r14
+                if has_terminal?(')', false, index)
+                  r16 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                  @index += 1
+                else
+                  terminal_parse_failure(')')
+                  r16 = nil
+                end
+                s9 << r16
+                if r16
+                  r18 = _nt_gap
+                  if r18
+                    r17 = r18
+                  else
+                    r17 = instantiate_node(SyntaxNode,input, index...index)
+                  end
+                  s9 << r17
+                  if r17
+                    r19 = _nt_unary
+                    s9 << r19
+                  end
+                end
+              end
+            end
+          end
+        end
+        if s9.last
+          r9 = instantiate_node(SyntaxNode,input, i9...index, s9)
+          r9.extend(Unary4)
+          r9.extend(Unary5)
+        else
+          @index = i9
+          r9 = nil
+        end
         if r9
           r0 = r9
         else
-          @index = i0
-          r0 = nil
+          r20 = _nt_primary
+          if r20
+            r0 = r20
+          else
+            @index = i0
+            r0 = nil
+          end
         end
       end
     end

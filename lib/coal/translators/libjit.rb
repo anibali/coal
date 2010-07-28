@@ -145,6 +145,8 @@ class LibJIT
         end
       when :addr
         expression(tree[1]).address
+      when :cast
+        expression(tree[1]).cast type(tree[2])
       when :sto
         variable(tree[1]).store expression(tree[2])
       when :call

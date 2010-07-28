@@ -129,6 +129,8 @@ class Ruby
         end
       when :addr
         "#{expression(tree[1])}.address"
+      when :cast
+        "VirtMem::Value.create(#{type(tree[2])}, #{expression(tree[1])})"
       when :sto
         "(#{tree[1]}.store(#{expression tree[2]}))"
       when :call
