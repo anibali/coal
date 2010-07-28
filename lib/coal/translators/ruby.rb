@@ -103,6 +103,14 @@ class Ruby
         "(#{expression(tree[1])} == #{expression(tree[2])})"
       when :ne
         "(#{expression(tree[1])} != #{expression(tree[2])})"
+      when :and
+        "(#{expression(tree[1])} && #{expression(tree[2])})"
+      when :xor
+        "(#{expression(tree[1])} ^ #{expression(tree[2])})"
+      when :or
+        "(#{expression(tree[1])} || #{expression(tree[2])})"
+      when :not
+        "(!#{expression(tree[1])})"
       when :bit_neg
         "(~#{expression(tree[1])})"
       when :neg

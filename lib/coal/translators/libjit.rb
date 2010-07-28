@@ -119,6 +119,14 @@ class LibJIT
         expression(tree[1]).eq expression(tree[2])
       when :ne
         expression(tree[1]).ne expression(tree[2])
+      when :and
+        expression(tree[1]).and expression(tree[2])
+      when :xor
+        expression(tree[1]).xor expression(tree[2])
+      when :or
+        expression(tree[1]).or expression(tree[2])
+      when :not
+        expression(tree[1]).not
       when :bit_neg
         ~expression(tree[1])
       when :neg
@@ -142,8 +150,11 @@ class LibJIT
       when :call
         other_func = function(tree[1])
         args = arguments(tree[2])
-        if other_func.is_a? Coal::SpecialFunction
-          other_func.call_libjit(@function, *args)
+        case other_func
+        when Cl::Core::CFunction
+          @function.call_native *(JIT::LibC[other_func.name] + args)
+        when Cl::Math::MathFunction
+          @function.send *([other_func.name] + args)
         else
           @function.call_other *[other_func].concat(args)
         end

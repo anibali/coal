@@ -119,11 +119,17 @@ grammar CoalTreetop
       end
     }
     /
+    xor
+  end
+  
+  rule xor
+    (or gap? '^^' gap?)+ xor <BinaryOpLTR>
+    /
     or
   end
   
   rule or
-    (and gap? '&&' gap?)+ or <BinaryOpLTR>
+    (and gap? '||' gap?)+ or <BinaryOpLTR>
     /
     and
   end
@@ -195,7 +201,7 @@ grammar CoalTreetop
       end
     }
     /
-    op:[-~@*] unary {
+    op:[-~@*!] unary {
       def tree
         [UNARY_SYMS[op.text_value], unary.tree]
       end

@@ -4,10 +4,12 @@ module CoalTreetop
     '~'   => :bit_neg,
     '@'   => :addr,
     '*'   => :deref,
+    '!'   => :not,
   }
   
   BINARY_SYMS = {
     '='   => :sto,
+    '^^'  => :xor,
     '||'  => :or,
     '&&'  => :and,
     '|'   => :bit_or,
