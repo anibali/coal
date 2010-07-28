@@ -5,10 +5,11 @@ require 'fileutils'
 
 Jeweler::Tasks.new do |s|
   s.name = 'coal'
-  s.summary = "Low-level language which may be embedded in Ruby code"
+  s.summary = "A low-level language which may be embedded in Ruby code"
   s.description = s.summary
   s.author = 'Aiden Nibali'
   s.email = 'dismal.denizen@gmail.com'
+  s.homepage = 'http://github.com/dismaldenizen/coal'
   
   s.add_dependency 'treetop', '>= 1.4.0'
   s.add_dependency 'libjit-ffi'
