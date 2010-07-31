@@ -57,7 +57,9 @@ begin
       '--title', "Coal #{File.read 'VERSION'}",
       '--readme', 'README.md',
       '-m', 'markdown',
-      '--files', 'LICENSE'
+      '--files', 'LICENSE',
+      '--exclude', 'lib/coal/coal_treetop.rb',
+      '--exclude', 'lib/coal/node_classes.rb'
     ]
   end
 rescue LoadError
