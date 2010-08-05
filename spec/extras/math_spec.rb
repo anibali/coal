@@ -45,23 +45,10 @@ end
 
 end
 
-
 describe Cl::Hailstone do
   describe ".run(113383)" do
     subject { Cl::Hailstone.run(113383) }
     it { should eql(247) }
   end
 end
-
-
-
-
-
-
-
-
-
-
-
-
 
