@@ -213,6 +213,12 @@ grammar CoalTreetop
       end
     }
     /
+    member
+  end
+  
+  rule member
+    (primary gap? '.' gap?)+ identifier <BinaryOpLTR>
+    /
     primary
   end
   

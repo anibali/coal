@@ -25,7 +25,7 @@ module Coal
     end
     
     def get_function name
-      (@functions ||= {})[name]
+      (@functions ||= {})[name.to_s]
     end
     
     def function name, param_types, return_type, code
@@ -49,9 +49,41 @@ module Coal
   end
   
   module ClassExt
-    def properties props
-      # TODO: actually do something
-      p props
+    def self.included(klass)
+      klass.extend ClassMethods
+    end
+    
+    def method_missing(name, *args)
+      func = self.class.get_function(name)
+      if func.nil?
+        super
+      else
+        func.call *([@struct] + args)
+      end
+    end
+    
+    module ClassMethods
+      include ModuleExt
+      
+      def properties props
+        trans = Coal.translator_class.new
+        @struct_type = trans.create_struct_type props
+      end
+      
+      def method name, param_types, return_type, code
+        function name, ([[:pointer, @struct_type]] + param_types), return_type, code
+      end
+      
+      def new *args
+        trans = Coal.translator_class.new
+        @constructor ||= trans.compile_func(trans.declare_func([], :void), [])
+        struct = trans.create_struct @constructor, @struct_type
+        @constructor[*args]
+        
+        obj = allocate
+        obj.instance_variable_set :@struct, struct
+        obj
+      end
     end
   end
 end
@@ -124,11 +156,13 @@ module Coal
       super
     else
       name = args[0]
-      @module.module_eval("class #{name} ; end") unless @module.const_defined? name
+      @module.module_eval("class #{name} ; include Coal::ClassExt ; end") unless @module.const_defined? name
       clazz = @module.const_get name
-      clazz.extend Coal::ClassExt
       
       yield clazz
+      
+      clazz.compile_funcs
+      clazz
     end
   end
   

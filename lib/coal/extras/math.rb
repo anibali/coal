@@ -134,13 +134,25 @@ end
 #puts(Cl::MurmurHash2.hash_hello == 2013460684 ? "Passed hash" : "Failed hash")
 
 #Coal.module "Math" do |m|
-#  m.class "Point2i" do |c|
+#  m.class "ComplexNumber" do |c|
 #    c.properties [
-#      ['x', :int32],
-#      ['y', :int32]
+#      ['re', :int32],
+#      ['im', :int32]
 #    ]
+#    
+#    c.method 're', [], :int32, <<-'end'
+#      return((*arg(0)).re)
+#    end
+#    
+#    c.method 'im', [], :int32, <<-'end'
+#      return((*arg(0)).im)
+#    end
 #  end
 #end
+
+#z = Cl::Math::ComplexNumber.new
+#puts z.re
+#puts z.im
 
 Coal.module 'Hailstone' do |m|
   m.function 'run', [:uint64], :uint64, <<-'end'

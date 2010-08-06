@@ -149,6 +149,9 @@ class LibJIT
         expression(tree[1]).cast type(tree[2])
       when :sto
         variable(tree[1]).store expression(tree[2])
+      when :mbr
+        struct = expression(tree[1])
+        struct[struct.type.find_field(tree[2])]
       when :call
         other_func = function(tree[1])
         args = arguments(tree[2])
@@ -212,6 +215,25 @@ class LibJIT
       raise Coal::UndeclaredVariableError.new(tree)
     end
     var
+  end
+  
+  def create_struct_type(fields)
+    names = []
+    types = []
+    
+    fields.each do |field|
+      names << field.first
+      types << type(field[1..-1])
+    end
+    
+    st = JIT::StructType.new *types
+    st.field_names = names
+    
+    return st
+  end
+  
+  def create_struct(f, type)
+    FFI::MemoryPointer.new :int8, type.size
   end
 end
 
