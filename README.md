@@ -1,10 +1,13 @@
 Coal
 ====
 
+Warning
+-------
+
+Coal is still under heavy development. Use at own risk!
+
 Synopsis
 --------
-
-Disclaimer: Coal is still under heavy development. Use at own risk!
 
 Ruby is an awesome programming language that makes coding a real pleasure.
 Unfortunately, it isn't great for writing high performance functions. Wouldn't
@@ -59,4 +62,6 @@ TODO
 ----
 
 * Finish a basic implementation!
+* Cache translated code for quicker startup
+* Add structs and classes to Ruby translator
 
