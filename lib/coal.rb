@@ -74,6 +74,13 @@ module Coal
         function name, ([[:pointer, @struct_type]] + param_types), return_type, code
       end
       
+      def getter *args
+        args.each do |name|
+          type = @struct_type.field_type(name).to_ffi_type
+          method name, [], type, "return((*arg(0)).#{name})"
+        end
+      end
+      
       def new *args
         trans = Coal.translator_class.new
         @constructor ||= trans.compile_func(trans.declare_func([], :void), [])
@@ -110,7 +117,8 @@ module Cl
     extend Coal::ModuleExt
     
     def self.get_function name
-      if %w[acos asin atan atan2 ceil cos cosh].include? name
+      if %w[acos asin atan atan2 ceil cos cosh exp floor log log rint round sin
+      sinh sqrt tan tanh].include? name
         MathFunction.new name
       else
         super

@@ -159,8 +159,9 @@ class LibJIT
         when Cl::Core::CFunction
           @function.call_native *(JIT::LibC[other_func.name] + args)
         when Cl::Math::MathFunction
-          @function.send *([other_func.name] + args)
+          @function.math.send *([other_func.name] + args)
         else
+          raise "No such method: #{tree[1][1..-1].join '.'}" if other_func.nil?
           @function.call_other *[other_func].concat(args)
         end
       when :arg

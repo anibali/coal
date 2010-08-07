@@ -140,12 +140,10 @@ end
 #      ['im', :int32]
 #    ]
 #    
-#    c.method 're', [], :int32, <<-'end'
-#      return((*arg(0)).re)
-#    end
+#    c.getter 're', 'im'
 #    
-#    c.method 'im', [], :int32, <<-'end'
-#      return((*arg(0)).im)
+#    c.method 'r', [], :int32, <<-'end'
+#      return(Math.sqrt((*arg(0)).re ** 2 + (*arg(0)).im ** 2))
 #    end
 #  end
 #end
@@ -153,6 +151,7 @@ end
 #z = Cl::Math::ComplexNumber.new
 #puts z.re
 #puts z.im
+#puts z.r
 
 Coal.module 'Hailstone' do |m|
   m.function 'run', [:uint64], :uint64, <<-'end'
