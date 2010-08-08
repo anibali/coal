@@ -3122,7 +3122,7 @@ module CoalTreetop
   end
 
   module Function0
-    def identifier_cap
+    def identifier
       elements[0]
     end
 
@@ -3131,6 +3131,12 @@ module CoalTreetop
   module Function1
     def identifier
       elements[1]
+    end
+  end
+
+  module Function2
+    def tree
+      elements[0].elements.map {|e| e.elements[0].text_value} << identifier.text_value
     end
   end
 
@@ -3145,82 +3151,66 @@ module CoalTreetop
       return cached
     end
 
-    i0 = index
-    i1, s1 = index, []
-    s2, i2 = [], index
+    i0, s0 = index, []
+    s1, i1 = [], index
     loop do
-      i3, s3 = index, []
-      r4 = _nt_identifier_cap
-      s3 << r4
-      if r4
-        r6 = _nt_gap
-        if r6
-          r5 = r6
-        else
-          r5 = instantiate_node(SyntaxNode,input, index...index)
-        end
-        s3 << r5
+      i2, s2 = index, []
+      r3 = _nt_identifier
+      s2 << r3
+      if r3
+        r5 = _nt_gap
         if r5
+          r4 = r5
+        else
+          r4 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s2 << r4
+        if r4
           if has_terminal?('.', false, index)
-            r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            r6 = instantiate_node(SyntaxNode,input, index...(index + 1))
             @index += 1
           else
             terminal_parse_failure('.')
-            r7 = nil
+            r6 = nil
           end
-          s3 << r7
-          if r7
-            r9 = _nt_gap
-            if r9
-              r8 = r9
+          s2 << r6
+          if r6
+            r8 = _nt_gap
+            if r8
+              r7 = r8
             else
-              r8 = instantiate_node(SyntaxNode,input, index...index)
+              r7 = instantiate_node(SyntaxNode,input, index...index)
             end
-            s3 << r8
+            s2 << r7
           end
         end
       end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(Function0)
+      if s2.last
+        r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+        r2.extend(Function0)
       else
-        @index = i3
-        r3 = nil
+        @index = i2
+        r2 = nil
       end
-      if r3
-        s2 << r3
+      if r2
+        s1 << r2
       else
         break
       end
     end
-    if s2.empty?
-      @index = i2
-      r2 = nil
-    else
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-    end
-    s1 << r2
-    if r2
-      r10 = _nt_identifier
-      s1 << r10
-    end
-    if s1.last
-      r1 = instantiate_node(BinaryOpLTR,input, i1...index, s1)
-      r1.extend(Function1)
-    else
-      @index = i1
-      r1 = nil
-    end
+    r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+    s0 << r1
     if r1
-      r0 = r1
+      r9 = _nt_identifier
+      s0 << r9
+    end
+    if s0.last
+      r0 = instantiate_node(BinaryOpLTR,input, i0...index, s0)
+      r0.extend(Function1)
+      r0.extend(Function2)
     else
-      r11 = _nt_identifier
-      if r11
-        r0 = r11
-      else
-        @index = i0
-        r0 = nil
-      end
+      @index = i0
+      r0 = nil
     end
 
     node_cache[:function][start_index] = r0
@@ -3854,66 +3844,6 @@ module CoalTreetop
     r0
   end
 
-  module IdentifierCap0
-  end
-
-  module IdentifierCap1
-    def tree
-      text_value
-    end
-  end
-
-  def _nt_identifier_cap
-    start_index = index
-    if node_cache[:identifier_cap].has_key?(index)
-      cached = node_cache[:identifier_cap][index]
-      if cached
-        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
-        @index = cached.interval.end
-      end
-      return cached
-    end
-
-    i0, s0 = index, []
-    if has_terminal?('\G[a-zA-Z]', true, index)
-      r1 = true
-      @index += 1
-    else
-      r1 = nil
-    end
-    s0 << r1
-    if r1
-      s2, i2 = [], index
-      loop do
-        if has_terminal?('\G[a-zA-Z0-9]', true, index)
-          r3 = true
-          @index += 1
-        else
-          r3 = nil
-        end
-        if r3
-          s2 << r3
-        else
-          break
-        end
-      end
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-      s0 << r2
-    end
-    if s0.last
-      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-      r0.extend(IdentifierCap0)
-      r0.extend(IdentifierCap1)
-    else
-      @index = i0
-      r0 = nil
-    end
-
-    node_cache[:identifier_cap][start_index] = r0
-
-    r0
-  end
-
   module Identifier0
   end
 
@@ -3935,7 +3865,7 @@ module CoalTreetop
     end
 
     i0, s0 = index, []
-    if has_terminal?('\G[a-z_]', true, index)
+    if has_terminal?('\G[a-zA-Z_]', true, index)
       r1 = true
       @index += 1
     else
@@ -3974,10 +3904,89 @@ module CoalTreetop
     r0
   end
 
+  module IdentifierCap0
+  end
+
+  module IdentifierCap1
+    def tree
+      text_value
+    end
+  end
+
+  def _nt_identifier_cap
+    start_index = index
+    if node_cache[:identifier_cap].has_key?(index)
+      cached = node_cache[:identifier_cap][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0, s0 = index, []
+    if has_terminal?('\G[A-Z]', true, index)
+      r1 = true
+      @index += 1
+    else
+      r1 = nil
+    end
+    s0 << r1
+    if r1
+      s2, i2 = [], index
+      loop do
+        if has_terminal?('\G[a-zA-Z0-9]', true, index)
+          r3 = true
+          @index += 1
+        else
+          r3 = nil
+        end
+        if r3
+          s2 << r3
+        else
+          break
+        end
+      end
+      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+      s0 << r2
+    end
+    if s0.last
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+      r0.extend(IdentifierCap0)
+      r0.extend(IdentifierCap1)
+    else
+      @index = i0
+      r0 = nil
+    end
+
+    node_cache[:identifier_cap][start_index] = r0
+
+    r0
+  end
+
   module Type0
+    def identifier_cap
+      elements[0]
+    end
+
   end
 
   module Type1
+    def identifier_cap
+      elements[1]
+    end
+  end
+
+  module Type2
+    def tree
+      [:class] + elements[0].elements.map {|e| e.elements[0].text_value} << identifier_cap.text_value
+    end
+  end
+
+  module Type3
+  end
+
+  module Type4
     def ptrs
       elements[0]
     end
@@ -3987,7 +3996,7 @@ module CoalTreetop
     end
   end
 
-  module Type2
+  module Type5
     def tree
       if ptrs.nil? || ptrs.text_value.empty?
         base.text_value
@@ -4010,50 +4019,40 @@ module CoalTreetop
       return cached
     end
 
-    i0, s0 = index, []
-    s1, i1 = [], index
+    i0 = index
+    i1, s1 = index, []
+    s2, i2 = [], index
     loop do
-      if has_terminal?('@', false, index)
-        r2 = instantiate_node(SyntaxNode,input, index...(index + 1))
-        @index += 1
-      else
-        terminal_parse_failure('@')
-        r2 = nil
-      end
-      if r2
-        s1 << r2
-      else
-        break
-      end
-    end
-    r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-    s0 << r1
-    if r1
       i3, s3 = index, []
-      if has_terminal?('\G[a-zA-Z]', true, index)
-        r4 = true
-        @index += 1
-      else
-        r4 = nil
-      end
+      r4 = _nt_identifier_cap
       s3 << r4
       if r4
-        s5, i5 = [], index
-        loop do
-          if has_terminal?('\G[a-zA-Z0-9]', true, index)
-            r6 = true
+        r6 = _nt_gap
+        if r6
+          r5 = r6
+        else
+          r5 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s3 << r5
+        if r5
+          if has_terminal?('.', false, index)
+            r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
             @index += 1
           else
-            r6 = nil
+            terminal_parse_failure('.')
+            r7 = nil
           end
-          if r6
-            s5 << r6
-          else
-            break
+          s3 << r7
+          if r7
+            r9 = _nt_gap
+            if r9
+              r8 = r9
+            else
+              r8 = instantiate_node(SyntaxNode,input, index...index)
+            end
+            s3 << r8
           end
         end
-        r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
-        s3 << r5
       end
       if s3.last
         r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
@@ -4062,15 +4061,97 @@ module CoalTreetop
         @index = i3
         r3 = nil
       end
-      s0 << r3
+      if r3
+        s2 << r3
+      else
+        break
+      end
     end
-    if s0.last
-      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-      r0.extend(Type1)
-      r0.extend(Type2)
+    r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+    s1 << r2
+    if r2
+      r10 = _nt_identifier_cap
+      s1 << r10
+    end
+    if s1.last
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+      r1.extend(Type1)
+      r1.extend(Type2)
     else
-      @index = i0
-      r0 = nil
+      @index = i1
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      i11, s11 = index, []
+      s12, i12 = [], index
+      loop do
+        if has_terminal?('@', false, index)
+          r13 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
+        else
+          terminal_parse_failure('@')
+          r13 = nil
+        end
+        if r13
+          s12 << r13
+        else
+          break
+        end
+      end
+      r12 = instantiate_node(SyntaxNode,input, i12...index, s12)
+      s11 << r12
+      if r12
+        i14, s14 = index, []
+        if has_terminal?('\G[a-zA-Z]', true, index)
+          r15 = true
+          @index += 1
+        else
+          r15 = nil
+        end
+        s14 << r15
+        if r15
+          s16, i16 = [], index
+          loop do
+            if has_terminal?('\G[a-zA-Z0-9]', true, index)
+              r17 = true
+              @index += 1
+            else
+              r17 = nil
+            end
+            if r17
+              s16 << r17
+            else
+              break
+            end
+          end
+          r16 = instantiate_node(SyntaxNode,input, i16...index, s16)
+          s14 << r16
+        end
+        if s14.last
+          r14 = instantiate_node(SyntaxNode,input, i14...index, s14)
+          r14.extend(Type3)
+        else
+          @index = i14
+          r14 = nil
+        end
+        s11 << r14
+      end
+      if s11.last
+        r11 = instantiate_node(SyntaxNode,input, i11...index, s11)
+        r11.extend(Type4)
+        r11.extend(Type5)
+      else
+        @index = i11
+        r11 = nil
+      end
+      if r11
+        r0 = r11
+      else
+        @index = i0
+        r0 = nil
+      end
     end
 
     node_cache[:type][start_index] = r0

@@ -58,7 +58,7 @@ module Coal
       if func.nil?
         super
       else
-        func.call *([@struct] + args)
+        func.call *([@struct_pointer] + args)
       end
     end
     
@@ -68,28 +68,41 @@ module Coal
       def fields fields
         trans = Coal.translator_class.new
         @struct_type = trans.create_struct_type fields
+        Cl::CLASSES[@struct_type.jit_t.address] = self
+      end
+      
+      def struct_type
+        @struct_type
       end
       
       def method name, param_types, return_type, code
         function name, ([[:pointer, @struct_type]] + param_types), return_type, code
       end
       
+      def constructor param_types, code
+        p param_types
+        method 'construct', param_types, :void, code
+        thing = self.name.split('::')[1..-1].join '.'
+        
+        trans = Coal.translator_class.new
+        function = trans.declare_func(param_types, [:pointer, @struct_type])
+        code = "return(#{thing}.construct(Core.malloc(#{@struct_type.size})"
+        param_types.size.times {|i| code << ', ' << "arg(#{i})"}
+        code << "))"
+        @uncompiled_funcs << ['new', function, code]
+        (@functions ||= {})['new'] = function
+      end
+      
       def getter *args
         args.each do |name|
           type = @struct_type.field_type(name).to_ffi_type
-          method name, [], type, "return(arg(0).#{name})"
+          method name, [], type, "return(self.#{name})"
         end
       end
       
       def new *args
-        trans = Coal.translator_class.new
-        @constructor ||= trans.compile_func(trans.declare_func([], :void), [])
-        
-        struct = trans.create_struct @constructor, @struct_type
-        @constructor[*args]
-        
         obj = allocate
-        obj.instance_variable_set :@struct, struct
+        obj.instance_variable_set :@struct_pointer, get_function('new').call(*args)
         obj
       end
     end
@@ -97,6 +110,8 @@ module Coal
 end
 
 module Cl
+  CLASSES = {} unless defined? CLASSES
+  
   module Core
     extend Coal::ModuleExt
     

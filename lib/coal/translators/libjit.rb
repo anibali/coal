@@ -19,6 +19,7 @@ class LibJIT
     
     begin
       context.build do |c|
+        @reg[:self] = expression([:arg, 0])
         statements(tree)
         @function.compile
       end
@@ -155,8 +156,22 @@ class LibJIT
         field = tree[2]
         ptr.mload(type.offset(field), type.field_type(field))
       when :call
-        other_func = function(tree[1])
+        other_func = nil
         args = arguments(tree[2])
+        
+        if @reg.has_key? tree[1][0].to_sym
+          obj = @reg[tree[1][0].to_sym]
+          clazz = Cl::CLASSES[obj.ref_type.jit_t.address]
+          args.insert(0, @reg[:self])
+          other_func = clazz.get_function(tree[1].last)
+        else
+          obj = Cl
+          tree[1][0..-2].each do |e|
+            obj = obj.const_get(e)
+          end
+          other_func = obj.get_function(tree[1].last)
+        end
+        
         case other_func
         when Cl::Core::CFunction
           @function.call_native *(JIT::LibC[other_func.name] + args)
@@ -189,19 +204,6 @@ class LibJIT
     end
   end
   
-  def function(tree)
-    modul(tree[1]).get_function(tree[2])
-  end
-  
-  def modul(tree)
-    if tree.is_a? Array
-      raise "wtf is this?: #{tree.inspect}" unless tree.first == :mbr
-      modul(tree[1]).const_get(tree[2])
-    else
-      Cl.const_get(tree)
-    end
-  end
-  
   def arguments(tree)
     tree.map do |arg|
       expression(arg)
@@ -209,15 +211,22 @@ class LibJIT
   end
   
   def type(tree)
-    JIT::Type.create(*tree)
+    if tree.first == :class
+      tree = tree[1..-1]
+      obj = Cl
+      tree.each do |e|
+        obj = obj.const_get(e)
+      end
+      JIT::Type.create(:pointer, obj.struct_type)
+    else
+      JIT::Type.create(*tree)
+    end
   end
   
   def variable(tree)
     var = @reg[tree.to_sym]
-    if var.nil?
-      raise Coal::UndeclaredVariableError.new(tree)
-    end
-    var
+    raise Coal::UndeclaredVariableError.new(tree) if var.nil?
+    return var
   end
   
   def create_struct_type(fields)
@@ -233,10 +242,6 @@ class LibJIT
     st.field_names = names
     
     return st
-  end
-  
-  def create_struct(f, type)
-    FFI::MemoryPointer.new :int8, type.size
   end
 end
 
