@@ -135,7 +135,7 @@ end
 
 #Coal.module "Math" do |m|
 #  m.class "ComplexNumber" do |c|
-#    c.properties [
+#    c.fields [
 #      ['re', :int32],
 #      ['im', :int32]
 #    ]
@@ -143,7 +143,7 @@ end
 #    c.getter 're', 'im'
 #    
 #    c.method 'r', [], :int32, <<-'end'
-#      return(Math.sqrt((*arg(0)).re ** 2 + (*arg(0)).im ** 2))
+#      return(Math.sqrt(arg(0).re ** 2 + arg(0).im ** 2))
 #    end
 #  end
 #end

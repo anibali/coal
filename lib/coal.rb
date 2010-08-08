@@ -65,9 +65,9 @@ module Coal
     module ClassMethods
       include ModuleExt
       
-      def properties props
+      def fields fields
         trans = Coal.translator_class.new
-        @struct_type = trans.create_struct_type props
+        @struct_type = trans.create_struct_type fields
       end
       
       def method name, param_types, return_type, code
@@ -77,13 +77,14 @@ module Coal
       def getter *args
         args.each do |name|
           type = @struct_type.field_type(name).to_ffi_type
-          method name, [], type, "return((*arg(0)).#{name})"
+          method name, [], type, "return(arg(0).#{name})"
         end
       end
       
       def new *args
         trans = Coal.translator_class.new
         @constructor ||= trans.compile_func(trans.declare_func([], :void), [])
+        
         struct = trans.create_struct @constructor, @struct_type
         @constructor[*args]
         

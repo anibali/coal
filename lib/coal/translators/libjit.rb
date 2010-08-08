@@ -150,8 +150,10 @@ class LibJIT
       when :sto
         variable(tree[1]).store expression(tree[2])
       when :mbr
-        struct = expression(tree[1])
-        struct[struct.type.find_field(tree[2])]
+        ptr = expression(tree[1])
+        type = ptr.ref_type
+        field = tree[2]
+        ptr.mload(type.offset(field), type.field_type(field))
       when :call
         other_func = function(tree[1])
         args = arguments(tree[2])
