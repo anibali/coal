@@ -150,11 +150,21 @@ class LibJIT
         expression(tree[1]).cast type(tree[2])
       when :sto
         variable(tree[1]).store expression(tree[2])
-      when :mbr
+      when :get
         ptr = expression(tree[1])
         type = ptr.ref_type
         field = tree[2]
         ptr.mload(type.offset(field), type.field_type(field))
+      when :set
+        ptr = expression(tree[1])
+        type = ptr.ref_type
+        field = tree[2]
+        field_type = type.field_type(field)
+        value = expression(tree[3])
+        if value.type.jit_t != field_type.jit_t
+          value = value.cast field_type
+        end
+        ptr.mstore(value, type.offset(field))
       when :call
         other_func = nil
         args = arguments(tree[2])

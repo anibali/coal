@@ -29,7 +29,7 @@ module CoalTreetop
     '/'   => :div,
     '%'   => :mod,
     '**'  => :pow,
-    '.'   => :mbr,
+    '.'   => :get,
   }
   
   class BinaryOpLTR < Treetop::Runtime::SyntaxNode

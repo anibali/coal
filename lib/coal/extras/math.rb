@@ -140,10 +140,11 @@ end
 #      ['im', :int32]
 #    ]
 #    
-#    c.getter 're', 'im'
+#    c.accessor 're', 'im'
 #    
 #    c.constructor [:int32, :int32], <<-'end'
-#      #TODO: set fields
+#      self.re = arg(1)
+#      self.im = arg(2)
 #    end
 #    
 #    c.method 'r', [], :int32, <<-'end'
@@ -153,14 +154,19 @@ end
 #    c.method 'double_r', [], :int32, <<-'end'
 #      return(self.r() * 2)
 #    end
+#    
+#    c.method 'conj', [], Cl::Math::ComplexNumber, <<-'end'
+#      return(Math.ComplexNumber.new(self.re, -self.im))
+#    end
 #  end
 #end
 
-#z = Cl::Math::ComplexNumber.new 1, 2
+#z = Cl::Math::ComplexNumber.new 3, 4
 #puts z.re
 #puts z.im
 #puts z.r
 #puts z.double_r
+#puts z.conj.im
 
 Coal.module 'Hailstone' do |m|
   m.function 'run', [:uint64], :uint64, <<-'end'

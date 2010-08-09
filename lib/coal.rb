@@ -29,12 +29,34 @@ module Coal
     end
     
     def function name, param_types, return_type, code
-      module_eval("def self.#{name}(*args) ; get_function('#{name}').call(*args) ; end")
+      if return_type.is_a? Class
+        module_eval("def self.#{name}(*args)
+          obj = #{return_type.name}.allocate
+          obj.instance_variable_set(:@struct_pointer, get_function('#{name}').call(*args))
+          return obj
+        end")
+      else
+        module_eval("def self.#{name}(*args)
+          get_function('#{name}').call(*args)
+        end")
+      end
+      param_types.map! do |type|
+        process_type type
+      end
+      return_type = process_type return_type
       @uncompiled_funcs ||= []
       trans = Coal.translator_class.new
       function = trans.declare_func(param_types, return_type)
       @uncompiled_funcs << [name, function, code]
       (@functions ||= {})[name] = function
+    end
+    
+    def process_type type
+      if type.is_a? Class
+        [:pointer, type.struct_type]
+      else
+        type
+      end
     end
     
     def compile_funcs
@@ -54,11 +76,10 @@ module Coal
     end
     
     def method_missing(name, *args)
-      func = self.class.get_function(name)
-      if func.nil?
-        super
+      if self.class.respond_to? name
+        self.class.send *([name, @struct_pointer] + args)
       else
-        func.call *([@struct_pointer] + args)
+        super
       end
     end
     
@@ -80,7 +101,6 @@ module Coal
       end
       
       def constructor param_types, code
-        p param_types
         method 'construct', param_types, :void, code
         thing = self.name.split('::')[1..-1].join '.'
         
@@ -98,6 +118,18 @@ module Coal
           type = @struct_type.field_type(name).to_ffi_type
           method name, [], type, "return(self.#{name})"
         end
+      end
+      
+      def setter *args
+        args.each do |name|
+          type = @struct_type.field_type(name).to_ffi_type
+          method "set_#{name}", [type], :void, "self.#{name}=arg(1)"
+        end
+      end
+      
+      def accessor *args
+        getter *args
+        setter *args
       end
       
       def new *args

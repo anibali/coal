@@ -112,6 +112,13 @@ grammar CoalTreetop
       end
     }
     /
+    primary gap? '.' gap? identifier gap? '=' gap? assignment {
+      #TODO: enable chains like a.b.c = d
+      def tree
+        [:set, primary.tree, identifier.tree, assignment.tree]
+      end
+    }
+    /
     identifier gap? pre_assign_op '=' gap? assignment {
       def tree
         var = identifier.tree
