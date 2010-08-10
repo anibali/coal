@@ -75,14 +75,6 @@ module Coal
       klass.extend ClassMethods
     end
     
-    def method_missing(name, *args)
-      if self.class.respond_to? name
-        self.class.send *([name, @struct_pointer] + args)
-      else
-        super
-      end
-    end
-    
     module ClassMethods
       include ModuleExt
       
@@ -98,6 +90,9 @@ module Coal
       
       def method name, param_types, return_type, code
         function name, ([[:pointer, @struct_type]] + param_types), return_type, code
+        class_eval "def #{name} *args, &block
+          self.class.#{name} *([@struct_pointer] + args), &block
+        end"
       end
       
       def constructor param_types, code
