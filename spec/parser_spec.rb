@@ -23,6 +23,9 @@ subject { Coal::Parser.parse(@code) }
   ';;;;',                         [],
   "# Awesome\n# story\n# bro",    [],
   "'Hello'",                      [[:strz, "Hello"]],
+  "a = 5",                        [[:sto, 'a', 5]],
+  "a.b = 5",                      [[:set, 'a', 'b', 5]],
+  "a.b.c = 5",                    [[:set, [:get, 'a', 'b'], 'c', 5]],
 ].each_slice(2) do |code, tree|
   describe(code.inspect) do
     before { @code = code }
@@ -33,10 +36,8 @@ end
 [
   "add(1 5)",
   "foo(x, y z)",
-  "f(x) = 5",
   "foo =",
   "= 31",
-  "43 = foo",
   "foo = 42 bar",
 ].each do |code|
   describe code.inspect do

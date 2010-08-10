@@ -106,16 +106,16 @@ grammar CoalTreetop
   end
   
   rule assignment
-    identifier gap? '=' gap? assignment {
+    member gap? '=' gap? assignment {
       def tree
-        [:sto, identifier.tree, assignment.tree]
-      end
-    }
-    /
-    primary gap? '.' gap? identifier gap? '=' gap? assignment {
-      #TODO: enable chains like a.b.c = d
-      def tree
-        [:set, primary.tree, identifier.tree, assignment.tree]
+        lhs = member.tree
+        rhs = assignment.tree
+        if lhs.is_a? Array and lhs.first == :get
+          lhs[0] = :set
+          lhs << rhs
+        else
+          [:sto, lhs, rhs]
+        end
       end
     }
     /

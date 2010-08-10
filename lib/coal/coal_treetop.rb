@@ -1257,7 +1257,7 @@ module CoalTreetop
   end
 
   module Assignment0
-    def identifier
+    def member
       elements[0]
     end
 
@@ -1268,32 +1268,18 @@ module CoalTreetop
 
   module Assignment1
     def tree
-      [:sto, identifier.tree, assignment.tree]
+      lhs = member.tree
+      rhs = assignment.tree
+      if lhs.is_a? Array and lhs.first == :get
+        lhs[0] = :set
+        lhs << rhs
+      else
+        [:sto, lhs, rhs]
+      end
     end
   end
 
   module Assignment2
-    def primary
-      elements[0]
-    end
-
-    def identifier
-      elements[4]
-    end
-
-    def assignment
-      elements[8]
-    end
-  end
-
-  module Assignment3
-    #TODO: enable chains like a.b.c = d
-    def tree
-      [:set, primary.tree, identifier.tree, assignment.tree]
-    end
-  end
-
-  module Assignment4
     def identifier
       elements[0]
     end
@@ -1307,7 +1293,7 @@ module CoalTreetop
     end
   end
 
-  module Assignment5
+  module Assignment3
     def tree
       var = identifier.tree
       [:sto, var, [BINARY_SYMS[pre_assign_op.text_value], var, assignment.tree]]
@@ -1327,7 +1313,7 @@ module CoalTreetop
 
     i0 = index
     i1, s1 = index, []
-    r2 = _nt_identifier
+    r2 = _nt_member
     s1 << r2
     if r2
       r4 = _nt_gap
@@ -1373,7 +1359,7 @@ module CoalTreetop
       r0 = r1
     else
       i9, s9 = index, []
-      r10 = _nt_primary
+      r10 = _nt_identifier
       s9 << r10
       if r10
         r12 = _nt_gap
@@ -1384,56 +1370,28 @@ module CoalTreetop
         end
         s9 << r11
         if r11
-          if has_terminal?('.', false, index)
-            r13 = instantiate_node(SyntaxNode,input, index...(index + 1))
-            @index += 1
-          else
-            terminal_parse_failure('.')
-            r13 = nil
-          end
+          r13 = _nt_pre_assign_op
           s9 << r13
           if r13
-            r15 = _nt_gap
-            if r15
-              r14 = r15
+            if has_terminal?('=', false, index)
+              r14 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
             else
-              r14 = instantiate_node(SyntaxNode,input, index...index)
+              terminal_parse_failure('=')
+              r14 = nil
             end
             s9 << r14
             if r14
-              r16 = _nt_identifier
-              s9 << r16
+              r16 = _nt_gap
               if r16
-                r18 = _nt_gap
-                if r18
-                  r17 = r18
-                else
-                  r17 = instantiate_node(SyntaxNode,input, index...index)
-                end
+                r15 = r16
+              else
+                r15 = instantiate_node(SyntaxNode,input, index...index)
+              end
+              s9 << r15
+              if r15
+                r17 = _nt_assignment
                 s9 << r17
-                if r17
-                  if has_terminal?('=', false, index)
-                    r19 = instantiate_node(SyntaxNode,input, index...(index + 1))
-                    @index += 1
-                  else
-                    terminal_parse_failure('=')
-                    r19 = nil
-                  end
-                  s9 << r19
-                  if r19
-                    r21 = _nt_gap
-                    if r21
-                      r20 = r21
-                    else
-                      r20 = instantiate_node(SyntaxNode,input, index...index)
-                    end
-                    s9 << r20
-                    if r20
-                      r22 = _nt_assignment
-                      s9 << r22
-                    end
-                  end
-                end
               end
             end
           end
@@ -1450,63 +1408,12 @@ module CoalTreetop
       if r9
         r0 = r9
       else
-        i23, s23 = index, []
-        r24 = _nt_identifier
-        s23 << r24
-        if r24
-          r26 = _nt_gap
-          if r26
-            r25 = r26
-          else
-            r25 = instantiate_node(SyntaxNode,input, index...index)
-          end
-          s23 << r25
-          if r25
-            r27 = _nt_pre_assign_op
-            s23 << r27
-            if r27
-              if has_terminal?('=', false, index)
-                r28 = instantiate_node(SyntaxNode,input, index...(index + 1))
-                @index += 1
-              else
-                terminal_parse_failure('=')
-                r28 = nil
-              end
-              s23 << r28
-              if r28
-                r30 = _nt_gap
-                if r30
-                  r29 = r30
-                else
-                  r29 = instantiate_node(SyntaxNode,input, index...index)
-                end
-                s23 << r29
-                if r29
-                  r31 = _nt_assignment
-                  s23 << r31
-                end
-              end
-            end
-          end
-        end
-        if s23.last
-          r23 = instantiate_node(SyntaxNode,input, i23...index, s23)
-          r23.extend(Assignment4)
-          r23.extend(Assignment5)
+        r18 = _nt_xor
+        if r18
+          r0 = r18
         else
-          @index = i23
-          r23 = nil
-        end
-        if r23
-          r0 = r23
-        else
-          r32 = _nt_xor
-          if r32
-            r0 = r32
-          else
-            @index = i0
-            r0 = nil
-          end
+          @index = i0
+          r0 = nil
         end
       end
     end
