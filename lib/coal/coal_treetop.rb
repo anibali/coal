@@ -1280,7 +1280,7 @@ module CoalTreetop
   end
 
   module Assignment2
-    def identifier
+    def member
       elements[0]
     end
 
@@ -1295,8 +1295,14 @@ module CoalTreetop
 
   module Assignment3
     def tree
-      var = identifier.tree
-      [:sto, var, [BINARY_SYMS[pre_assign_op.text_value], var, assignment.tree]]
+      lhs = member.tree
+      rhs = [BINARY_SYMS[pre_assign_op.text_value], lhs.dup, assignment.tree]
+      if lhs.is_a? Array and lhs.first == :get
+        lhs[0] = :set
+        lhs << rhs
+      else
+        [:sto, lhs, rhs]
+      end
     end
   end
 
@@ -1359,7 +1365,7 @@ module CoalTreetop
       r0 = r1
     else
       i9, s9 = index, []
-      r10 = _nt_identifier
+      r10 = _nt_member
       s9 << r10
       if r10
         r12 = _nt_gap

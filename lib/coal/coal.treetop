@@ -119,10 +119,16 @@ grammar CoalTreetop
       end
     }
     /
-    identifier gap? pre_assign_op '=' gap? assignment {
+    member gap? pre_assign_op '=' gap? assignment {
       def tree
-        var = identifier.tree
-        [:sto, var, [BINARY_SYMS[pre_assign_op.text_value], var, assignment.tree]]
+        lhs = member.tree
+        rhs = [BINARY_SYMS[pre_assign_op.text_value], lhs.dup, assignment.tree]
+        if lhs.is_a? Array and lhs.first == :get
+          lhs[0] = :set
+          lhs << rhs
+        else
+          [:sto, lhs, rhs]
+        end
       end
     }
     /
