@@ -1,7 +1,10 @@
 require 'rubygems'
 require 'jeweler'
+require 'rake/clean'
 require 'treetop'
 require 'fileutils'
+
+CLOBBER.include("pkg", "doc", "*.gemspec")
 
 Jeweler::Tasks.new do |s|
   s.name = 'coal'
