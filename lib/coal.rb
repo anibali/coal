@@ -29,17 +29,17 @@ module Coal
     end
     
     def function name, param_types, return_type, code
+      method_def = "def self.#{name}(*args)
+      args.map! {|arg| arg.respond_to?(:struct_pointer) ? arg.struct_pointer : arg}\n"
       if return_type.is_a? Class
-        module_eval("def self.#{name}(*args)
-          obj = #{return_type.name}.allocate
+        method_def << "obj = #{return_type.name}.allocate
           obj.instance_variable_set(:@struct_pointer, get_function('#{name}').call(*args))
-          return obj
-        end")
+          return obj"
       else
-        module_eval("def self.#{name}(*args)
-          get_function('#{name}').call(*args)
-        end")
+        method_def << "get_function('#{name}').call(*args)"
       end
+      method_def << "\nend"
+      module_eval method_def
       param_types.map! do |type|
         process_type type
       end
@@ -71,6 +71,8 @@ module Coal
   end
   
   module ClassExt
+    attr_reader :struct_pointer
+    
     def self.included(klass)
       klass.extend ClassMethods
     end
@@ -207,8 +209,25 @@ module Coal
       super
     else
       name = args[0]
-      @module.module_eval("class #{name} ; include Coal::ClassExt ; end") unless @module.const_defined? name
+      superclass = args[1]
+      unless @module.const_defined? name
+        if superclass.nil?
+          @module.module_eval("class #{name} ; include Coal::ClassExt ; end")
+        else
+          @module.module_eval("class #{name} < #{superclass.name}
+            include Coal::ClassExt
+          end")
+        end
+      end
+      
       clazz = @module.const_get name
+      
+      unless superclass.nil?
+        # Copy instance variables from the superclass
+        superclass.instance_variables.each do |var|
+          clazz.instance_variable_set(var, superclass.instance_variable_get(var))
+        end
+      end
       
       yield clazz
       

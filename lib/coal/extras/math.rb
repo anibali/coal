@@ -133,40 +133,36 @@ end
 
 #puts(Cl::MurmurHash2.hash_hello == 2013460684 ? "Passed hash" : "Failed hash")
 
-#Coal.module "Math" do |m|
-#  m.class "ComplexNumber" do |c|
-#    c.fields [
-#      ['re', :int32],
-#      ['im', :int32]
-#    ]
-#    
-#    c.accessor 're', 'im'
-#    
-#    c.constructor [:int32, :int32], <<-'end'
-#      self.re = arg(1)
-#      self.im = arg(2)
-#    end
-#    
-#    c.method 'r', [], :int32, <<-'end'
-#      return(Math.sqrt(self.re ** 2 + self.im ** 2))
-#    end
-#    
-#    c.method 'double_r', [], :int32, <<-'end'
-#      return(self.r() * 2)
-#    end
-#    
-#    c.method 'conj', [], Cl::Math::ComplexNumber, <<-'end'
-#      return(Math.ComplexNumber.new(self.re, -self.im))
-#    end
-#  end
-#end
-
-#z = Cl::Math::ComplexNumber.new 3, 4
-#puts z.re
-#puts z.im
-#puts z.r
-#puts z.double_r
-#puts z.conj.im
+Coal.module "Math" do |m|
+  m.class "ComplexNumber" do |c|
+    c.fields [
+      ['re', :int32],
+      ['im', :int32]
+    ]
+    
+    c.accessor 're', 'im'
+    
+    c.constructor [:int32, :int32], <<-'end'
+      self.re = arg(1)
+      self.im = arg(2)
+    end
+    
+    c.method 'r', [], :int32, <<-'end'
+      return(Math.sqrt(self.re ** 2 + self.im ** 2))
+    end
+    
+    c.method 'conj', [], Cl::Math::ComplexNumber, <<-'end'
+      return(Math.ComplexNumber.new(self.re, -self.im))
+    end
+    
+    c.method 'add', [Cl::Math::ComplexNumber], Cl::Math::ComplexNumber, <<-'end'
+      Math.ComplexNumber sum = Math.ComplexNumber.new(self.re, self.im)
+      sum.re += arg(1).re
+      sum.im += arg(1).im
+      return(sum)
+    end
+  end
+end
 
 Coal.module 'Hailstone' do |m|
   m.function 'run', [:uint64], :uint64, <<-'end'

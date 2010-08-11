@@ -52,3 +52,29 @@ describe Cl::Hailstone do
   end
 end
 
+describe Cl::Math::ComplexNumber do
+  context "when representing 3 + 4i" do
+    let(:z) { Cl::Math::ComplexNumber.new(3, 4) }
+    subject { z }
+    
+    its('re') { should eql(3) }
+    its('im') { should eql(4) }
+    
+    describe "conj" do
+      subject { z.conj }
+      
+      its('re') { should eql(3) }
+      its('im') { should eql(-4) }
+    end
+    
+    its('r') { should eql(5) }
+    
+    context "when added to 2 - 7i" do
+      subject { z.add Cl::Math::ComplexNumber.new(2, -7) }
+      
+      its('re') { should eql(5) }
+      its('im') { should eql(-3) }
+    end
+  end
+end
+
