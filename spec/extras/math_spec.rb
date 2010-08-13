@@ -77,6 +77,8 @@ begin
         its('re') { should eql(5) }
         its('im') { should eql(-3) }
       end
+      
+      its('to_stringz') { should eql("3 + 4i") }
     end
   end
 rescue Exception => ex

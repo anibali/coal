@@ -19,7 +19,7 @@ class LibJIT
     
     begin
       context.build do |c|
-        @reg[:self] = expression([:arg, 0])
+        @reg[:self] = expression([:arg, 0]) rescue nil
         statements(tree)
         @function.compile
       end
@@ -187,9 +187,9 @@ class LibJIT
         
         case other_func
         when Cl::Core::CFunction
-          @function.call_native *(JIT::LibC[other_func.name] + args)
+          @function.c.call_native(other_func.name, *args)
         when Cl::Math::MathFunction
-          @function.math.send *([other_func.name] + args)
+          @function.math.send(other_func.name, *args)
         else
           raise "No such method: #{tree[1][1..-1].join '.'}" if other_func.nil?
           @function.call_other *[other_func].concat(args)

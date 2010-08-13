@@ -35,6 +35,8 @@ module Coal
         method_def << "obj = #{return_type.name}.allocate
           obj.instance_variable_set(:@struct_pointer, get_function('#{name}').call(*args))
           return obj"
+      elsif return_type == :stringz
+        method_def << "get_function('#{name}').call(*args).get_string(0)"
       else
         method_def << "get_function('#{name}').call(*args)"
       end
@@ -54,6 +56,8 @@ module Coal
     def process_type type
       if type.is_a? Class
         [:pointer, type.struct_type]
+      elsif type == :stringz
+        [:pointer, :uint8]
       else
         type
       end
@@ -145,7 +149,7 @@ module Cl
     extend Coal::ModuleExt
     
     def self.get_function name
-      if %w[puts putchar malloc free].include? name
+      if %w[puts putchar printf sprintf time rand malloc free].include? name
         CFunction.new name
       else
         super

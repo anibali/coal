@@ -161,6 +161,21 @@ Coal.module "Math" do |m|
       sum.im += arg(1).im
       return(sum)
     end
+    
+    c.method 'to_stringz', [], :stringz, <<-'end'
+      @uint8 str = Core.malloc(256)
+      
+      if(self.im == 0)
+        Core.sprintf(str, '%d', self.re)
+      else if(self.re == 0)
+        Core.sprintf(str, '%di', self.im)
+      else if(self.im > 0)
+        Core.sprintf(str, '%d + %di', self.re, self.im)
+      else if(self.im < 0)
+        Core.sprintf(str, '%d - %di', self.re, -self.im)
+        
+      return(str)
+    end
   end
 end
 
