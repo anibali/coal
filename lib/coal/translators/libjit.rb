@@ -231,6 +231,8 @@ class LibJIT
         obj = obj.const_get(e)
       end
       JIT::Type.create(:pointer, obj.struct_type)
+    elsif tree.to_s == 'stringz'
+      JIT::Type.create(:pointer, :uint8)
     else
       JIT::Type.create(*tree)
     end

@@ -97,7 +97,7 @@ module Coal
       def method name, param_types, return_type, code
         function name, ([[:pointer, @struct_type]] + param_types), return_type, code
         class_eval "def #{name} *args, &block
-          self.class.#{name} *([@struct_pointer] + args), &block
+          self.class.#{name} @struct_pointer, *args, &block
         end"
       end
       

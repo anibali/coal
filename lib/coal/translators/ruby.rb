@@ -157,7 +157,11 @@ class Ruby
   end
   
   def type(tree)
-    "VirtMem::Type.create(#{[*tree].map{|e| e.inspect}.join(', ')})"
+    if tree.to_s == 'stringz'
+      "VirtMem::Type.create(:pointer, :uint8)"
+    else
+      "VirtMem::Type.create(#{[*tree].map{|e| e.inspect}.join(', ')})"
+    end
   end
 end
 

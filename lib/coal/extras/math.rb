@@ -163,7 +163,7 @@ Coal.module "Math" do |m|
     end
     
     c.method 'to_stringz', [], :stringz, <<-'end'
-      @uint8 str = Core.malloc(256)
+      stringz str = Core.malloc(256)
       
       if(self.im == 0)
         Core.sprintf(str, '%d', self.re)
