@@ -50,13 +50,14 @@ def self.widest_scope
 end
 
 def self.load(ptr, type)
-  ptr = ptr.to_numeric if ptr.respond_to? :to_numeric
+  ptr = Integer(ptr.to_s)
   mem = ptr < STACK_SIZE ? STACK_MEM : HEAP_MEM
   Value.create type, type.unpack(mem[ptr...ptr + type.size])
 end
 
 def self.store(ptr, type, val)
-  val = val.to_numeric if val.respond_to? :to_numeric
+  ptr = Integer(ptr.to_s)
+  val = Integer(val.to_s)
   mem = ptr < STACK_SIZE ? STACK_MEM : HEAP_MEM
   mem[ptr...ptr + type.size] = type.pack(val)
 end
@@ -140,6 +141,8 @@ class Number < Value
 end
 
 class Int < Number
+  attr_reader :type
+  
   def initialize type, num=nil
     num ||= 0
     @type = type
@@ -157,13 +160,8 @@ class Int < Number
     ret.is_a?(Integer) ? self.class.new(@type, ret) : ret
   end
   
-  def inspect
-    to_numeric.inspect
-  end
-  
-  def to_s
-    to_numeric.to_s
-  end
+  undef :inspect
+  undef :to_s
   
   def == other
     self.to_numeric == (other.is_a?(Int) ? other.to_numeric : other)
@@ -174,8 +172,10 @@ class Int < Number
   end
   
   def store other
-    @address = nil
     @num = (other.is_a?(Int) ? other.to_numeric : other)
+    unless @address.nil?
+      VirtMem.store(address, @type, @num)
+    end
     self
   end
   
@@ -207,6 +207,10 @@ class Pointer < Int
     ref_type ||= @type.ref_type
     raise("TODO: default reference type for pointer") if ref_type.nil?
     VirtMem.load(self.to_numeric, ref_type)
+  end
+  
+  def mstore val
+    VirtMem.store(self, @type.ref_type, val)
   end
 end
 

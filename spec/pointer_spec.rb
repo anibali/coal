@@ -33,6 +33,15 @@ coal_examples [
   [:decl, ["pointer", "pointer", "int8"], "pptr", [:addr, "ptr"]],
   [:ret, [:deref, [:deref, "pptr"]]]],
   42,
+  
+  "int8 x = 0 ; @int8 ptr = @x ; ptr := 42 ; return(x)",
+  [
+    [:decl, "int8", "x", 0],
+    [:decl, ["pointer", "int8"], "ptr", [:addr, "x"]],
+    [:msto, "ptr", 42],
+    [:ret, "x"]
+  ],
+  42,
 
 ]
 

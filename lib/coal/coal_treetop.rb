@@ -1237,8 +1237,19 @@ module CoalTreetop
                         if r11
                           r0 = r11
                         else
-                          @index = i0
-                          r0 = nil
+                          if has_terminal?(':', false, index)
+                            r12 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                            @index += 1
+                          else
+                            terminal_parse_failure(':')
+                            r12 = nil
+                          end
+                          if r12
+                            r0 = r12
+                          else
+                            @index = i0
+                            r0 = nil
+                          end
                         end
                       end
                     end
@@ -1296,12 +1307,17 @@ module CoalTreetop
   module Assignment3
     def tree
       lhs = member.tree
-      rhs = [BINARY_SYMS[pre_assign_op.text_value], lhs.dup, assignment.tree]
-      if lhs.is_a? Array and lhs.first == :get
-        lhs[0] = :set
-        lhs << rhs
+      op = pre_assign_op.text_value
+      if op == ':'
+        [:msto, lhs, assignment.tree]
       else
-        [:sto, lhs, rhs]
+        rhs = [BINARY_SYMS[op], lhs.dup, assignment.tree]
+        if lhs.is_a? Array and lhs.first == :get
+          lhs[0] = :set
+          lhs << rhs
+        else
+          [:sto, lhs, rhs]
+        end
       end
     end
   end

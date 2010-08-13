@@ -32,7 +32,7 @@ class Ruby
     when :break
       @code << "VirtMem.widen_scope;break;"
     when :ret
-      @code << "__tmp_var__=#{expression(tree[1])};VirtMem.widest_scope;return(__tmp_var__);"
+      @code << "__tmp_var__=#{expression(tree[1])};__tmp_var__ = __tmp_var__.to_numeric if __tmp_var__.is_a? VirtMem::Int;VirtMem.widest_scope;return(__tmp_var__);"
     when :decl
       @code << "#{tree[2]} = VirtMem::Value.create(#{type(tree[1])}"
       @code << ", #{expression(tree[3])}" unless tree[3].nil?
@@ -133,6 +133,8 @@ class Ruby
         "VirtMem::Value.create(#{type(tree[2])}, #{expression(tree[1])})"
       when :sto
         "(#{tree[1]}.store(#{expression tree[2]}))"
+      when :msto
+        "#{tree[1]}.mstore(#{expression(tree[2])})"
       when :call
         func = "Cl::#{tree[0..-2].join('::')}.#{tree[-1]}"
         "#{func}(#{arguments tree[2]})"

@@ -150,6 +150,9 @@ class LibJIT
         expression(tree[1]).cast type(tree[2])
       when :sto
         variable(tree[1]).store expression(tree[2])
+      when :msto
+        ptr = variable(tree[1])
+        ptr.mstore expression(tree[2]).cast(ptr.ref_type)
       when :get
         ptr = expression(tree[1])
         type = ptr.ref_type
