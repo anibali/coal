@@ -1,6 +1,6 @@
-coverage
-doc
-.yardoc
-pkg
+coverage/
+doc/
+.yardoc/
+pkg/
 *~
 *.gemspec
