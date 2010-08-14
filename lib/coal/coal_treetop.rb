@@ -1660,7 +1660,7 @@ module CoalTreetop
   end
 
   module And0
-    def bitwise_or
+    def equality
       elements[0]
     end
 
@@ -1688,7 +1688,7 @@ module CoalTreetop
     s2, i2 = [], index
     loop do
       i3, s3 = index, []
-      r4 = _nt_bitwise_or
+      r4 = _nt_equality
       s3 << r4
       if r4
         r6 = _nt_gap
@@ -1752,7 +1752,7 @@ module CoalTreetop
     if r1
       r0 = r1
     else
-      r11 = _nt_bitwise_or
+      r11 = _nt_equality
       if r11
         r0 = r11
       else
@@ -1762,6 +1762,226 @@ module CoalTreetop
     end
 
     node_cache[:and][start_index] = r0
+
+    r0
+  end
+
+  module Equality0
+    def comparison
+      elements[0]
+    end
+
+    def equality
+      elements[4]
+    end
+  end
+
+  def _nt_equality
+    start_index = index
+    if node_cache[:equality].has_key?(index)
+      cached = node_cache[:equality][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0 = index
+    i1, s1 = index, []
+    r2 = _nt_comparison
+    s1 << r2
+    if r2
+      r4 = _nt_gap
+      if r4
+        r3 = r4
+      else
+        r3 = instantiate_node(SyntaxNode,input, index...index)
+      end
+      s1 << r3
+      if r3
+        i5 = index
+        if has_terminal?('==', false, index)
+          r6 = instantiate_node(SyntaxNode,input, index...(index + 2))
+          @index += 2
+        else
+          terminal_parse_failure('==')
+          r6 = nil
+        end
+        if r6
+          r5 = r6
+        else
+          if has_terminal?('!=', false, index)
+            r7 = instantiate_node(SyntaxNode,input, index...(index + 2))
+            @index += 2
+          else
+            terminal_parse_failure('!=')
+            r7 = nil
+          end
+          if r7
+            r5 = r7
+          else
+            @index = i5
+            r5 = nil
+          end
+        end
+        s1 << r5
+        if r5
+          r9 = _nt_gap
+          if r9
+            r8 = r9
+          else
+            r8 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s1 << r8
+          if r8
+            r10 = _nt_equality
+            s1 << r10
+          end
+        end
+      end
+    end
+    if s1.last
+      r1 = instantiate_node(BinaryOpRTL,input, i1...index, s1)
+      r1.extend(Equality0)
+    else
+      @index = i1
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      r11 = _nt_comparison
+      if r11
+        r0 = r11
+      else
+        @index = i0
+        r0 = nil
+      end
+    end
+
+    node_cache[:equality][start_index] = r0
+
+    r0
+  end
+
+  module Comparison0
+    def bitwise_or
+      elements[0]
+    end
+
+    def comparison
+      elements[4]
+    end
+  end
+
+  def _nt_comparison
+    start_index = index
+    if node_cache[:comparison].has_key?(index)
+      cached = node_cache[:comparison][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0 = index
+    i1, s1 = index, []
+    r2 = _nt_bitwise_or
+    s1 << r2
+    if r2
+      r4 = _nt_gap
+      if r4
+        r3 = r4
+      else
+        r3 = instantiate_node(SyntaxNode,input, index...index)
+      end
+      s1 << r3
+      if r3
+        i5 = index
+        if has_terminal?('<=', false, index)
+          r6 = instantiate_node(SyntaxNode,input, index...(index + 2))
+          @index += 2
+        else
+          terminal_parse_failure('<=')
+          r6 = nil
+        end
+        if r6
+          r5 = r6
+        else
+          if has_terminal?('<', false, index)
+            r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            @index += 1
+          else
+            terminal_parse_failure('<')
+            r7 = nil
+          end
+          if r7
+            r5 = r7
+          else
+            if has_terminal?('>=', false, index)
+              r8 = instantiate_node(SyntaxNode,input, index...(index + 2))
+              @index += 2
+            else
+              terminal_parse_failure('>=')
+              r8 = nil
+            end
+            if r8
+              r5 = r8
+            else
+              if has_terminal?('>', false, index)
+                r9 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                @index += 1
+              else
+                terminal_parse_failure('>')
+                r9 = nil
+              end
+              if r9
+                r5 = r9
+              else
+                @index = i5
+                r5 = nil
+              end
+            end
+          end
+        end
+        s1 << r5
+        if r5
+          r11 = _nt_gap
+          if r11
+            r10 = r11
+          else
+            r10 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s1 << r10
+          if r10
+            r12 = _nt_comparison
+            s1 << r12
+          end
+        end
+      end
+    end
+    if s1.last
+      r1 = instantiate_node(BinaryOpRTL,input, i1...index, s1)
+      r1.extend(Comparison0)
+    else
+      @index = i1
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      r13 = _nt_bitwise_or
+      if r13
+        r0 = r13
+      else
+        @index = i0
+        r0 = nil
+      end
+    end
+
+    node_cache[:comparison][start_index] = r0
 
     r0
   end
@@ -1981,7 +2201,7 @@ module CoalTreetop
   end
 
   module BitwiseAnd0
-    def equality
+    def shift
       elements[0]
     end
 
@@ -2009,7 +2229,7 @@ module CoalTreetop
     s2, i2 = [], index
     loop do
       i3, s3 = index, []
-      r4 = _nt_equality
+      r4 = _nt_shift
       s3 << r4
       if r4
         r6 = _nt_gap
@@ -2073,7 +2293,7 @@ module CoalTreetop
     if r1
       r0 = r1
     else
-      r11 = _nt_equality
+      r11 = _nt_shift
       if r11
         r0 = r11
       else
@@ -2083,226 +2303,6 @@ module CoalTreetop
     end
 
     node_cache[:bitwise_and][start_index] = r0
-
-    r0
-  end
-
-  module Equality0
-    def comparison
-      elements[0]
-    end
-
-    def equality
-      elements[4]
-    end
-  end
-
-  def _nt_equality
-    start_index = index
-    if node_cache[:equality].has_key?(index)
-      cached = node_cache[:equality][index]
-      if cached
-        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
-        @index = cached.interval.end
-      end
-      return cached
-    end
-
-    i0 = index
-    i1, s1 = index, []
-    r2 = _nt_comparison
-    s1 << r2
-    if r2
-      r4 = _nt_gap
-      if r4
-        r3 = r4
-      else
-        r3 = instantiate_node(SyntaxNode,input, index...index)
-      end
-      s1 << r3
-      if r3
-        i5 = index
-        if has_terminal?('==', false, index)
-          r6 = instantiate_node(SyntaxNode,input, index...(index + 2))
-          @index += 2
-        else
-          terminal_parse_failure('==')
-          r6 = nil
-        end
-        if r6
-          r5 = r6
-        else
-          if has_terminal?('!=', false, index)
-            r7 = instantiate_node(SyntaxNode,input, index...(index + 2))
-            @index += 2
-          else
-            terminal_parse_failure('!=')
-            r7 = nil
-          end
-          if r7
-            r5 = r7
-          else
-            @index = i5
-            r5 = nil
-          end
-        end
-        s1 << r5
-        if r5
-          r9 = _nt_gap
-          if r9
-            r8 = r9
-          else
-            r8 = instantiate_node(SyntaxNode,input, index...index)
-          end
-          s1 << r8
-          if r8
-            r10 = _nt_equality
-            s1 << r10
-          end
-        end
-      end
-    end
-    if s1.last
-      r1 = instantiate_node(BinaryOpRTL,input, i1...index, s1)
-      r1.extend(Equality0)
-    else
-      @index = i1
-      r1 = nil
-    end
-    if r1
-      r0 = r1
-    else
-      r11 = _nt_comparison
-      if r11
-        r0 = r11
-      else
-        @index = i0
-        r0 = nil
-      end
-    end
-
-    node_cache[:equality][start_index] = r0
-
-    r0
-  end
-
-  module Comparison0
-    def shift
-      elements[0]
-    end
-
-    def comparison
-      elements[4]
-    end
-  end
-
-  def _nt_comparison
-    start_index = index
-    if node_cache[:comparison].has_key?(index)
-      cached = node_cache[:comparison][index]
-      if cached
-        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
-        @index = cached.interval.end
-      end
-      return cached
-    end
-
-    i0 = index
-    i1, s1 = index, []
-    r2 = _nt_shift
-    s1 << r2
-    if r2
-      r4 = _nt_gap
-      if r4
-        r3 = r4
-      else
-        r3 = instantiate_node(SyntaxNode,input, index...index)
-      end
-      s1 << r3
-      if r3
-        i5 = index
-        if has_terminal?('<=', false, index)
-          r6 = instantiate_node(SyntaxNode,input, index...(index + 2))
-          @index += 2
-        else
-          terminal_parse_failure('<=')
-          r6 = nil
-        end
-        if r6
-          r5 = r6
-        else
-          if has_terminal?('<', false, index)
-            r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
-            @index += 1
-          else
-            terminal_parse_failure('<')
-            r7 = nil
-          end
-          if r7
-            r5 = r7
-          else
-            if has_terminal?('>=', false, index)
-              r8 = instantiate_node(SyntaxNode,input, index...(index + 2))
-              @index += 2
-            else
-              terminal_parse_failure('>=')
-              r8 = nil
-            end
-            if r8
-              r5 = r8
-            else
-              if has_terminal?('>', false, index)
-                r9 = instantiate_node(SyntaxNode,input, index...(index + 1))
-                @index += 1
-              else
-                terminal_parse_failure('>')
-                r9 = nil
-              end
-              if r9
-                r5 = r9
-              else
-                @index = i5
-                r5 = nil
-              end
-            end
-          end
-        end
-        s1 << r5
-        if r5
-          r11 = _nt_gap
-          if r11
-            r10 = r11
-          else
-            r10 = instantiate_node(SyntaxNode,input, index...index)
-          end
-          s1 << r10
-          if r10
-            r12 = _nt_comparison
-            s1 << r12
-          end
-        end
-      end
-    end
-    if s1.last
-      r1 = instantiate_node(BinaryOpRTL,input, i1...index, s1)
-      r1.extend(Comparison0)
-    else
-      @index = i1
-      r1 = nil
-    end
-    if r1
-      r0 = r1
-    else
-      r13 = _nt_shift
-      if r13
-        r0 = r13
-      else
-        @index = i0
-        r0 = nil
-      end
-    end
-
-    node_cache[:comparison][start_index] = r0
 
     r0
   end

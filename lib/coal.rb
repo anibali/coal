@@ -149,7 +149,8 @@ module Cl
     extend Coal::ModuleExt
     
     def self.get_function name
-      if %w[puts putchar printf sprintf time rand malloc free].include? name
+      if %w[puts putchar printf sprintf time rand malloc free fprintf fscanf
+      fopen fread fclose].include? name
         CFunction.new name
       else
         super

@@ -153,7 +153,19 @@ grammar CoalTreetop
   end
   
   rule and
-    (bitwise_or gap? '&&' gap?)+ and <BinaryOpLTR>
+    (equality gap? '&&' gap?)+ and <BinaryOpLTR>
+    /
+    equality
+  end
+  
+  rule equality
+    comparison gap? ('=='/'!=') gap? equality <BinaryOpRTL>
+    /
+    comparison
+  end
+  
+  rule comparison
+    bitwise_or gap? ('<='/'<'/'>='/'>') gap? comparison <BinaryOpRTL>
     /
     bitwise_or
   end
@@ -171,19 +183,7 @@ grammar CoalTreetop
   end
   
   rule bitwise_and
-    (equality gap? '&' gap?)+ bitwise_and <BinaryOpLTR>
-    /
-    equality
-  end
-  
-  rule equality
-    comparison gap? ('=='/'!=') gap? equality <BinaryOpRTL>
-    /
-    comparison
-  end
-  
-  rule comparison
-    shift gap? ('<='/'<'/'>='/'>') gap? comparison <BinaryOpRTL>
+    (shift gap? '&' gap?)+ bitwise_and <BinaryOpLTR>
     /
     shift
   end
