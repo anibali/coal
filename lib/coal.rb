@@ -114,14 +114,14 @@ module Coal
       
       def getter *args
         args.each do |name|
-          type = @struct_type.field_type(name).to_ffi_type
+          type = @struct_type.field_type(name)
           method name, [], type, "return(self.#{name})"
         end
       end
       
       def setter *args
         args.each do |name|
-          type = @struct_type.field_type(name).to_ffi_type
+          type = @struct_type.field_type(name)
           method "set_#{name}", [type], :void, "self.#{name}=arg(1)"
         end
       end
@@ -146,8 +146,8 @@ module Cl
   module Core
     extend Coal::ModuleExt
     
-    C_FUNCTIONS = %w[puts putchar printf sprintf time rand malloc free fprintf
-      fscanf fopen fread fclose] unless defined? C_FUNCTIONS
+    C_FUNCTIONS = %w[puts putchar printf sprintf time rand malloc realloc free
+      fprintf fscanf fopen fread fclose] unless defined? C_FUNCTIONS
     
     def self.get_function name
       if C_FUNCTIONS.include? name
