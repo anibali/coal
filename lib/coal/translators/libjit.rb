@@ -244,6 +244,10 @@ class LibJIT
     return var
   end
   
+  def call_c_function name, *args
+    JIT::LibC.send name, *args
+  end
+  
   def create_struct_type(fields)
     names = []
     types = []

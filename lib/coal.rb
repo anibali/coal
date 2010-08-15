@@ -35,8 +35,6 @@ module Coal
         method_def << "obj = #{return_type.name}.allocate
           obj.instance_variable_set(:@struct_pointer, get_function('#{name}').call(*args))
           return obj"
-      elsif return_type == :stringz
-        method_def << "get_function('#{name}').call(*args).get_string(0)"
       else
         method_def << "get_function('#{name}').call(*args)"
       end
@@ -148,10 +146,21 @@ module Cl
   module Core
     extend Coal::ModuleExt
     
+    C_FUNCTIONS = %w[puts putchar printf sprintf time rand malloc free fprintf
+      fscanf fopen fread fclose] unless defined? C_FUNCTIONS
+    
     def self.get_function name
-      if %w[puts putchar printf sprintf time rand malloc free fprintf fscanf
-      fopen fread fclose].include? name
+      if C_FUNCTIONS.include? name
         CFunction.new name
+      else
+        super
+      end
+    end
+    
+    def self.method_missing name, *args
+      if C_FUNCTIONS.include? name.to_s
+        trans = Coal.translator_class.new
+        trans.call_c_function(name.to_s, *args)
       else
         super
       end

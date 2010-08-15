@@ -179,6 +179,18 @@ Coal.module "Math" do |m|
   end
 end
 
+# Here we augment the to_stringz method for more Rubyful usage
+class Cl::Math::ComplexNumber
+  alias :old_to_stringz :to_stringz
+  
+  def to_stringz
+    ptr = old_to_stringz
+    str = ptr.get_string(0)
+    Cl::Core.free(ptr)
+    str
+  end
+end
+
 Coal.module 'Hailstone' do |m|
   m.function 'run', [:uint64], :uint64, <<-'end'
     uint64 n = arg(0)
