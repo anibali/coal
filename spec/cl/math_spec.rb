@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + "/../spec_helper"
 
 begin
-  require 'coal/extras/math'
+  require 'cl/math'
 
   describe Coal::Math do
 
