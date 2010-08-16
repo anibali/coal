@@ -5,9 +5,10 @@ begin
   
   describe Cl::String do
     describe "when created with length 42" do
-      subject { Cl::String.new 42 }
+      let(:str) { Cl::String.new 42 }
+      subject { str }
       
-      its(:length) { pending ; should eql(42) }
+      its(:length) { should eql(42) }
     end
   end
 rescue Exception => ex

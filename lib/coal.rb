@@ -105,9 +105,10 @@ module Coal
         
         trans = Coal.translator_class.new
         function = trans.declare_func(param_types, [:pointer, @struct_type])
-        code = "return(#{thing}.construct(Core.malloc(#{@struct_type.size})"
-        param_types.size.times {|i| code << ', ' << "arg(#{i})"}
-        code << "))"
+        n_args = param_types.size
+        code = "pointer ptr = Core.malloc(#{@struct_type.size})
+        #{thing}.construct(ptr#{(0...n_args).map{|i| ", arg(#{i})"}.join})
+        return(ptr)"
         @uncompiled_funcs << ['new', function, code]
         (@functions ||= {})['new'] = function
       end
@@ -133,7 +134,8 @@ module Coal
       
       def new *args
         obj = allocate
-        obj.instance_variable_set :@struct_pointer, get_function('new').call(*args)
+        ptr = get_function('new').call(*args)
+        obj.instance_variable_set :@struct_pointer, ptr
         obj
       end
     end

@@ -3,10 +3,10 @@ require 'coal'
 Coal.class "String" do |c|
   c.fields [
     ['length', :uintn],
-    ['chars', :pointer, :uint8]
+    ['chars', :pointer, :uint8],
   ]
   
-  c.accessor 'length'
+  c.getter 'length'
   
   c.constructor [:uintn], <<-'end'
     self.chars = Core.malloc(arg(1))
