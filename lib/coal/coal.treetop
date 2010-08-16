@@ -137,17 +137,17 @@ grammar CoalTreetop
       end
     }
     /
+    or
+  end
+
+  rule or
+    (xor gap? '||' gap?)+ or <BinaryOpLTR>
+    /
     xor
   end
   
   rule xor
-    (or gap? '^^' gap?)+ xor <BinaryOpLTR>
-    /
-    or
-  end
-  
-  rule or
-    (and gap? '||' gap?)+ or <BinaryOpLTR>
+    (and gap? '^^' gap?)+ xor <BinaryOpLTR>
     /
     and
   end
