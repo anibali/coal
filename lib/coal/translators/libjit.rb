@@ -157,7 +157,11 @@ class LibJIT
         ptr = expression(tree[1])
         type = ptr.ref_type
         field = tree[2]
-        ptr.mload(type.offset(field), type.field_type(field))
+        field_index = type.find_field(field)
+        if [field_index].pack('I').unpack('i').first == -1
+          raise "'#{tree[1]}' does not have a field called '#{field}'"
+        end
+        ptr.mload(type.offset(field_index), type.field_type(field_index))
       when :set
         ptr = expression(tree[1])
         type = ptr.ref_type
@@ -175,7 +179,7 @@ class LibJIT
         if @reg.has_key? tree[1][0].to_sym
           obj = @reg[tree[1][0].to_sym]
           clazz = Cl::CLASSES[obj.ref_type.jit_t.address]
-          args.insert(0, @reg[:self])
+          args.insert(0, obj)
           other_func = clazz.get_function(tree[1].last)
         else
           obj = Cl

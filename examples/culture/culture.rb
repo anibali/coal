@@ -5,14 +5,15 @@
 # To prove that it works, run `ruby test_culture.rb`.
 
 require 'coal'
+require 'cl/file'
 
 Coal.module 'Culture' do |m|
   m.function 'run', [], :void, <<-'end'
-    pointer input = Core.fopen('cultin.txt', 'r')
-    pointer output = Core.fopen('cultout.txt', 'w')
+    File input = File.open('cultin.txt', 'r')
+    File output = File.open('cultout.txt', 'w')
     
     int32 n
-    Core.fscanf(input, '%d', @n)
+    Core.fscanf(input.handle(), '%d', @n)
     
     int32 b = n
     int32 d = 0
@@ -26,10 +27,10 @@ Coal.module 'Culture' do |m|
       d += 1
     }
     
-    Core.fprintf(output, '%d %d', b, d)
+    Core.fprintf(output.handle(), '%d %d', b, d)
     
-    Core.fclose(input)
-    Core.fclose(output)
+    input.close()
+    output.close()
   end
 end
 
