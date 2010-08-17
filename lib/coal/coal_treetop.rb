@@ -1430,7 +1430,7 @@ module CoalTreetop
       if r9
         r0 = r9
       else
-        r18 = _nt_xor
+        r18 = _nt_or
         if r18
           r0 = r18
         else
@@ -1445,115 +1445,8 @@ module CoalTreetop
     r0
   end
 
-  module Xor0
-    def or
-      elements[0]
-    end
-
-  end
-
-  module Xor1
-    def xor
-      elements[1]
-    end
-  end
-
-  def _nt_xor
-    start_index = index
-    if node_cache[:xor].has_key?(index)
-      cached = node_cache[:xor][index]
-      if cached
-        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
-        @index = cached.interval.end
-      end
-      return cached
-    end
-
-    i0 = index
-    i1, s1 = index, []
-    s2, i2 = [], index
-    loop do
-      i3, s3 = index, []
-      r4 = _nt_or
-      s3 << r4
-      if r4
-        r6 = _nt_gap
-        if r6
-          r5 = r6
-        else
-          r5 = instantiate_node(SyntaxNode,input, index...index)
-        end
-        s3 << r5
-        if r5
-          if has_terminal?('^^', false, index)
-            r7 = instantiate_node(SyntaxNode,input, index...(index + 2))
-            @index += 2
-          else
-            terminal_parse_failure('^^')
-            r7 = nil
-          end
-          s3 << r7
-          if r7
-            r9 = _nt_gap
-            if r9
-              r8 = r9
-            else
-              r8 = instantiate_node(SyntaxNode,input, index...index)
-            end
-            s3 << r8
-          end
-        end
-      end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(Xor0)
-      else
-        @index = i3
-        r3 = nil
-      end
-      if r3
-        s2 << r3
-      else
-        break
-      end
-    end
-    if s2.empty?
-      @index = i2
-      r2 = nil
-    else
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-    end
-    s1 << r2
-    if r2
-      r10 = _nt_xor
-      s1 << r10
-    end
-    if s1.last
-      r1 = instantiate_node(BinaryOpLTR,input, i1...index, s1)
-      r1.extend(Xor1)
-    else
-      @index = i1
-      r1 = nil
-    end
-    if r1
-      r0 = r1
-    else
-      r11 = _nt_or
-      if r11
-        r0 = r11
-      else
-        @index = i0
-        r0 = nil
-      end
-    end
-
-    node_cache[:xor][start_index] = r0
-
-    r0
-  end
-
   module Or0
-    def and
+    def xor
       elements[0]
     end
 
@@ -1581,7 +1474,7 @@ module CoalTreetop
     s2, i2 = [], index
     loop do
       i3, s3 = index, []
-      r4 = _nt_and
+      r4 = _nt_xor
       s3 << r4
       if r4
         r6 = _nt_gap
@@ -1645,7 +1538,7 @@ module CoalTreetop
     if r1
       r0 = r1
     else
-      r11 = _nt_and
+      r11 = _nt_xor
       if r11
         r0 = r11
       else
@@ -1655,6 +1548,113 @@ module CoalTreetop
     end
 
     node_cache[:or][start_index] = r0
+
+    r0
+  end
+
+  module Xor0
+    def and
+      elements[0]
+    end
+
+  end
+
+  module Xor1
+    def xor
+      elements[1]
+    end
+  end
+
+  def _nt_xor
+    start_index = index
+    if node_cache[:xor].has_key?(index)
+      cached = node_cache[:xor][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0 = index
+    i1, s1 = index, []
+    s2, i2 = [], index
+    loop do
+      i3, s3 = index, []
+      r4 = _nt_and
+      s3 << r4
+      if r4
+        r6 = _nt_gap
+        if r6
+          r5 = r6
+        else
+          r5 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s3 << r5
+        if r5
+          if has_terminal?('^^', false, index)
+            r7 = instantiate_node(SyntaxNode,input, index...(index + 2))
+            @index += 2
+          else
+            terminal_parse_failure('^^')
+            r7 = nil
+          end
+          s3 << r7
+          if r7
+            r9 = _nt_gap
+            if r9
+              r8 = r9
+            else
+              r8 = instantiate_node(SyntaxNode,input, index...index)
+            end
+            s3 << r8
+          end
+        end
+      end
+      if s3.last
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+        r3.extend(Xor0)
+      else
+        @index = i3
+        r3 = nil
+      end
+      if r3
+        s2 << r3
+      else
+        break
+      end
+    end
+    if s2.empty?
+      @index = i2
+      r2 = nil
+    else
+      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+    end
+    s1 << r2
+    if r2
+      r10 = _nt_xor
+      s1 << r10
+    end
+    if s1.last
+      r1 = instantiate_node(BinaryOpLTR,input, i1...index, s1)
+      r1.extend(Xor1)
+    else
+      @index = i1
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      r11 = _nt_and
+      if r11
+        r0 = r11
+      else
+        @index = i0
+        r0 = nil
+      end
+    end
+
+    node_cache[:xor][start_index] = r0
 
     r0
   end
