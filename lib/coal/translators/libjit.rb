@@ -158,7 +158,7 @@ class LibJIT
         type = ptr.ref_type
         field = tree[2]
         field_index = type.find_field(field)
-        if [field_index].pack('I').unpack('i').first == -1
+        if [field_index].pack('L_').unpack('l_').first == -1
           raise "'#{tree[1]}' does not have a field called '#{field}'"
         end
         ptr.mload(type.offset(field_index), type.field_type(field_index))

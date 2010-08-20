@@ -84,8 +84,8 @@ class NumberType < Type
     :uint32 => 'L',
     :int64 => 'q',
     :uint64 => 'Q',
-    :intn => 'i',
-    :uintn => 'I',
+    :intn => 'l_',
+    :uintn => 'L_',
   }
   
   def initialize sym
