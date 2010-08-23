@@ -152,10 +152,10 @@ class LibJIT
         variable(tree[1]).store expression(tree[2])
       when :msto
         ptr = variable(tree[1])
-        ptr.mstore expression(tree[2]).cast(ptr.ref_type)
+        ptr.mstore expression(tree[2]).cast(ptr.type.ref_type)
       when :get
         ptr = expression(tree[1])
-        type = ptr.ref_type
+        type = ptr.type.ref_type
         field = tree[2]
         field_index = type.find_field(field)
         if [field_index].pack('L_').unpack('l_').first == -1
@@ -164,7 +164,7 @@ class LibJIT
         ptr.mload(type.offset(field_index), type.field_type(field_index))
       when :set
         ptr = expression(tree[1])
-        type = ptr.ref_type
+        type = ptr.type.ref_type
         field = tree[2]
         field_type = type.field_type(field)
         value = expression(tree[3])
