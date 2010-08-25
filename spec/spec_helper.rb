@@ -1,4 +1,5 @@
-require File.dirname(__FILE__) + "/../lib/coal"
+$LOAD_PATH << File.join(File.dirname(File.expand_path(__FILE__)), '..', 'lib')
+require 'coal'
 
 def coal_examples(*args)
   array = args.last
