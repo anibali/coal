@@ -178,7 +178,7 @@ class LibJIT
         
         if @reg.has_key? tree[1][0].to_sym
           obj = @reg[tree[1][0].to_sym]
-          clazz = Cl::CLASSES[obj.ref_type.jit_t.address]
+          clazz = Cl::CLASSES[obj.type.ref_type.jit_t.address]
           args.insert(0, obj)
           other_func = clazz.get_function(tree[1].last)
         else
