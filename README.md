@@ -1,6 +1,9 @@
 Coal
 ====
 
+* http://github.com/dismaldenizen/coal
+* http://rdoc.info/github/dismaldenizen/coal
+
 Warning
 -------
 
