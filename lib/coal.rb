@@ -2,15 +2,16 @@ require 'treetop'
 
 require 'virtmem'
 require 'coal/parser'
-require 'coal/power'
 
-Module.module_eval <<END
+Module.module_eval do
   def namespace
     const_get(self.name.split('::')[0...-1].join('::'))
   end
-END
+end
 
 module Coal
+  autoload :Power, 'coal/power'
+  
   module ModuleExt
     def get_class name
       (@classes ||= {})[name]
