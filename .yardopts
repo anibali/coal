@@ -1,0 +1,10 @@
+--readme
+README.md
+--markup
+markdown
+--files
+LICENSE
+--exclude
+lib/coal/coal_treetop.rb
+--exclude
+lib/coal/node_classes.rb
