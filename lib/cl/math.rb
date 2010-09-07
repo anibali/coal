@@ -84,7 +84,7 @@ end
 Coal.module 'MurmurHash2' do |m|
   # This is a working implementation of MurmurHash2.
   # Original code at: http://sites.google.com/site/murmurhash/MurmurHash2.cpp
-  m.function 'hash', [[:pointer, :uint8], :uintn, :uint32], :uint32, <<-'end'
+  m.function 'hash', [:stringz, :uintn, :uint32], :uint32, <<-'end'
     @uint8 data = arg(0)
     uintn len = arg(1)
     uint32 seed = arg(2)
@@ -183,6 +183,7 @@ end
 class Cl::Math::ComplexNumber
   alias :old_to_stringz :to_stringz
   
+  # TODO: make this translator independent
   def to_stringz
     ptr = old_to_stringz
     str = ptr.get_string(0)
@@ -228,6 +229,4 @@ Coal.module 'Hailstone' do |m|
     return(steps)
   end
 end
-
-#p Cl::Math.square(-7)
 

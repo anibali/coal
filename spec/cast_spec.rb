@@ -9,8 +9,11 @@ describe Coal do
 
 coal_examples [
 
-# Code                    Tree                                  Result
-  "return((uint8)532)",   [[:ret, [:cast, 532, 'uint8']]],      20,
+# Code                        Tree                                    Result
+  "return((uint8)532)",       [[:ret, [:cast, 532, 'uint8']]],        20,
+  "return((uint8)-4)",        [[:ret, [:cast, [:neg, 4], 'uint8']]],  252,
+  "return((int8)255)",        [[:ret, [:cast, 255, 'int8']]],         -1,
+  "return((uint8)0xfffff)",   [[:ret, [:cast, 0xfffff, 'uint8']]],     255,
 
 ]
 
