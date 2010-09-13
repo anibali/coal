@@ -191,7 +191,7 @@ class LibJIT
         
         case other_func
         when Cl::Core::CFunction
-          @function.c.call_native(other_func.name, *args)
+          @function.c.call_native(other_func.name.to_sym, *args)
         when Cl::Math::MathFunction
           @function.math.send(other_func.name, *args)
         else
@@ -249,7 +249,7 @@ class LibJIT
   end
   
   def call_c_function name, *args
-    JIT::LibC.send name, *args
+    JIT::LibC::FUNCTIONS[name.to_sym].first.call *args
   end
   
   def create_struct_type(fields)

@@ -171,7 +171,10 @@ module Cl
     
     class CFunction
       attr_reader :name
-      def initialize(name) ; @name = name ; end
+      
+      def initialize(name)
+        @name = name
+      end
     end
   end
   
@@ -189,7 +192,10 @@ module Cl
     
     class MathFunction
       attr_reader :name
-      def initialize(name) ; @name = name ; end
+      
+      def initialize(name)
+        @name = name
+      end
     end
   end
 end
