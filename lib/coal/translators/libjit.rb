@@ -3,6 +3,8 @@ require 'libjit'
 module Coal::Translators
 
 class LibJIT
+  attr_reader :function
+  
   def declare_func param_types, return_type
     function = nil
     JIT::Context.default.build do |c|
@@ -173,31 +175,21 @@ class LibJIT
         end
         ptr.mstore(value, type.offset(field))
       when :call
-        other_func = nil
-        args = arguments(tree[2])
+        obj_array = tree[1]
+        func_name = tree[2]
+        args = arguments(tree[3])
+        obj = nil
         
-        if @reg.has_key? tree[1][0].to_sym
-          obj = @reg[tree[1][0].to_sym]
-          clazz = Cl::CLASSES[obj.type.ref_type.jit_t.address]
-          args.insert(0, obj)
-          other_func = clazz.get_function(tree[1].last)
+        if @reg.key? obj_array.first.to_sym
+          instance = @reg[obj_array.first.to_sym]
+          obj = Cl::CLASSES[instance.type.ref_type.jit_t.address]
+          args.insert(0, instance)
         else
           obj = Cl
-          tree[1][0..-2].each do |e|
-            obj = obj.const_get(e)
-          end
-          other_func = obj.get_function(tree[1].last)
+          obj_array.each { |e| obj = obj.const_get(e) }
         end
         
-        case other_func
-        when Cl::Core::CFunction
-          @function.c.call_native(other_func.name.to_sym, *args)
-        when Cl::Math::MathFunction
-          @function.math.send(other_func.name, *args)
-        else
-          raise "No such method: #{tree[1][1..-1].join '.'}" if other_func.nil?
-          @function.call_other *[other_func].concat(args)
-        end
+        obj.libjit_call! self, func_name, *args
       when :arg
         @function.arg(tree[1])
       when :strz
@@ -246,10 +238,6 @@ class LibJIT
     var = @reg[tree.to_sym]
     raise Coal::UndeclaredVariableError.new(tree) if var.nil?
     return var
-  end
-  
-  def call_c_function name, *args
-    JIT::LibC::FUNCTIONS[name.to_sym].first.call *args
   end
   
   def create_struct_type(fields)

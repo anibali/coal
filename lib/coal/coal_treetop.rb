@@ -3165,7 +3165,7 @@ module CoalTreetop
 
   module Function2
     def tree
-      elements[0].elements.map {|e| e.elements[0].text_value} << identifier.text_value
+      [elements[0].elements.map {|e| e.elements[0].text_value}, identifier.text_value]
     end
   end
 
@@ -3260,7 +3260,7 @@ module CoalTreetop
 
   module FunctionCall1
     def tree
-      [:call, function.tree, arguments.tree]
+      [:call].concat(function.tree) << arguments.tree
     end
   end
 

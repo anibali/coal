@@ -58,7 +58,6 @@ Features
 --------
 
 * Super-fast JIT compilation via LibJIT
-* Fallback to Ruby interpretation of code when required binaries are absent
 * No need for any native compilation by you or your users
 
 TODO
@@ -66,5 +65,5 @@ TODO
 
 * Finish a basic implementation!
 * Cache translated code for quicker startup
-* Add structs and classes to Ruby translator
+* Bring Ruby translator up to scratch
 

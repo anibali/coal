@@ -136,8 +136,7 @@ class Ruby
       when :msto
         "#{tree[1]}.mstore(#{expression(tree[2])})"
       when :call
-        func = "Cl::#{tree[0..-2].join('::')}.#{tree[-1]}"
-        "#{func}(#{arguments tree[2]})"
+        raise 'TODO: ruby translator function calls'
       when :arg
         "args[#{tree[1]}]"
       else

@@ -263,7 +263,7 @@ grammar CoalTreetop
   rule function
     (identifier gap? '.' gap?)* identifier <BinaryOpLTR> {
       def tree
-        elements[0].elements.map {|e| e.elements[0].text_value} << identifier.text_value
+        [elements[0].elements.map {|e| e.elements[0].text_value}, identifier.text_value]
       end
     }
   end
@@ -271,7 +271,7 @@ grammar CoalTreetop
   rule function_call
     function '(' gap? arguments gap? ')' {
       def tree
-        [:call, function.tree, arguments.tree]
+        [:call].concat(function.tree) << arguments.tree
       end
     }
   end

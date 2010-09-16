@@ -13,8 +13,13 @@ module Coal
   autoload :Power, 'coal/power'
   
   module ModuleExt
+    def self.extended(subject)
+      subject.instance_variable_set :@functions, {}
+      subject.instance_variable_set :@classes, {}
+    end
+    
     def get_class name
-      (@classes ||= {})[name]
+      @classes[name]
     end  
     
     def class *args, &block
@@ -25,8 +30,12 @@ module Coal
       end
     end
     
+    def libjit_call! trans, name, *args
+      trans.function.call_other(@functions[String(name)], *args)
+    end
+    
     def get_function name
-      (@functions ||= {})[name.to_s]
+      @functions[name.to_s]
     end
     
     def function name, param_types, return_type, code
@@ -49,7 +58,7 @@ module Coal
       trans = Coal.translator_class.new
       function = trans.declare_func(param_types, return_type)
       @uncompiled_funcs << [name, function, code]
-      (@functions ||= {})[name] = function
+      @functions[name] = function
     end
     
     def process_type type
@@ -67,7 +76,7 @@ module Coal
       @uncompiled_funcs.each do |name, func, code|
         tree = Coal::Parser.parse code
         trans = Coal.translator_class.new
-        (@functions ||= {})[name] = trans.compile_func(func, Coal::Parser.parse(code))
+        @functions[name] = trans.compile_func(func, Coal::Parser.parse(code))
       end
       @uncompiled_funcs.clear
     end
@@ -77,12 +86,11 @@ module Coal
     attr_reader :struct_pointer
     
     def self.included(klass)
+      klass.extend ModuleExt
       klass.extend ClassMethods
     end
     
     module ClassMethods
-      include ModuleExt
-      
       def fields fields
         trans = Coal.translator_class.new
         @struct_type = trans.create_struct_type fields
@@ -149,31 +157,28 @@ module Cl
   module Core
     extend Coal::ModuleExt
     
-    C_FUNCTIONS = %w[puts putchar printf sprintf time rand malloc realloc free
-      fprintf fscanf fopen fread fclose] unless defined? C_FUNCTIONS
+    C_FUNCTIONS =
+      %w[
+        puts putchar printf sprintf time rand malloc
+        realloc free fprintf fscanf fopen fread fclose
+      ] unless defined? C_FUNCTIONS
     
-    def self.get_function name
-      if C_FUNCTIONS.include? name
-        CFunction.new name
-      else
-        super
+    def self.libjit_call! trans, name, *args
+      if C_FUNCTIONS.include? name.to_s
+        trans.function.c.call_native name, *args
       end
     end
     
     def self.method_missing name, *args
       if C_FUNCTIONS.include? name.to_s
         trans = Coal.translator_class.new
-        trans.call_c_function(name.to_s, *args)
+        if trans.is_a? Coal::Translators::LibJIT
+          JIT::LibC::FUNCTIONS[name.to_sym].first.call *args
+        else
+          raise 'TODO: c function emulation in ruby'
+        end
       else
         super
-      end
-    end
-    
-    class CFunction
-      attr_reader :name
-      
-      def initialize(name)
-        @name = name
       end
     end
   end
@@ -181,20 +186,15 @@ module Cl
   module Math
     extend Coal::ModuleExt
     
-    def self.get_function name
-      if %w[acos asin atan atan2 ceil cos cosh exp floor log log rint round sin
-      sinh sqrt tan tanh].include? name
-        MathFunction.new name
-      else
-        super
-      end
-    end
+    MATH_FUNCTIONS = 
+      %w[
+        acos asin atan atan2 ceil cos cosh exp floor
+        log log rint round sin sinh sqrt tan tanh
+      ] unless defined? MATH_FUNCTIONS
     
-    class MathFunction
-      attr_reader :name
-      
-      def initialize(name)
-        @name = name
+    def self.libjit_call! trans, name, *args
+      if MATH_FUNCTIONS.include? name.to_s
+        trans.function.math.send name, *args
       end
     end
   end
