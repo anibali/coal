@@ -64,8 +64,6 @@ module Coal
     def process_type type
       if type.is_a? Class
         [:pointer, type.struct_type]
-      elsif type == :stringz
-        [:pointer, :uint8]
       else
         type
       end

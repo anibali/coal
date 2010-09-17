@@ -181,7 +181,7 @@ end
 
 # Here we augment the to_stringz method for more Rubyful usage
 class Cl::Math::ComplexNumber
-  alias :old_to_stringz :to_stringz
+  alias_method :old_to_stringz, :to_stringz
   
   # TODO: make this translator independent
   def to_stringz
