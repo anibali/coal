@@ -16,6 +16,9 @@ Coal.module "GLib" do |m|
     c.method 'to_sz', [], :stringz, <<-'end'
       return(GLib.g_quark_to_string(self.id))
     end
+    
+    c.destructor <<-'end'
+    end
   end
 end
 
@@ -36,5 +39,7 @@ class Cl::GLib::GQuark
   end
 end
 
-#p Cl::GLib::GQuark.new('hello').to_sz
+#q = Cl::GLib::GQuark.new('hello')
+#p q.to_sz
+#q.destroy
 

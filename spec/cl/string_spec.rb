@@ -9,6 +9,10 @@ begin
       subject { str }
       
       its(:length) { should eql(42) }
+      
+      after do
+        str.destroy
+      end
     end
   end
 rescue Exception => ex

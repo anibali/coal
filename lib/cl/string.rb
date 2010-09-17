@@ -17,5 +17,9 @@ Coal.class "String" do |c|
     self.chars = Core.realloc(self.chars, arg(1))
     self.length = arg(1)
   end
+  
+  c.destructor <<-'end'
+    Core.free(self.chars)
+  end
 end
 

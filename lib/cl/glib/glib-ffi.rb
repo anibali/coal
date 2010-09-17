@@ -16,12 +16,22 @@ module Cl
       FUNCTIONS[name] = [func, param_types, return_type]
     end
     
+    # GQuark
     bind_function :g_quark_from_string, [:string], :uint32
     bind_function :g_quark_from_static_string, [:string], :uint32
     bind_function :g_quark_to_string, [:uint32], :string
     bind_function :g_quark_try_string, [:string], :uint32
     bind_function :g_intern_string, [:string], :string
     bind_function :g_intern_static_string, [:string], :string
+    
+    # GTimer
+    bind_function :g_timer_new, [], :pointer
+    bind_function :g_timer_start, [:pointer], :void
+    bind_function :g_timer_stop, [:pointer], :void
+    bind_function :g_timer_continue, [:pointer], :void
+    bind_function :g_timer_elapsed, [:pointer, :ulong], :double
+    bind_function :g_timer_reset, [:pointer], :void
+    bind_function :g_timer_destroy, [:pointer], :void
     
     def self.libjit_call! trans, name, *args
       func, param_types, return_type = *FUNCTIONS[name.to_sym]

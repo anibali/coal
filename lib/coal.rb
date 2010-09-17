@@ -120,6 +120,15 @@ module Coal
         (@functions ||= {})['new'] = function
       end
       
+      def destructor code
+        method 'destruct', [], :void, code
+        
+        method 'destroy', [], :void, <<-end
+          self.destruct()
+          Core.free(self)
+        end
+      end
+      
       def getter *args
         args.each do |name|
           type = @struct_type.field_type(name)
@@ -143,7 +152,12 @@ module Coal
         obj = allocate
         ptr = get_function('new').call(*args)
         obj.instance_variable_set :@struct_pointer, ptr
+        ObjectSpace.define_finalizer(obj, create_finalizer(ptr))
         obj
+      end
+      
+      def create_finalizer struct_pointer
+        proc { destroy(struct_pointer) if respond_to? :destroy }
       end
     end
   end
