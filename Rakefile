@@ -1,41 +1,24 @@
 require 'rubygems'
-require 'jeweler'
-require 'rake/clean'
+require 'burke'
 require 'treetop'
 require 'fileutils'
 
-CLOBBER.include("pkg", "doc", "*.gemspec")
+Burke.enable_all
 
-Jeweler::Tasks.new do |s|
+Burke.setup do |s|
   s.name = 'coal'
   s.summary = "A low-level language which may be embedded in Ruby code"
-  s.description = s.summary
   s.author = 'Aiden Nibali'
   s.email = 'dismal.denizen@gmail.com'
   s.homepage = 'http://github.com/dismaldenizen/coal'
   
-  s.add_dependency 'treetop', '>= 1.4.0'
-  s.add_dependency 'libjit-ffi'
-  
-  s.files = %w(LICENSE README.md Rakefile VERSION) + Dir.glob("{lib,spec}/**/*")
-  s.require_path = 'lib'
-  s.extra_rdoc_files = ['README.md', 'LICENSE']
-  s.rdoc_options << '--title' << "#{s.name} #{File.read 'VERSION'}" <<
-                    '--main' << 'README.md' << '--line-numbers'
-end
-
-Jeweler::GemcutterTasks.new
-
-begin
-  require 'spec/rake/spectask'
-
-  desc "Run all RSpec examples."
-  Spec::Rake::SpecTask.new('spec') do |t|
-    t.spec_files = FileList['spec/**/*.rb']
-    t.spec_opts << '--colour --format progress'
-    t.ruby_opts << '-rrubygems'
+  s.dependencies do |d|
+    d['treetop'] = '~> 1.4'
+    d['libjit-ffi'] = '0.0.0'
   end
-rescue LoadError
+  
+  s.clean = %w[.yardoc]
+  s.clobber = %w[pkg doc html coverage]
 end
 
 namespace :compile do
@@ -50,16 +33,6 @@ namespace :compile do
 end
 
 task :spec => ['compile:grammar']
-task :build => ['compile:grammar']
-
-begin
-  require 'yard'
-
-  YARD::Rake::YardocTask.new do |t|
-    t.options = [
-      '--title', "Coal #{File.read 'VERSION'}",
-    ]
-  end
-rescue LoadError
-end
+task :gem => ['compile:grammar']
+task :gems => ['compile:grammar']
 
