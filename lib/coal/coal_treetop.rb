@@ -5,7 +5,7 @@ module CoalTreetop
   include Treetop::Runtime
 
   def root
-    @root || :root
+    @root ||= :root
   end
 
   module Root0
