@@ -228,12 +228,16 @@ module Coal
   end
   
   @module = Cl
-  def self.module name
+  def self.module name, &block
     @module.module_eval("module #{name} ; end") unless @module.const_defined? name
     @module = @module.const_get name
     @module.extend Coal::ModuleExt
     
-    yield @module
+    if block.arity < 1
+      @module.instance_eval &block
+    else
+      yield @module
+    end
     
     @module.compile_funcs
     @module = @module.namespace
@@ -264,7 +268,11 @@ module Coal
         end
       end
       
-      yield clazz
+      if block.arity < 1
+        clazz.instance_eval &block
+      else
+        yield clazz
+      end
       
       clazz.compile_funcs
       clazz

@@ -81,10 +81,10 @@ module Coal::Math
   end
 end
 
-Coal.module 'MurmurHash2' do |m|
+Coal.module 'MurmurHash2' do
   # This is a working implementation of MurmurHash2.
   # Original code at: http://sites.google.com/site/murmurhash/MurmurHash2.cpp
-  m.function 'hash', [:stringz, :uintn, :uint32], :uint32, <<-'end'
+  function 'hash', [:stringz, :uintn, :uint32], :uint32, <<-'end'
     @uint8 data = arg(0)
     uintn len = arg(1)
     uint32 seed = arg(2)
@@ -126,43 +126,43 @@ Coal.module 'MurmurHash2' do |m|
   end
   
   # Should always return 2013460684
-  m.function 'hash_hello', [], :uint32, <<-'end'
+  function 'hash_hello', [], :uint32, <<-'end'
     return(MurmurHash2.hash('hello', 5, 42))
   end
 end
 
 #puts(Cl::MurmurHash2.hash_hello == 2013460684 ? "Passed hash" : "Failed hash")
 
-Coal.module "Math" do |m|
-  m.class "ComplexNumber" do |c|
-    c.fields [
+Coal.module "Math" do
+  self.class "ComplexNumber" do
+    fields [
       ['re', :int32],
       ['im', :int32]
     ]
     
-    c.accessor 're', 'im'
+    accessor 're', 'im'
     
-    c.constructor [:int32, :int32], <<-'end'
+    constructor [:int32, :int32], <<-'end'
       self.re = arg(1)
       self.im = arg(2)
     end
     
-    c.method 'r', [], :int32, <<-'end'
+    method 'r', [], :int32, <<-'end'
       return(Math.sqrt(self.re ** 2 + self.im ** 2))
     end
     
-    c.method 'conj', [], Cl::Math::ComplexNumber, <<-'end'
+    method 'conj', [], Cl::Math::ComplexNumber, <<-'end'
       return(Math.ComplexNumber.new(self.re, -self.im))
     end
     
-    c.method 'add', [Cl::Math::ComplexNumber], Cl::Math::ComplexNumber, <<-'end'
+    method 'add', [Cl::Math::ComplexNumber], Cl::Math::ComplexNumber, <<-'end'
       Math.ComplexNumber sum = Math.ComplexNumber.new(self.re, self.im)
       sum.re += arg(1).re
       sum.im += arg(1).im
       return(sum)
     end
     
-    c.method 'to_stringz', [], :stringz, <<-'end'
+    method 'to_stringz', [], :stringz, <<-'end'
       stringz str = Core.malloc(256)
       
       if(self.im == 0)
@@ -179,8 +179,8 @@ Coal.module "Math" do |m|
   end
 end
 
-Coal.module 'Hailstone' do |m|
-  m.function 'run', [:uint64], :uint64, <<-'end'
+Coal.module 'Hailstone' do
+  function 'run', [:uint64], :uint64, <<-'end'
     uint64 n = arg(0)
     uint64 steps
     
@@ -192,7 +192,7 @@ Coal.module 'Hailstone' do |m|
     return(steps)
   end
   
-  m.function 'odd', [:uint64, :uint64], :uint64, <<-'end'
+  function 'odd', [:uint64, :uint64], :uint64, <<-'end'
     uint64 n = arg(0)
     uint64 steps = arg(1)
     
@@ -202,7 +202,7 @@ Coal.module 'Hailstone' do |m|
     return(steps)
   end
   
-  m.function 'even', [:uint64, :uint64], :uint64, <<-'end'
+  function 'even', [:uint64, :uint64], :uint64, <<-'end'
     uint64 n = arg(0)
     uint64 steps = arg(1)
     
