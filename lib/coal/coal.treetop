@@ -106,12 +106,15 @@ grammar CoalTreetop
   end
   
   rule assignment
-    member gap? '=' gap? assignment {
+    subscript gap? '=' gap? assignment {
       def tree
-        lhs = member.tree
+        lhs = subscript.tree
         rhs = assignment.tree
         if lhs.is_a? Array and lhs.first == :get
           lhs[0] = :set
+          lhs << rhs
+        elsif lhs.is_a? Array and lhs.first == :sget
+          lhs[0] = :sset
           lhs << rhs
         else
           [:sto, lhs, rhs]
@@ -119,9 +122,9 @@ grammar CoalTreetop
       end
     }
     /
-    member gap? pre_assign_op '=' gap? assignment {
+    subscript gap? pre_assign_op '=' gap? assignment {
       def tree
-        lhs = member.tree
+        lhs = subscript.tree
         op = pre_assign_op.text_value
         if op == ':'
           [:msto, lhs, assignment.tree]
@@ -129,6 +132,9 @@ grammar CoalTreetop
           rhs = [BINARY_SYMS[op], lhs.dup, assignment.tree]
           if lhs.is_a? Array and lhs.first == :get
             lhs[0] = :set
+            lhs << rhs
+          elsif lhs.is_a? Array and lhs.first == :sget
+            lhs[0] = :sset
             lhs << rhs
           else
             [:sto, lhs, rhs]
@@ -228,6 +234,21 @@ grammar CoalTreetop
     '(' gap? type gap? ')' gap? unary {
       def tree
         [:cast, unary.tree, type.tree]
+      end
+    }
+    /
+    subscript
+  end
+  
+  rule subscript
+    member ('[' expression ']')+ {
+      def tree
+        array = member.tree
+        elements[1].elements.each do |elem|
+          index = elem.elements[1].tree
+          array = [:sget, array, index]
+        end
+        array
       end
     }
     /

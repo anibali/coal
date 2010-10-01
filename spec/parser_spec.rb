@@ -30,6 +30,12 @@ subject { Coal::Parser.parse(@code) }
   "a.b.c",                        [[:get, [:get, "a", "b"], "c"]],
   "a.b = 5",                      [[:set, "a", "b", 5]],
   "a.b.c = 5",                    [[:set, [:get, "a", "b"], "c", 5]],
+  "a[b]",                         [[:sget, "a", "b"]],
+  "a[b][c]",                      [[:sget, [:sget, "a", "b"], "c"]],
+  "a.b[c]",                       [[:sget, [:get, "a", "b"], "c"]],
+  "-a[b]",                        [[:neg, [:sget, "a", "b"]]],
+  "a[b] = 42",                    [[:sset, "a", "b", 42]],
+  "a[b][c] = 42",                 [[:sset, [:sget, "a", "b"], "c", 42]],
 ].each_slice(2) do |code, tree|
   describe(code.inspect) do
     before { @code = code }

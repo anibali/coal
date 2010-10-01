@@ -132,9 +132,13 @@ class Ruby
       when :cast
         "VirtMem::Value.create(#{type(tree[2])}, #{expression(tree[1])})"
       when :sto
-        "(#{tree[1]}.store(#{expression tree[2]}))"
+        "#{tree[1]}.store(#{expression tree[2]})"
       when :msto
         "#{tree[1]}.mstore(#{expression(tree[2])})"
+      when :sget
+        "#{tree[1]}[#{expression(tree[2])}]"
+      when :sset
+        "(#{tree[1]}[#{expression(tree[2])}] = #{expression(tree[3])})"
       when :call
         raise 'TODO: ruby translator function calls'
       when :arg

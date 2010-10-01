@@ -1268,7 +1268,7 @@ module CoalTreetop
   end
 
   module Assignment0
-    def member
+    def subscript
       elements[0]
     end
 
@@ -1279,10 +1279,13 @@ module CoalTreetop
 
   module Assignment1
     def tree
-      lhs = member.tree
+      lhs = subscript.tree
       rhs = assignment.tree
       if lhs.is_a? Array and lhs.first == :get
         lhs[0] = :set
+        lhs << rhs
+      elsif lhs.is_a? Array and lhs.first == :sget
+        lhs[0] = :sset
         lhs << rhs
       else
         [:sto, lhs, rhs]
@@ -1291,7 +1294,7 @@ module CoalTreetop
   end
 
   module Assignment2
-    def member
+    def subscript
       elements[0]
     end
 
@@ -1306,7 +1309,7 @@ module CoalTreetop
 
   module Assignment3
     def tree
-      lhs = member.tree
+      lhs = subscript.tree
       op = pre_assign_op.text_value
       if op == ':'
         [:msto, lhs, assignment.tree]
@@ -1314,6 +1317,9 @@ module CoalTreetop
         rhs = [BINARY_SYMS[op], lhs.dup, assignment.tree]
         if lhs.is_a? Array and lhs.first == :get
           lhs[0] = :set
+          lhs << rhs
+        elsif lhs.is_a? Array and lhs.first == :sget
+          lhs[0] = :sset
           lhs << rhs
         else
           [:sto, lhs, rhs]
@@ -1335,7 +1341,7 @@ module CoalTreetop
 
     i0 = index
     i1, s1 = index, []
-    r2 = _nt_member
+    r2 = _nt_subscript
     s1 << r2
     if r2
       r4 = _nt_gap
@@ -1381,7 +1387,7 @@ module CoalTreetop
       r0 = r1
     else
       i9, s9 = index, []
-      r10 = _nt_member
+      r10 = _nt_subscript
       s9 << r10
       if r10
         r12 = _nt_gap
@@ -2911,7 +2917,7 @@ module CoalTreetop
         if r9
           r0 = r9
         else
-          r20 = _nt_member
+          r20 = _nt_subscript
           if r20
             r0 = r20
           else
@@ -2923,6 +2929,118 @@ module CoalTreetop
     end
 
     node_cache[:unary][start_index] = r0
+
+    r0
+  end
+
+  module Subscript0
+    def expression
+      elements[1]
+    end
+
+  end
+
+  module Subscript1
+    def member
+      elements[0]
+    end
+
+  end
+
+  module Subscript2
+    def tree
+      array = member.tree
+      elements[1].elements.each do |elem|
+        index = elem.elements[1].tree
+        array = [:sget, array, index]
+      end
+      array
+    end
+  end
+
+  def _nt_subscript
+    start_index = index
+    if node_cache[:subscript].has_key?(index)
+      cached = node_cache[:subscript][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0 = index
+    i1, s1 = index, []
+    r2 = _nt_member
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        i4, s4 = index, []
+        if has_terminal?('[', false, index)
+          r5 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
+        else
+          terminal_parse_failure('[')
+          r5 = nil
+        end
+        s4 << r5
+        if r5
+          r6 = _nt_expression
+          s4 << r6
+          if r6
+            if has_terminal?(']', false, index)
+              r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
+            else
+              terminal_parse_failure(']')
+              r7 = nil
+            end
+            s4 << r7
+          end
+        end
+        if s4.last
+          r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+          r4.extend(Subscript0)
+        else
+          @index = i4
+          r4 = nil
+        end
+        if r4
+          s3 << r4
+        else
+          break
+        end
+      end
+      if s3.empty?
+        @index = i3
+        r3 = nil
+      else
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+      end
+      s1 << r3
+    end
+    if s1.last
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+      r1.extend(Subscript1)
+      r1.extend(Subscript2)
+    else
+      @index = i1
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      r8 = _nt_member
+      if r8
+        r0 = r8
+      else
+        @index = i0
+        r0 = nil
+      end
+    end
+
+    node_cache[:subscript][start_index] = r0
 
     r0
   end

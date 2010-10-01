@@ -55,6 +55,7 @@ def self.load(ptr, type)
   Value.create type, type.unpack(mem[ptr...ptr + type.size])
 end
 
+# TODO: remove need to pass type
 def self.store(ptr, type, val)
   ptr = Integer(ptr.to_s)
   val = Integer(val.to_s)
@@ -211,6 +212,16 @@ class Pointer < Int
   
   def mstore val
     VirtMem.store(self, @type.ref_type, val)
+  end
+  
+  def [](index)
+    ref_type = @type.ref_type
+    Pointer.new(@type, to_numeric + ref_type.size * index).dereference
+  end
+  
+  def []=(index, val)
+    ref_type = @type.ref_type
+    Pointer.new(@type, to_numeric + ref_type.size * index).mstore(val)
   end
 end
 

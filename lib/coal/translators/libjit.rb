@@ -174,6 +174,13 @@ class LibJIT
           value = value.cast field_type
         end
         ptr.mstore(value, type.offset(field))
+      when :sget # Subscript 'get' with []
+        ptr = expression(tree[1])
+        ptr[expression(tree[2])]
+      when :sset # Subscript 'set' with []=
+        ptr = expression(tree[1])
+        val = expression(tree[3]).cast ptr.type.ref_type
+        ptr[expression(tree[2])] = val
       when :call
         obj_array = tree[1]
         func_name = tree[2]

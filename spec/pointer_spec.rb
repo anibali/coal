@@ -42,6 +42,20 @@ coal_examples [
     [:ret, "x"]
   ],
   42,
+  
+  """
+  int8 x = 0
+  @int8 ptr = @x
+  ptr[0] = 42
+  return(x)
+  """,
+  [
+    [:decl, "int8", "x", 0],
+    [:decl, ["pointer", "int8"], "ptr", [:addr, "x"]],
+    [:sset, "ptr", 0, 42],
+    [:ret, "x"]
+  ],
+  42,
 
 ]
 
