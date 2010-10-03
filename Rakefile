@@ -19,6 +19,8 @@ Burke.setup do |s|
   
   s.clean = %w[.yardoc]
   s.clobber = %w[pkg doc html coverage]
+  
+  s.rspec.ruby_opts = ['-rubygems']
 end
 
 namespace :compile do

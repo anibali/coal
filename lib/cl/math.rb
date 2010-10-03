@@ -1,10 +1,23 @@
-require 'coal'
+module Cl
+  module Math
+    extend Coal::ModuleExt
+    
+    MATH_FUNCTIONS = 
+      %w[
+        acos asin atan atan2 ceil cos cosh exp floor
+        log log rint round sin sinh sqrt tan tanh
+      ] unless defined? MATH_FUNCTIONS
+    
+    def self.libjit_call! trans, name, *args
+      if MATH_FUNCTIONS.include? name.to_s
+        trans.function.math.send name, *args
+      end
+    end
+  end
+end
 
-# TODO: Rename to "FastMath"?
-module Coal::Math
-  include Coal::Power
-  
-  defc 'self.fibonacci', [:uint32], :uint64, <<-'end'
+Coal.module 'Math' do
+  function 'fibonacci', [:uint32], :uint64, <<-'end'
     uint32 n = arg(0)
     uint64 fib_n = 2
 
@@ -26,7 +39,7 @@ module Coal::Math
     return(fib_n)
   end
   
-  defc 'self.factorial', [:uint32], :uint64, <<-'end'
+  function 'factorial', [:uint32], :uint64, <<-'end'
     uint32 n = arg(0)
     uint64 factorial = 1
     uint32 i = 1
@@ -41,7 +54,7 @@ module Coal::Math
   end
   
   # TODO: Include a prime number generator which doesn't suck :)
-  defc 'self.prime', [:uint32], :uint64, <<-'end'
+  function 'prime', [:uint32], :uint64, <<-'end'
     uint32 n = arg(0)
     uint32 cur_n = 0
     uint32 num = 2
@@ -73,67 +86,6 @@ module Coal::Math
     return(ans)
   end
   
-  defc 'self.pow_of_2', [:uint32], :uint64, <<-'end'
-    uint32 n = arg(0)
-    uint64 one = 1
-    
-    return(one << n)
-  end
-end
-
-Coal.module 'MurmurHash2' do
-  # This is a working implementation of MurmurHash2.
-  # Original code at: http://sites.google.com/site/murmurhash/MurmurHash2.cpp
-  function 'hash', [:stringz, :uintn, :uint32], :uint32, <<-'end'
-    @uint8 data = arg(0)
-    uintn len = arg(1)
-    uint32 seed = arg(2)
-    
-    uint32 m = 0x5bd1e995
-    int32 r = 24
-    
-    uint32 h = seed ^ len
-    
-    while(len >= 4)
-    {
-      uint32 k = *data:uint32
-
-      k *= m
-      k ^= k >> r
-      k *= m
-    
-      h *= m
-      h ^= k
-
-      data += 4
-      len -= 4
-    }
-    
-    if(len > 0)
-    {
-      uint32 k = *data:uint32
-      if(len == 3) h ^= k & 0xff0000
-      if(len >= 2) h ^= k & 0x00ff00
-      h ^= k & 0x0000ff
-      h *= m
-    }
-
-    h ^= h >> 13
-    h *= m
-    h ^= h >> 15
-
-    return(h)
-  end
-  
-  # Should always return 2013460684
-  function 'hash_hello', [], :uint32, <<-'end'
-    return(MurmurHash2.hash('hello', 5, 42))
-  end
-end
-
-#puts(Cl::MurmurHash2.hash_hello == 2013460684 ? "Passed hash" : "Failed hash")
-
-Coal.module "Math" do
   self.class "ComplexNumber" do
     fields [
       ['re', :int32],
@@ -176,44 +128,6 @@ Coal.module "Math" do
         
       return(str)
     end
-  end
-end
-
-Coal.module 'Hailstone' do
-  function 'run', [:uint64], :uint64, <<-'end'
-    uint64 n = arg(0)
-    uint64 steps
-    
-    if(n % 2 == 0)
-      steps = Hailstone.even(n, 0)
-    else
-      steps = Hailstone.odd(n, 0)
-    
-    return(steps)
-  end
-  
-  function 'odd', [:uint64, :uint64], :uint64, <<-'end'
-    uint64 n = arg(0)
-    uint64 steps = arg(1)
-    
-    if(n > 1)
-      steps = Hailstone.even(3 * n + 1, steps + 1)
-    
-    return(steps)
-  end
-  
-  function 'even', [:uint64, :uint64], :uint64, <<-'end'
-    uint64 n = arg(0)
-    uint64 steps = arg(1)
-    
-    n /= 2
-    
-    if(n % 2 == 0)
-      steps = Hailstone.even(n, steps + 1)
-    else
-      steps = Hailstone.odd(n, steps + 1)
-    
-    return(steps)
   end
 end
 

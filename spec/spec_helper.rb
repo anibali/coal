@@ -1,6 +1,4 @@
-require 'rubygems'
-$LOAD_PATH << File.join(File.dirname(File.expand_path(__FILE__)), '..', 'lib')
-require 'coal'
+require File.dirname(__FILE__) + "/../lib/coal"
 
 def coal_examples(*args)
   array = args.last
@@ -22,6 +20,21 @@ def coal_examples(*args)
         trans = Coal::Translators::LibJIT.new
         func = trans.compile_func(trans.declare_func([], return_type), tree)
         func.call().should eql(result)
+      end
+    end
+  end
+end
+
+module Spec::Example::Subject::ExampleGroupMethods
+  alias_method :old_its, :its
+  
+  def its attribute, *args, &block
+    if args.empty?
+      old_its attribute, &block
+    else
+      describe("#{attribute}(#{args.map{|a| a.inspect}.join ', '})") do
+        define_method(:subject) { super().send(attribute, *args) }
+        it(&block)
       end
     end
   end

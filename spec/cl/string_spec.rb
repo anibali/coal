@@ -1,4 +1,6 @@
-require File.dirname(__FILE__) + "/../spec_helper"
+require 'spec_helper'
+
+exception = nil
 
 begin
   require 'cl/string'
@@ -12,10 +14,12 @@ begin
     end
   end
 rescue Exception => ex
-  describe 'Coal::String' do
-    it "should not raise exceptions" do
-      raise ex
-    end
+  exception = ex
+end
+
+describe 'Cl::String' do
+  it "should not raise an exception" do
+    raise exception if exception
   end
 end
 

@@ -9,6 +9,10 @@ Module.module_eval do
   end
 end
 
+module Cl
+  CLASSES = {} unless defined? CLASSES
+end
+
 module Coal
   autoload :Power, 'coal/power'
   
@@ -161,58 +165,7 @@ module Coal
       end
     end
   end
-end
-
-module Cl
-  CLASSES = {} unless defined? CLASSES
   
-  module Core
-    extend Coal::ModuleExt
-    
-    C_FUNCTIONS =
-      %w[
-        puts putchar printf sprintf time rand malloc
-        realloc free fprintf fscanf fopen fread fclose
-      ] unless defined? C_FUNCTIONS
-    
-    def self.libjit_call! trans, name, *args
-      if C_FUNCTIONS.include? name.to_s
-        trans.function.c.call_native name, *args
-      end
-    end
-    
-    def self.method_missing name, *args
-      if C_FUNCTIONS.include? name.to_s
-        trans = Coal.translator_class.new
-        if trans.is_a? Coal::Translators::LibJIT
-          JIT::LibC::FUNCTIONS[name.to_sym].first.call *args
-        else
-          raise 'TODO: c function emulation in ruby'
-        end
-      else
-        super
-      end
-    end
-  end
-  
-  module Math
-    extend Coal::ModuleExt
-    
-    MATH_FUNCTIONS = 
-      %w[
-        acos asin atan atan2 ceil cos cosh exp floor
-        log log rint round sin sinh sqrt tan tanh
-      ] unless defined? MATH_FUNCTIONS
-    
-    def self.libjit_call! trans, name, *args
-      if MATH_FUNCTIONS.include? name.to_s
-        trans.function.math.send name, *args
-      end
-    end
-  end
-end
-
-module Coal
   def self.translator_class=(clazz)
     @translator_class = clazz
   end
@@ -296,4 +249,7 @@ begin
 rescue
   Coal.translator_class = Coal::Translators::Ruby
 end
+
+require 'cl/core'
+require 'cl/math'
 
