@@ -5,7 +5,10 @@ begin
   
   describe Cl::Digest do
     describe('murmurhash2("hello", 5, 42)') do
-      subject { Cl::Digest.murmurhash2("hello", 5, 42) }
+      subject do
+        ptr = FFI::MemoryPointer.from_string "hello"
+        Cl::Digest.murmurhash2(ptr, 5, 42)
+      end
       it { should eql 2013460684 }
     end
   end

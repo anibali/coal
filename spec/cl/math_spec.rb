@@ -30,6 +30,11 @@ describe Cl::Math do
     subject { Cl::Math.prime(11) }
     it { should eql(31) }
   end
+  
+  describe ".choose(10, 5)" do
+    subject { Cl::Math.choose(10, 5) }
+    it { should eql(252) }
+  end
 end
 
 describe Cl::Math::ComplexNumber do

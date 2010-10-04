@@ -86,6 +86,22 @@ Coal.module 'Math' do
     return(ans)
   end
   
+  function 'choose', [:uint32, :uint32], :uint64, <<-'end'
+    uint32 n = arg(0)
+    uint32 r = arg(1)
+    if(n - r < r) r = n - r
+    if(r == 0) return(1)
+    uint64 result = n
+    uint32 i = 1
+    while(i < r)
+    {
+      result /= i
+      result *= n - i
+      i += 1
+    }
+    return(result / r)
+  end
+  
   self.class "ComplexNumber" do
     fields [
       ['re', :int32],
