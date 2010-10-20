@@ -1,0 +1,98 @@
+<html>
+<head>
+<link href="styles/main.css" media="screen" rel="stylesheet" type="text/css" />
+</head>
+<body>
+  <div id="centre_pane">
+    <div id="header">
+      <em style="float: right; line-height: 150px; padding-right: 32px; font-size: 130%;">A language within Ruby</em>
+      <h1>Coal</h1>
+    </div>
+    <div id="navigation">
+      <a href="http://dismaldenizen.github.com/coal">Home</a>
+      <a href="http://rubydoc.info/github/dismaldenizen/coal/master/frames">API Docs</a>
+      <a href="http://github.com/dismaldenizen/coal">Source</a>
+    </div>
+    <div id="summary">
+      <img src="images/coal.png" style="float: right;"/>
+      <div id="summary_text">
+        <p>Replace C extensions with a more user-friendly alternative</p>
+        <p>Create super-fast portions of code</p>
+        <p>Make better bindings</p>
+      </div>
+    </div>
+    <div id="content">
+      <p>
+      <strong>Coal</strong> is a dirty, static and fast low-level programming
+      language which is fully integrated with Ruby. It makes use of
+      <a href="http://dotgnu.org/libjit-doc/libjit_toc.html">LibJIT</a>
+      to compile the code at runtime, meaning that users do not need to have
+      a compiler installed.
+      </p>
+      <h2>Why do I need this?</h2>
+      <p>
+      Because it's fast!
+      </p>
+      <p>
+      Ruby is a great language which is easy to read and write, has a great
+      community and is backed by a vast collection of support libraries.
+      Unfortunately, Ruby tends to also be quite slow for certain operations.
+      Coal is an attempt to scratch this itch by allowing Ruby coders to
+      seemlessly drop into a lower-level language when creating certain
+      aspects of their software. The nasty pointer-riddled code can be
+      encapsulated in a function or class and need never be a problem for
+      other developers or users.
+      </p>
+      <p>
+      Let's look at an example. Using pure Ruby, one may define a Fibonacci
+      function as follows:
+      </p>
+      <pre class="code ruby"><span class="keyword">module </span><span class="module">ExtraMath</span>
+  <span class="keyword">def </span><span class="attribute">self</span><span class="punct">.</span><span class="method">fibonacci</span><span class="punct">(</span><span class="ident">n</span><span class="punct">)</span>
+    <span class="keyword">return</span> <span class="ident">n</span> <span class="keyword">if</span> <span class="punct">[</span><span class="number">0</span><span class="punct">,</span> <span class="number">1</span><span class="punct">].</span><span class="ident">include?</span> <span class="ident">n</span>
+    <span class="ident">a</span> <span class="punct">=</span> <span class="number">0</span><span class="punct">;</span> <span class="ident">b</span> <span class="punct">=</span> <span class="number">1</span>
+    <span class="ident">fib_n</span> <span class="punct">=</span> <span class="number">2</span>
+    <span class="punct">(</span><span class="number">2</span><span class="punct">..</span><span class="ident">n</span><span class="punct">).</span><span class="ident">each</span> <span class="keyword">do</span>
+      <span class="ident">fib_n</span> <span class="punct">=</span> <span class="ident">a</span> <span class="punct">+</span> <span class="ident">b</span>
+      <span class="ident">a</span> <span class="punct">=</span> <span class="ident">b</span>
+      <span class="ident">b</span> <span class="punct">=</span> <span class="ident">fib_n</span>
+    <span class="keyword">end</span>
+    <span class="keyword">return</span> <span class="ident">fib_n</span>
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+      <p>
+      Corresponding Coal code looks like this:
+      </p>
+      <pre class="code ruby"><span class="constant">Coal</span><span class="punct">.</span><span class="keyword">module </span><span class="module">&quot;ExtraMath&quot;</span> <span class="ident">do</span>
+  <span class="ident">function</span> <span class="punct">'</span><span class="string">fibonacci</span><span class="punct">',</span> <span class="punct">[</span><span class="symbol">:uint8</span><span class="punct">],</span> <span class="symbol">:uint64</span><span class="punct">,</span> <span class="punct">&lt;&lt;-'</span><span class="constant">end</span><span class="punct">'</span><span class="string">
+    uint8 n = arg(0)
+    uint64 fib_n = 2
+
+    unless(n &lt; 2)
+    {
+      uint64 fib_i_take_2 = 0
+      uint64 fib_i_take_1 = 1
+      uint8 i = 2
+
+      while(i &lt;= n)
+      {
+        fib_n = fib_i_take_2 + fib_i_take_1
+        fib_i_take_2 = fib_i_take_1
+        fib_i_take_1 = fib_n
+        i += 1
+      }
+    }
+
+    return(fib_n)
+</span><span class="constant">  end</span>
+<span class="keyword">end</span>
+</pre>
+      <h2>How does it work?</h2>
+      <p>
+      Blah
+      </p>
+    </div>
+  </div>
+</body>
+</html>

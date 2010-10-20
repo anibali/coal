@@ -1,0 +1,119 @@
+body {
+  margin: 0;
+  background: #999;
+  font-family: sans-serif;
+}
+
+a {
+  color: #149;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+#centre_pane {
+  margin: auto;
+  width: 800px;
+  background: #e3e3da;
+  margin: auto;
+  width: 800px;
+  /* Shadow */
+  -webkit-box-shadow: 2px 2px 10px ;
+  -moz-box-shadow: 2px 2px 10px ;
+  box-shadow: 2px 2px 10px ; 
+  /* Rounded corners */
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px; 
+}
+
+#header {
+  height: 150px;
+  padding-left: 32px;
+}
+
+#header h1 {
+  /* Vertically align text to middle */
+  line-height: 150px;
+  
+  font-size: 250%;
+}
+
+#navigation {
+  background: #333;
+  font-weight: bold;
+  color: white;
+  padding: 16px 8px 16px 8px;
+  font-size: 120%;
+}
+
+#navigation a {
+  color: white;
+  text-decoration: none;
+  padding: 0px 8px 0px 8px;
+}
+
+#navigation a:hover {
+  color: #ffa;
+}
+
+#content {
+  padding: 16px;
+}
+
+#summary {
+  color: white;
+  padding: 16px 32px 16px 32px;
+
+  background: #D66B6B; /* old browsers */
+
+  background: -moz-linear-gradient(top, #D66B6B 0%, #8C3939 100%); /* firefox */
+
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#D66B6B), color-stop(100%,#8C3939)); /* webkit */
+
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#D66B6B', endColorstr='#8C3939',GradientType=0 ); /* ie */
+}
+
+#summary_text {
+  padding: 16px 0px 16px 0px;
+}
+
+pre.code {
+  padding: 16px;
+  color: #f8f8f8;
+  background: #141414;
+  -webkit-border-top-left-radius: 10px;
+  -webkit-border-top-right-radius: 0px;
+  -webkit-border-bottom-right-radius: 10px;
+  -webkit-border-bottom-left-radius: 0px;
+  -moz-border-radius-topleft: 10px;
+  -moz-border-radius-topright: 0px;
+  -moz-border-radius-bottomright: 10px;
+  -moz-border-radius-bottomleft: 0px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 0px; 
+}
+
+/* Styles go with with "syntax" gem */
+.ruby .normal { color: #f8f8f8; }
+.ruby .comment { color: #665f57; font-style: italic; }
+.ruby .keyword { color: #cda869; font-weight: bold; }
+.ruby .method { color: #f8f8f8; }
+.ruby .class { color: #9b859d; }
+.ruby .module { color: #9b859d; }
+.ruby .punct { color: #f8f8f8; }
+.ruby .symbol { color: #cf6a4c; }
+.ruby .string { color: #8f9d6a; }
+.ruby .char { color: #cf6a4c; }
+.ruby .ident { color: #f8f8f8; }
+.ruby .constant { color: #7587a6; }
+.ruby .regex { color: #e9c062; }
+.ruby .number { color: #cf6a4c; }
+.ruby .attribute { color: #7587a6; }
+.ruby .global { color: #7587a6; }
+.ruby .expr { color: #f8f8f8; }
+.ruby .escape { color: #7587a6; }
