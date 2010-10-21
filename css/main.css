@@ -80,7 +80,8 @@ a:hover {
   padding: 16px 0px 16px 0px;
 }
 
-pre.code {
+code.ruby {
+  display: block;
   padding: 16px;
   color: #f8f8f8;
   background: #141414;
@@ -98,22 +99,31 @@ pre.code {
   border-bottom-left-radius: 0px; 
 }
 
-/* Styles go with with "syntax" gem */
-.ruby .normal { color: #f8f8f8; }
-.ruby .comment { color: #665f57; font-style: italic; }
-.ruby .keyword { color: #cda869; font-weight: bold; }
-.ruby .method { color: #f8f8f8; }
-.ruby .class { color: #9b859d; }
-.ruby .module { color: #9b859d; }
-.ruby .punct { color: #f8f8f8; }
-.ruby .symbol { color: #cf6a4c; }
-.ruby .string { color: #8f9d6a; }
-.ruby .char { color: #cf6a4c; }
-.ruby .ident { color: #f8f8f8; }
-.ruby .constant { color: #7587a6; }
-.ruby .regex { color: #e9c062; }
-.ruby .number { color: #cf6a4c; }
-.ruby .attribute { color: #7587a6; }
-.ruby .global { color: #7587a6; }
-.ruby .expr { color: #f8f8f8; }
+.ruby .n { color: #f8f8f8; }
+.ruby .k { color: #cda869; font-weight: bold; }
+.ruby .kp { color: #cda869; }
+.ruby .nn { color: #9b859d; }
+.ruby .nb { color: #cda869; }
+.ruby .o { color: #f8f8f8; }
+.ruby .mf { color: #cf6a4c; }
+.ruby .mh { color: #cf6a4c; }
+.ruby .mi { color: #cf6a4c; }
+.ruby .mo { color: #cf6a4c; }
+.ruby .s1 { color: #8f9d6a; }
+.ruby .s2 { color: #8f9d6a; }
+.ruby .sh { color: #8f9d6a; }
+.ruby .si { color: #8f9d6a; font-weight: bold; }
+.ruby .c { color: #665f57; font-style: italic; }
+.ruby .cm { color: #665f57; font-style: italic; }
+.ruby .cp { color: #665f57; font-style: italic; }
+.ruby .c1 { color: #665f57; font-style: italic; }
+.ruby .no { color: #7587a6; }
+.ruby .sr { color: #e9c062; }
+.ruby .nf { color: #f8f8f8; }
+.ruby .nc { color: #9b859d; }
+.ruby .ss { color: #cf6a4c; }
+.ruby .sc { color: #cf6a4c; }
+.ruby .vi { color: #7587a6; }
+.ruby .vc { color: #7587a6; }
+.ruby .vg { color: #7587a6; }
 .ruby .escape { color: #7587a6; }
