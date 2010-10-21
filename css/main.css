@@ -67,13 +67,11 @@ a:hover {
   color: white;
   padding: 16px 32px 16px 32px;
 
-  background: #D66B6B; /* old browsers */
+  background: #D66B6B; /* for non-css3 browsers */
 
-  background: -moz-linear-gradient(top, #D66B6B 0%, #8C3939 100%); /* firefox */
-
-  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#D66B6B), color-stop(100%,#8C3939)); /* webkit */
-
-  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#D66B6B', endColorstr='#8C3939',GradientType=0 ); /* ie */
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#D66B6B', endColorstr='#8C3939'); /* for IE */
+  background: -webkit-gradient(linear, left top, left bottom, from(#D66B6B), to(#8C3939)); /* for webkit browsers */
+  background: -moz-linear-gradient(top,  #D66B6B,  #8C3939); /* for firefox 3.6+ */
 }
 
 #summary_text {
