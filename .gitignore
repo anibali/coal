@@ -2,5 +2,6 @@ coverage/
 doc/
 .yardoc/
 pkg/
+_site/
 *~
 *.gemspec
