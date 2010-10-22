@@ -57,5 +57,5 @@ than a tenth of the execution time!
 How does it work?
 -----------------
 
-Blah
+Coal interfaces with LibJIT binaries via FFI to generate machine code at runtime.
 
