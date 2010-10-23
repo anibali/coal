@@ -25,7 +25,7 @@ def coal_examples(*args)
   end
 end
 
-module Spec::Example::Subject::ExampleGroupMethods
+module RSpec::Core::Subject::ClassMethods
   alias_method :old_its, :its
   
   def its attribute, *args, &block

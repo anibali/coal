@@ -54,7 +54,7 @@ end
   describe code.inspect do
     it do
       expect {
-        Coal::Parser.new.parse(code)
+        Coal::Parser.parse(code)
       }.to raise_error(Coal::SyntaxError)
     end
   end

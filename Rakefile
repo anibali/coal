@@ -24,10 +24,10 @@ Burke.setup do |s|
 end
 
 namespace :compile do
-  desc 'Compile Treetop grammar into a parser.'
+  desc 'Compile Treetop grammar'
   task :grammar do
-    grammar_file = File.join(*%w[lib coal coal.treetop])
-    output_file = File.join(*%w[lib coal coal_treetop.rb])
+    grammar_file = File.join(*%w[lib coal parser coal.treetop])
+    output_file = File.join(*%w[lib coal parser coal_treetop.rb])
     
     FileUtils.remove(output_file) if File.exists? output_file
     Treetop::Compiler::GrammarCompiler.new.compile(grammar_file, output_file)
