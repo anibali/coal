@@ -1,3 +1,4 @@
+($LOAD_PATH << File.dirname(File.dirname(File.expand_path(__FILE__)))).uniq!
 require 'spec_helper'
 
 exception = nil

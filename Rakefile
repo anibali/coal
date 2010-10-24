@@ -19,6 +19,8 @@ Burke.setup do
   
   clean     %w[.yardoc]
   clobber   %w[pkg doc html coverage]
+  
+  rspec.rcov.failure_threshold 90
 end
 
 namespace :compile do
