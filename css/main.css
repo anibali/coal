@@ -66,6 +66,7 @@ a:hover {
 #summary {
   color: white;
   padding: 16px 32px 16px 32px;
+  height: 175px;
 
   background: #D66B6B; /* for non-css3 browsers */
 
