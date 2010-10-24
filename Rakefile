@@ -5,22 +5,20 @@ require 'fileutils'
 
 Burke.enable_all
 
-Burke.setup do |s|
-  s.name = 'coal'
-  s.summary = "A low-level language which may be embedded in Ruby code"
-  s.author = 'Aiden Nibali'
-  s.email = 'dismal.denizen@gmail.com'
-  s.homepage = 'http://github.com/dismaldenizen/coal'
+Burke.setup do
+  name      'coal'
+  summary   "A low-level language which may be embedded in Ruby code"
+  author    'Aiden Nibali'
+  email     'dismal.denizen@gmail.com'
+  homepage  'http://github.com/dismaldenizen/coal'
   
-  s.dependencies do |d|
+  dependencies do |d|
     d['treetop'] = '~> 1.4'
     d['libjit-ffi'] = '0.0.0'
   end
   
-  s.clean = %w[.yardoc]
-  s.clobber = %w[pkg doc html coverage]
-  
-  s.rspec.ruby_opts = ['-rubygems']
+  clean     %w[.yardoc]
+  clobber   %w[pkg doc html coverage]
 end
 
 namespace :compile do
