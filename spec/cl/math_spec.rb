@@ -36,6 +36,11 @@ describe Cl::Math do
     subject { Cl::Math.choose(10, 5) }
     it { should eql(252) }
   end
+  
+  describe ".inv_sqrt(4.2)" do
+    subject { Cl::Math.inv_sqrt(19.54) }
+    it { should be_close(1.0 / Math.sqrt(19.54), 0.2) }
+  end
 end
 
 describe Cl::Math::ComplexNumber do

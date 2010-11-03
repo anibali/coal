@@ -102,6 +102,23 @@ Coal.module 'Math' do
     return(result / r)
   end
   
+  # See http://www.lomont.org/Math/Papers/2003/InvSqrt.pdf
+  function 'inv_sqrt', [:float32], :float32, <<-'end'
+    float32 x = arg(0)
+    
+    int32 i = *(@x):int32
+    i = 0x5f375a86 - (i >> 1)
+    x = *(@i):float32
+    
+    float32 half_x = x / 2
+    # Yucky. Coal doesn't have float constants yet...
+    float32 three_halves = 3 ; three_halves /= 2
+    
+    x *= three_halves - half_x * x * x # Repeat this step for greater accuracy
+    
+    return(x)
+  end
+  
   self.class "ComplexNumber" do
     fields [
       ['re', :int32],
