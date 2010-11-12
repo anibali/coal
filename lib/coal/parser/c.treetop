@@ -1,0 +1,592 @@
+grammar C
+  include Coal::Nodes
+  
+  rule start
+    translation_unit
+  end
+  
+  rule ws
+    ([\s] / multiline_comment / single_line_comment)+
+  end
+  
+  rule single_line_comment
+    '//' (!"\n" .)+
+  end
+
+  rule multiline_comment
+    '/*' (!'*/' .)* '*/'
+  end
+  
+  ## Identifiers
+  
+  rule identifier
+    [a-zA-Z_] [\w]* <Identifier>
+  end
+  
+  ## Constants
+  
+  rule constant
+    floating_constant
+    / integer_constant
+    / enumeration_constant
+    / character_constant
+  end
+  
+  rule integer_constant
+    decimal_constant integer_suffix? <IntegerConstant>
+    / hexadecimal_constant integer_suffix? <IntegerConstant>
+    / octal_constant integer_suffix? <IntegerConstant>
+  end
+  
+  rule decimal_constant
+    [1-9] [\d]* <DecimalConstant>
+  end
+  
+  rule octal_constant
+    '0' [0-7]* <OctalConstant>
+  end
+  
+  rule hexadecimal_constant
+    '0' [xX] [\da-fA-F]+ <HexadecimalConstant>
+  end
+  
+  rule integer_suffix
+    [uU] [lL]? [lL]?
+    / [lL] [lL]? [uU]?
+  end
+  
+  rule floating_constant
+    hexadecimal_floating_constant
+    / decimal_floating_constant
+  end
+  
+  rule decimal_floating_constant
+    fractional_constant exponent_part? [fFlL]? <DecimalFloatingConstant>
+    / [\d]+ exponent_part [fFlL]? <DecimalFloatingConstant>
+  end
+  
+  rule fractional_constant
+    [\d]* '.' [\d]+
+    / [\d]+ '.'
+  end
+  
+  rule exponent_part
+    [eE] [+-]? [\d]+
+  end
+  
+  rule hexadecimal_floating_constant
+    '0' [xX] hexadecimal_fractional_constant binary_exponent_part [fFlL]? <HexadecimalFloatingConstant>
+    / '0' [xX] [\da-fA-F]+ binary_exponent_part [fFlL]? < HexadecimalFloatingConstant>
+  end
+  
+  rule hexadecimal_fractional_constant
+    [\da-fA-F]* . [\da-fA-F]+
+    / [\da-fA-F]+ .
+  end
+  
+  rule binary_exponent_part
+    [pP] [+-]? [\d]+
+  end
+  
+  rule enumeration_constant
+    identifier
+  end
+  
+  rule character_constant
+    'L'? '\'' ([^'\\\n] / escape_sequence)+ '\'' <CharacterConstant>
+  end
+  
+  rule escape_sequence
+    '\\' ['"\?\\abfnrtv] <EscapeSequence>
+    / '\\' [0-7] [0-7]? [0-7]? <EscapeSequence>
+    / '\\x' [\da-fA-F]+ <EscapeSequence>
+  end
+  
+  ## String literals
+  
+  rule string_literal
+    'L'? '"' ([^"\\\n] / escape_sequence)* '"' <StringLiteral>
+  end
+  
+  # Skipped A.1.7 - 9 (preprocessor stuff)
+  
+  ## Expressions
+  
+  rule primary_expression
+    identifier
+    / constant
+    / string_literal
+    / '(' ws? expression ws? ')' <PrimaryExpression>
+  end
+  
+  rule postfix_expression_start
+    '(' ws? type_name ws? ')' ws? '{' ws? initializer_list ws? (',' ws?)? '}'
+    /
+    primary_expression
+  end
+  
+  rule postfix_expression_end
+    '(' ws? (argument_expression_list ws?)? ')'
+    / '.' ws? identifier
+    / '->' ws? identifier
+    / '++'
+    / '--'
+    / '[' ws? expression ws? ']'
+  end
+  
+  rule postfix_expression
+    postfix_expression_start (ws? postfix_expression_end)+ <PostfixExpression>
+    / postfix_expression_start
+  end
+  
+  rule argument_expression_list
+    assignment_expression (ws? ',' ws? assignment_expression)*
+  end
+  
+  rule unary_expression
+    '++' ws? unary_expression <PrefixIncrement>
+    / '--' ws? unary_expression <PrefixDecrement>
+    / [\&\*\+\-\~\!] ws? cast_expression
+    / 'sizeof' ws? '(' ws? type_name ws? ')' <SizeOf>
+    / 'sizeof' ![\w] ws? unary_expression <SizeOf>
+    / postfix_expression
+  end
+  
+  rule cast_expression
+    '(' ws? type_name ws? ')' ws? cast_expression <CastExpression>
+    /
+    unary_expression
+  end
+  
+  rule multiplicative_expression
+    (cast_expression ws? [\*/%] ws?)+
+      cast_expression <MultiplicativeExpression>
+    / 
+    cast_expression
+  end
+  
+  rule additive_expression
+    (multiplicative_expression ws? [\+\-] ws?)+
+      multiplicative_expression <AdditiveExpression>
+    /
+    multiplicative_expression
+  end
+  
+  rule shift_expression
+    (additive_expression ws? ('<<'/'>>') ws?)+
+      additive_expression <ShiftExpression>
+    /
+    additive_expression
+  end
+  
+  rule relational_expression
+    (shift_expression ws? ('<='/'<'/'>='/'>') ws?)+
+      shift_expression <RelationalExpression>
+    /
+    shift_expression
+  end
+  
+  rule equality_expression
+    (relational_expression ws? ('=='/'!=') ws?)+
+      relational_expression <EqualityExpression>
+    /
+    relational_expression
+  end
+  
+  rule and_expression
+    (equality_expression ws? '&' ws?)+
+      equality_expression <AndExpression>
+    /
+    equality_expression
+  end
+  
+  rule exclusive_or_expression
+    (and_expression ws? '^' ws?)+
+      and_expression <ExclusiveOrExpression>
+    /
+    and_expression
+  end
+  
+  rule inclusive_or_expression
+    (exclusive_or_expression ws? '|' ws?)+
+      exclusive_or_expression <InclusiveOrExpression>
+    /
+    exclusive_or_expression
+  end
+  
+  rule logical_and_expression
+    (inclusive_or_expression ws? '&&' ws?)+
+      inclusive_or_expression <LogicalAndExpression>
+    /
+    inclusive_or_expression
+  end
+  
+  rule logical_or_expression
+    (logical_and_expression ws? '||' ws?)+
+      logical_and_expression <LogicalOrExpression>
+    /
+    logical_and_expression
+  end
+  
+  rule conditional_expression
+    logical_or_expression ws? '?' ws? expression ws?
+      ':' ws? conditional_expression <ConditionalExpression>
+    / 
+    logical_or_expression
+  end
+  
+  rule assignment_expression
+    unary_expression ws? assignment_operator ws?
+      assignment_expression <AssignmentExpression>
+    /
+    conditional_expression
+  end
+  
+  rule assignment_operator
+    '='/'*='/'/='/'%='/'+='/'-='/'<<='/'>>='/'&='/'^='/'|='
+  end
+  
+  rule expression
+    assignment_expression (ws? ',' ws? assignment_expression)+ <ExpressionList>
+    / assignment_expression
+  end
+  
+  rule constant_expression
+    conditional_expression
+  end
+  
+  ## Declarations
+  
+  rule declaration_start
+    declaration_specifier ![\w] ws? declaration_start <DeclarationStart>
+    /
+    declaration_specifier ![\w] ws? init_declarator_list
+  end
+  
+  rule declaration
+    declaration_start ws? ';' <Declaration>
+    /
+    declaration_specifiers ws? ';' <Declaration>
+  end
+  
+  rule declaration_specifier
+    storage_class_specifier
+    /
+    type_qualifier
+    /
+    type_specifier
+    /
+    function_specifier
+  end
+  
+  rule declaration_specifiers
+    declaration_specifier (![\w] ws? declaration_specifiers)? <DeclarationSpecifiers>
+  end
+  
+  rule init_declarator_list
+    init_declarator (ws? ',' ws? init_declarator)*
+  end
+  
+  rule init_declarator
+    declarator ws? '=' ws? initializer <InitDeclarator>
+    / declarator
+  end
+  
+  rule storage_class_specifier
+    'typedef'
+    / 'extern'
+    / 'static'
+    / 'auto'
+    / 'register'
+  end
+  
+  rule type_specifier
+    'void' <VoidTypeSpecifier>
+    / 'char' <CharTypeSpecifier>
+    / 'short' <ShortTypeSpecifier>
+    / 'int' <IntTypeSpecifier>
+    / 'long' <LongTypeSpecifier>
+    / 'float' <FloatTypeSpecifier>
+    / 'double' <DoubleTypeSpecifier>
+    / 'signed' <SignedTypeSpecifier>
+    / 'unsigned' <UnsignedTypeSpecifier>
+    / '_Bool'
+    / '_Complex'
+    / struct_or_union_specifier
+    / enum_specifier
+    / typedef_name
+  end
+  
+  rule struct_or_union_specifier
+    struct_or_union (ws identifier)? ws? '{' ws? struct_declaration_list ws? '}'
+    / struct_or_union ws identifier
+  end
+  
+  rule struct_or_union
+    'struct' / 'union'
+  end
+  
+  rule struct_declaration_list
+    struct_declaration (ws struct_declaration)*
+  end
+  
+  rule struct_declaration
+    specifier_qualifier_list ws struct_declarator_list ws? ';'
+  end
+  
+  rule specifier_qualifier_list
+    type_specifier (ws specifier_qualifier_list)?
+    / type_qualifier (ws specifier_qualifier_list)?
+  end
+  
+  rule struct_declarator_list
+    struct_declarator (ws? ',' ws? struct_declarator)*
+  end
+  
+  rule struct_declarator
+    (declarator ws?)? ':' ws? constant_expression
+    / declarator
+  end
+  
+  rule enum_specifier
+    'enum' (ws identifier)? ws? '{' ws? enumerator_list ws? (',' ws?)? '}'
+    / 'enum' ws identifier
+  end
+  
+  rule enumerator_list
+    enumerator (ws? ',' ws? enumerator)*
+  end
+  
+  rule enumerator
+    enumeration_constant ws? '=' ws? constant_expression
+    / enumeration_constant
+  end
+  
+  rule type_qualifier
+    'const'
+    / 'restrict'
+    / 'volatile'
+  end
+  
+  rule function_specifier
+    'inline'
+  end
+  
+  rule declarator
+    pointer ws? direct_declarator <PointerDeclarator>
+    /
+    direct_declarator
+  end
+  
+  rule direct_declarator_start
+    identifier
+    /
+    '(' ws? declarator ws? ')' <ParenthesizedDeclarator>
+  end
+  
+  rule direct_declarator_end
+    '[' ws? (type_qualifier_list ![\w] ws?)?
+      (assignment_expression ws?)? ']' <ArrayDeclaratorEnd>
+    /
+    '[' ws? 'static' ![\w] ws? (type_qualifier_list ![\w] ws?)?
+      assignment_expression ws? ']' <ArrayDeclaratorEnd>
+    /
+    '[' ws? type_qualifier_list ws 'static' ![\w] ws?
+      assignment_expression ws? ']' <ArrayDeclaratorEnd>
+    /
+    '[' ws? (type_qualifier_list ws?)? '*' ws? ']' <ArrayDeclaratorEnd>
+    /
+    '(' ws? parameter_type_list ws? ')' <FunctionDeclaratorEnd>
+    /
+    '(' ws? (identifier_list ws?)? ')' <FunctionDeclaratorEnd>
+  end
+  
+  rule direct_declarator
+    direct_declarator_start ws? direct_declarator_end+ <DirectDeclarator>
+    /
+    direct_declarator_start
+  end
+  
+  rule pointer
+    '*' ws? type_qualifier_list? ws? pointer
+    /
+    '*' ws? type_qualifier_list?
+  end
+  
+  rule type_qualifier_list
+    type_qualifier (ws type_qualifier)*
+  end
+  
+  rule parameter_type_list
+    parameter_list ws? ',' ws? '...' <VariadicParameterTypeList>
+    / parameter_list
+  end
+  
+  rule parameter_list
+    parameter_declaration (ws? ',' ws? parameter_declaration)*
+  end
+  
+  rule parameter_declaration
+    declaration_specifier ![\w] ws?
+      parameter_declaration <ParameterDeclaration>
+    /
+    declaration_specifier ![\w] ws?
+      (declarator / abstract_declarator) <ParameterDeclaration>
+  end
+  
+  rule identifier_list
+    identifier (ws? ',' ws? identifier)+
+    / identifier
+  end
+  
+  rule type_name
+    specifier_qualifier_list ws? abstract_declarator?
+  end
+  
+  rule abstract_declarator
+    pointer ws? direct_abstract_declarator
+    / pointer
+  end
+  
+  rule direct_abstract_declarator_start
+    '(' ws? abstract_declarator ws? ')'
+  end
+  
+  rule direct_abstract_declarator_end
+    '[' ws? assignment_expression ws? ']'
+    /
+    '[' ws? '*' ws? ']'
+    /
+    '(' ws? (parameter_type_list ws?)? ')'
+  end
+  
+  rule direct_abstract_declarator
+    direct_abstract_declarator_start ws? direct_abstract_declarator_end
+    /
+    direct_abstract_declarator_start
+  end
+  
+  rule typedef_name
+    identifier
+  end
+  
+  rule initializer
+    '{' ws? initializer_list ws? (',' ws?)? '}' <InitializerList>
+    / assignment_expression
+  end
+  
+  rule initializer_list_item
+    (designation ws?)? initializer
+  end
+  
+  rule initializer_list
+    initializer_list_item (ws? ',' ws? initializer_list_item)*
+  end
+  
+  rule designation
+    designator_list ws? '='
+  end
+  
+  rule designator_list
+    designator (ws? designator)*
+  end
+  
+  rule designator
+    '[' ws? constant_expression ws? ']'
+    / '.' ws? identifier
+  end
+  
+  ## Statements
+  
+  rule statement
+    labeled_statement
+    / compound_statement
+    / selection_statement
+    / iteration_statement
+    / jump_statement
+    / expression_statement
+  end
+  
+  rule labeled_statement
+    'case' ![\w] ws? constant_expression ws? ':' ws? statement
+    / 'default' ws? ':' ws? statement
+    / identifier ws? ':' ws? statement
+  end
+  
+  rule compound_statement
+    '{' ws? (block_item_list ws?)? '}' <CompoundStatement>
+  end
+  
+  rule block_item_list
+    block_item (ws? block_item)*
+  end
+  
+  rule block_item
+    statement
+    /
+    declaration
+  end
+  
+  rule expression_statement
+    (expression ws?)? ';' <ExpressionStatement>
+  end
+  
+  rule selection_statement
+    'if' ws? '(' ws? expression ws? ')' ws? statement
+      ws? 'else' ws? statement <IfStatement>
+    /
+    'if' ws? '(' ws? expression ws? ')' ws? statement <IfStatement>
+    /
+    'switch' ws? '(' ws? expression ws? ')' ws? statement
+  end
+  
+  rule iteration_statement
+    'while' ws? '(' ws? expression ws? ')' ws? statement <WhileLoop>
+    /
+    'do' ![\w] ws? statement ws?
+      'while' ws? '(' ws? expression ws? ')' ws? ';' <DoWhileLoop>
+    /
+    'for' ws? '(' ws? (expression ws?)? ';' ws? (expression ws?)? ';' ws? (expression ws?)? ')' ws? statement
+    /
+    'for' ws? '(' ws? declaration ws? (expression ws?)? ';' ws? (expression ws?)? ')' ws? statement
+  end
+  
+  rule jump_statement
+    'goto' ws identifier ws? ';' <GotoStatement>
+    / 'continue' ws? ';' <ContinueStatement>
+    / 'break' ws? ';' <BreakStatement>
+    / 'return' ![\w] (ws? expression)? ws? ';' <ReturnStatement>
+  end
+  
+  ## External definitions
+  
+  rule translation_unit
+    ws? external_declaration (ws? external_declaration)* ws? <TranslationUnit>
+  end
+  
+  rule external_declaration
+    function_definition
+    /
+    declaration
+  end
+  
+  rule function_definition_start
+    declaration_specifier ![\w] ws? function_definition_start <FunctionDefinitionStart>
+    /
+    declaration_specifier ![\w] ws? declarator
+  end
+  
+  rule function_definition
+    function_definition_start ![\w]
+      (ws? declaration_list)? ws? compound_statement <FunctionDefinition>
+  end
+  
+  rule declaration_list
+    declaration (ws? declaration)*
+  end
+  
+  # Preprocessing directives
+  
+  # TODO
+end
+

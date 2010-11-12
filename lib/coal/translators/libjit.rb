@@ -1,267 +1,322 @@
+require 'coal/translators/translator'
 require 'libjit'
 
 module Coal::Translators
-
-class LibJIT
-  attr_reader :function
-  
-  def declare_func param_types, return_type
-    function = nil
-    JIT::Context.default.build do |c|
-      function = JIT::Function.new(param_types, return_type)
-    end
-    function
-  end
-  
-  def compile_func(function, tree)
-    context = JIT::Context.default
+  class LibJIT < Translator
+    attr_reader :namespace, :context
     
-    @function = function
-    @reg = {}
-    
-    begin
-      context.build do |c|
-        @reg[:self] = expression([:arg, 0]) rescue nil
-        statements(tree)
-        @function.compile
-      end
-    rescue Exception => ex
-      context.build_end
-      raise ex
+    def initialize namespace
+      @namespace = namespace
+      @context = JIT::Context.new
+      @prototypes = {}
     end
     
-    @reg = @function = nil
-    
-    function
-  end
-  
-  def statements(tree)
-    tree.each do |e|
-      statement(e)
-    end
-  end
-  
-  def statement(tree)
-    case tree.first
-    when :break
-      @function.break
-    when :ret
-      @function.return(expression(tree[1]))
-    when :decl
-      @reg[tree[2].to_sym] = @function.declare(type tree[1])
-      unless tree[3].nil?
-        @reg[tree[2].to_sym].store expression(tree[3])
-      end
-    when :if
-      branch = @function.if {expression tree[1]}.do {
-        statements tree[2]
-      }
-      unless tree[3].nil?
-        branch.else {
-          statements tree[3]
-        }
-      end
-      branch.end
-    when :unless
-      branch = @function.unless {expression tree[1]}.do {
-        statements tree[2]
-      }.end
-      unless tree[3].nil?
-        branch.else {
-          statements tree[3]
-        }
-      end
-      branch.end
-    when :while
-      @function.while {expression tree[1]}.do {
-        statements tree[2]
-      }.end
-    when :until
-      @function.until {expression tree[1]}.do {
-        statements tree[2]
-      }.end
-    else
-      expression(tree)
-    end
-  end
-  
-  def expression(tree)
-    if tree.is_a? Array
-      case tree.first
-      when :add
-        expression(tree[1]) + expression(tree[2])
-      when :sub
-        expression(tree[1]) - expression(tree[2])
-      when :mul
-        expression(tree[1]) * expression(tree[2])
-      when :div
-        expression(tree[1]) / expression(tree[2])
-      when :mod
-        expression(tree[1]) % expression(tree[2])
-      when :pow
-        expression(tree[1]) ** expression(tree[2])
-      when :bit_and
-        expression(tree[1]) & expression(tree[2])
-      when :bit_xor
-        expression(tree[1]) ^ expression(tree[2])
-      when :bit_or
-        expression(tree[1]) | expression(tree[2])
-      when :lshift
-        expression(tree[1]) << expression(tree[2])
-      when :rshift
-        expression(tree[1]) >> expression(tree[2])
-      when :lt
-        expression(tree[1]) < expression(tree[2])
-      when :lte
-        expression(tree[1]) <= expression(tree[2])
-      when :gt
-        expression(tree[1]) > expression(tree[2])
-      when :gte
-        expression(tree[1]) >= expression(tree[2])
-      when :eq
-        expression(tree[1]).eq expression(tree[2])
-      when :ne
-        expression(tree[1]).ne expression(tree[2])
-      when :and
-        expression(tree[1]).and expression(tree[2])
-      when :xor
-        expression(tree[1]).xor expression(tree[2])
-      when :or
-        expression(tree[1]).or expression(tree[2])
-      when :not
-        expression(tree[1]).not
-      when :bit_neg
-        ~expression(tree[1])
-      when :neg
-        if tree[1].is_a? Fixnum
-          # Small optimisation. Creates a negative constant rather than
-          # creating a positive constant then negating it
-          expression -tree[1]
+    def translate root_node
+      root_node.items.each do |item|
+        if item.is_a? FunctionDefinition
+          function(item)
         else
-          -expression(tree[1])
+          assert_type item, Declaration
+          
+          if item.inits[0].is_a? DirectDeclarator and item.inits[0].suffixes[0].is_a? FunctionDeclaratorEnd
+            specifiers = item.specifiers
+            declarator = item.inits[0]
+            prototype(specifiers, declarator)
+          else
+            raise "TODO: support global declarations"
+          end
         end
-      when :deref
-        if tree[2].nil?
-          expression(tree[1]).dereference
-        else
-          expression(tree[1]).dereference(type(tree[2]))
-        end
-      when :addr
-        expression(tree[1]).address
-      when :cast
-        expression(tree[1]).cast type(tree[2])
-      when :sto
-        variable(tree[1]).store expression(tree[2])
-      when :msto
-        ptr = variable(tree[1])
-        ptr.mstore expression(tree[2]).cast(ptr.type.ref_type)
-      when :get
-        ptr = expression(tree[1])
-        type = ptr.type.ref_type
-        field = tree[2]
-        field_index = type.find_field(field)
-        if [field_index].pack('L_').unpack('l_').first == -1
-          raise "'#{tree[1]}' does not have a field called '#{field}'"
-        end
-        ptr.mload(type.offset(field_index), type.field_type(field_index))
-      when :set
-        ptr = expression(tree[1])
-        type = ptr.type.ref_type
-        field = tree[2]
-        field_type = type.field_type(field)
-        value = expression(tree[3])
-        if value.type.jit_t != field_type.jit_t
-          value = value.cast field_type
-        end
-        ptr.mstore(value, type.offset(field))
-      when :sget # Subscript 'get' with []
-        ptr = expression(tree[1])
-        ptr[expression(tree[2])]
-      when :sset # Subscript 'set' with []=
-        ptr = expression(tree[1])
-        val = expression(tree[3]).cast ptr.type.ref_type
-        ptr[expression(tree[2])] = val
-      when :call
-        obj_array = tree[1]
-        func_name = tree[2]
-        args = arguments(tree[3])
-        obj = nil
+      end
+    end
+    
+    def function(node)
+      assert_type node, FunctionDefinition
+      
+      proto = prototype(node.declaration_specifiers, node.declarator)
+      @namespace.add_function! proto.name do
+        compile_function(proto, node.statements)
+        proto.function
+      end
+    end
+    
+    def prototype(specifiers, declarator)
+      proto = Prototype.new(self, specifiers, declarator)
+      # TODO: combine prototypes (make sure param names are there, etc)
+      # rather than keeping first prototype as concrete
+      @prototypes[proto.name] ||= proto
+    end
+    
+    class Prototype
+      include Coal::Nodes
+      
+      attr_reader :name, :param_names, :function
+      
+      def initialize trans, specifiers, declarator
+        trans.assert_type declarator, DirectDeclarator
         
-        if @reg.key? obj_array.first.to_sym
-          instance = @reg[obj_array.first.to_sym]
-          obj = Cl::CLASSES[instance.type.ref_type.jit_t.address]
-          args.insert(0, instance)
+        # TODO: support other declarator types
+        trans.assert_type declarator.stem, Identifier
+        @name = String(declarator.stem.name)
+        
+        param_types = []
+        @param_names = []
+        if declarator.suffixes.one?
+          suffix = declarator.suffixes[0]
+          trans.assert_type suffix, FunctionDeclaratorEnd
+          
+          if suffix.parameter_declarations.nil?
+            unless suffix.identifiers.empty?
+              raise "identifier-list style function definitions not supported yet"
+            end
+          else
+            trans.assert_type suffix.parameter_declarations, Array
+            suffix.parameter_declarations.each do |decl|
+              trans.assert_type decl, ParameterDeclaration
+              param_types << trans.declaration_specifiers(decl.declaration_specifiers)
+              trans.assert_type decl.declarator, Identifier
+              @param_names << decl.declarator.name
+            end
+          end
         else
-          obj = Cl
-          obj_array.each { |e| obj = obj.const_get(e) }
+          raise "can't understand function definitions with multiple suffixes"
         end
         
-        obj.libjit_call! self, func_name, *args
-      when :arg
-        @function.arg(tree[1])
-      when :strz
-        @function.stringz(tree[1])
+        trans.assert_type specifiers, Array
+        return_type = trans.declaration_specifiers(specifiers)
+        
+        trans.context.build do
+          @function = trans.context.function(param_types, return_type)
+        end
+      end
+    end
+    
+    def compile_function(proto, statements)
+      assert_type proto, Prototype
+      
+      @reg = {}
+      
+      begin
+        @context.build do |c|
+          @function = proto.function
+          proto.param_names.each_with_index do |name, i|
+            @reg[name] = @function.arg(i)
+          end
+          statements(statements)
+          @function.compile
+        end
+      rescue Exception => ex
+        @context.build_end
+        raise ex
+      end
+      
+      @reg = @function = nil
+    end
+    
+    def statements(array)
+      array.each do |node|
+        statement(node)
+      end
+    end
+    
+    def statement(node)
+      case node
+      when CompoundStatement
+        statements(node.statements)
+      when ExpressionStatement
+        expression(node.expression)
+      when IfStatement
+        part = @function.if { expression(node.condition) }.do {
+          statement(node.then_statement)
+        }
+        if node.else_statement.nil?
+          part.end
+        else
+          part.else { statement(node.else_statement) }.end
+        end
+      when WhileLoop
+        @function.while { expression(node.condition) }.do {
+          statement(node.statement)
+        }.end
+      when ReturnStatement
+        @function.return(expression(node.expression))
+      when Declaration
+        declaration(node)
       else
-        # Oops!
-        raise "Can't translate expression: #{tree.inspect}"
+        raise "unrecognised statement node: #{node}"
       end
-    else
-      if tree.is_a? Integer
-        @function.const(tree, (tree < 0 ? :int64 : :uint64))
-      elsif [true, false].include? tree
-        if tree
-          @function.true
-        else
-          @function.false
+    end
+    
+    def declaration(node)
+      type = declaration_specifiers(node.specifiers)
+      node.inits.each do |init|
+        declarator = init.is_a?(InitDeclarator) ? init.declarator : init
+        # TODO: support other declarator types
+        assert_type declarator, Identifier
+        name = String(declarator.name)
+        @reg[name] = @function.declare(type)
+        if init.is_a? InitDeclarator
+          if init.initializer.is_a? InitializerList
+            raise "TODO: initializer lists"
+          else
+            @reg[name].store expression(init.initializer)
+          end
         end
-      elsif tree.is_a? String
-        variable(tree)
       end
     end
-  end
-  
-  def arguments(tree)
-    tree.map do |arg|
-      expression(arg)
-    end
-  end
-  
-  def type(tree)
-    if tree.first == :class
-      tree = tree[1..-1]
-      obj = Cl
-      tree.each do |e|
-        obj = obj.const_get(e)
+    
+    def expression(node)
+      case node
+      when IntegerConstant
+        integer_constant(node)
+      when Identifier
+        var = @reg[node.name]
+        raise "undeclared variable '#{node.name}'" if var.nil?
+        var
+      when PrimaryExpression
+        expression(node.expression)
+      when LTRBinaryExpression
+        ltr_binary_expression(node)
+      when AssignmentExpression
+        if node.operator == '='
+          expression(node.lvalue).store expression(node.rvalue)
+        else
+          lvalue = expression(node.lvalue)
+          rvalue = lvalue.send node.operator[0].chr, expression(node.rvalue)
+          lvalue.store rvalue
+        end
+      when ExpressionList
+        node.expressions.inject(nil) do |_, expr|
+          expression(expr)
+        end
+      else
+        raise "unrecognised expression node: #{node}"
       end
-      JIT::Type.create(:pointer, obj.struct_type)
-    elsif tree.to_s == 'stringz'
-      JIT::Type.create(:pointer, :uint8)
-    else
-      JIT::Type.create(*tree)
-    end
-  end
-  
-  def variable(tree)
-    var = @reg[tree.to_sym]
-    raise Coal::UndeclaredVariableError.new(tree) if var.nil?
-    return var
-  end
-  
-  def create_struct_type(fields)
-    names = []
-    types = []
-    
-    fields.each do |field|
-      names << field.first
-      types << type(field[1..-1])
     end
     
-    st = JIT::StructType.new *types
-    st.field_names = names
+    def ltr_binary_expression(node)
+      assert_type node, LTRBinaryExpression
+      
+      ops = node.operations.dup
+      a = expression(ops.slice! 0)
+      until ops.empty?
+        operator, b = *ops.slice!(0..2)
+        b = expression(b)
+        a = case operator
+        when *%w[* / % + - << >> < <= > >= & | ^]
+          a.send(operator, b)
+        when '=='
+          a.eq b
+        when '!='
+          a.ne b
+        when '||'
+          a.or b
+        when '&&'
+          a.and b
+        else
+          raise "unrecognised left-to-right binary operator: #{operator}"
+        end
+      end
+      a
+    end
     
-    return st
-  end
-end
-
-end
+    def declaration_specifiers(array)
+      type_specifiers array.select {|s| s.is_a? TypeSpecifier}
+    end
+    
+    def type_specifiers(array)
+      array.each do |e|
+        assert_type e, TypeSpecifier
+      end
+      array = array.map {|s| s.text_value}.sort
+      
+      hash = {}
+      [
+        ['void', :void],
+        ['char', :int8],
+        ['signed char', :int8],
+        ['unsigned char', :uint8],
+        ['short', 'signed short', 'short int', 'signed short int', :int16],
+        ['unsigned short', 'unsigned short int', :uint16],
+        ['int', 'signed', 'signed int', :int32],
+        ['unsigned', 'unsigned int', :uint32],
+        ['long', 'signed long', 'long int', 'signed long int', :intn],
+        ['unsigned long', 'unsigned long int', :uintn],
+        ['long long', 'signed long long', 'long long int',
+          'signed long long int', :int64],
+        ['unsigned long long', 'unsigned long long int', :uint64],
+        ['float', :float32],
+        ['double', :float64],
+        ['long double', :floatn],
+        ['_Bool', :bool],
+      ].each do |a|
+        a[0..-2].each do |k|
+          hash[k.split.sort] = a.last
+        end
+      end
+      type = hash[array]
+      raise "unrecognised type: #{array.join ' '}" if type.nil?
+      type
+    end
+    
+    def integer_constant(node)
+      assert_type node, IntegerConstant
+      
+      native_bits = JIT::Type.create(:uintn).size * 8
+      base = node.base
+      value = node.value
+      type = case node.suffix.sort
+      when ['ll', 'u']
+        :uint64
+      when ['ll']
+        if base == 10 or value < 2 ** 63
+          :int64
+        else
+          :uint64
+        end
+      when ['l', 'u']
+        if value < 2 ** native_bits
+          :uintn
+        else
+          :uint64
+        end
+      when ['l']
+        if value < 2 ** (native_bits - 1)
+          :intn
+        elsif base != 10 and value < 2 ** native_bits
+          :uintn
+        elsif base == 10 or value < 2 ** 63
+          :int64
+        else
+          :uint64
+        end
+      when ['u']
+        if value < 2 ** 32
+          :uint32
+        elsif value < 2 ** native_bits
+          :uintn
+        else
+          :uint64
+        end
+      when []
+        if value < 2 ** 31
+          :int32
+        elsif base != 10 and value < 2 ** 32
+          :uint32
+        elsif value < 2 ** (native_bits - 1)
+          :intn
+        elsif base != 10 and value < 2 ** native_bits
+          :uintn
+        elsif base == 10 or value < 2 ** 63
+          :int64
+        else
+          :uint64
+        end
+      else
+        raise "unrecognised integer constant suffix: #{node.suffix.inspect}"
+      end
+      @function.const(value, type)
+    end
+    
+  end # End class LibJIT
+end # End module Coal::Translators
 

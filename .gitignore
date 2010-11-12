@@ -3,5 +3,6 @@ doc/
 .yardoc/
 pkg/
 _site/
+_dev/
 *~
 *.gemspec

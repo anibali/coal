@@ -1,9 +1,3 @@
---readme
-README.md
---markup
-markdown
---files
-LICENSE
 --exclude
 lib/coal/coal_treetop.rb
 --exclude
