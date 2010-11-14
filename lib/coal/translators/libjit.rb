@@ -176,6 +176,12 @@ module Coal::Translators
         var
       when PrimaryExpression
         expression(node.expression)
+      when PrefixIncrement
+        lvalue = expression(node.operand)
+        lvalue.store(lvalue + @function.const(1, :intn))
+      when PrefixDecrement
+        lvalue = expression(node.operand)
+        lvalue.store(lvalue - @function.const(1, :intn))
       when LTRBinaryExpression
         ltr_binary_expression(node)
       when ConditionalExpression
