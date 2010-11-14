@@ -168,6 +168,8 @@ module Coal::Translators
       case node
       when IntegerConstant
         integer_constant(node)
+      when FloatingConstant
+        floating_constant(node)
       when Identifier
         var = @reg[node.name]
         raise "undeclared variable '#{node.name}'" if var.nil?
@@ -176,6 +178,27 @@ module Coal::Translators
         expression(node.expression)
       when LTRBinaryExpression
         ltr_binary_expression(node)
+      when ConditionalExpression
+        # TODO: Somehow do this with only one if statement
+        t = f = nil
+        cond = expression(node.condition)
+        
+        @function.if { cond }.do {
+          t = expression(node.true_expression)
+        }.else {
+          f = expression(node.false_expression)
+        }.end
+        
+        type = t.type.size < f.type.size ? f.type : t.type
+        tmp = @function.declare type
+        
+        @function.if { cond }.do {
+          tmp.store t
+        }.else {
+          tmp.store f
+        }.end
+        
+        tmp
       when AssignmentExpression
         if node.operator == '='
           expression(node.lvalue).store expression(node.rvalue)
@@ -314,6 +337,23 @@ module Coal::Translators
       else
         raise "unrecognised integer constant suffix: #{node.suffix.inspect}"
       end
+      @function.const(value, type)
+    end
+    
+    def floating_constant(node)
+      value = node.value
+      
+      type = case node.suffix
+        when 'f'
+          :float32
+        when 'l'
+          :floatn
+        when nil, ""
+          :float64
+        else
+          raise "unrecognised floating constant suffix: #{node.suffix}"
+      end
+      
       @function.const(value, type)
     end
     

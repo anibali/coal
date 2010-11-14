@@ -98,15 +98,9 @@ module Coal
       attr_reader :suffix
       
       def init e
-        @suffix = []
+        @suffix = nil
         unless e.last.empty?
-          suffix_str = e.last.text_value.downcase
-          if suffix_str.include? 'f'
-            @suffix << 'f'
-          end
-          if suffix_str.include? 'l'
-            @suffix << 'l'
-          end
+          @suffix = e.last.text_value.downcase
         end
       end
     end
