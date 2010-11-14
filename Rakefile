@@ -34,10 +34,3 @@ end
 
 task :cucumber => ['compile:grammar']
 
-task :run  => ['compile:grammar'] do
-  $:.unshift File.join(File.dirname(File.expand_path(__FILE__)),'lib')
-  require 'coal'
-  require 'samples/collatz'
-  puts Cl.collatz(27)
-end
-

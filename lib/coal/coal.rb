@@ -30,7 +30,7 @@ module Coal
       parser = Parser.new
       root_node = parser.parse code
       if root_node.nil?
-        $stderr.puts parser.failure_reason
+        raise parser.failure_reason
       else
         translate! root_node
       end
