@@ -206,8 +206,33 @@ module Coal
       end
     end
     
+    class PostfixFunctionCall < BaseNode
+      attr_reader :arguments
+      
+      def init e
+        @arguments = []
+        unless e[2].empty?
+          @arguments = Helper.comma_separated_list e[2][0]
+        end
+      end
+    end
+    
+    class PostfixMember < BaseNode ; end
+    class PostfixPointerMember < BaseNode ; end
+    class PostfixIncrement < BaseNode ; end
+    class PostfixDecrement < BaseNode ; end
+    class PostfixSubscript < BaseNode ; end
+    
     class PostfixExpression < BaseNode
-      # TODO
+      attr_reader :operand, :suffixes
+      
+      def init e
+        @operand = e[0]
+        @suffixes = []
+        e[1].each do |sub|
+          @suffixes << sub[1]
+        end
+      end
     end
     
     class UnaryExpression < BaseNode

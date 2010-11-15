@@ -16,7 +16,6 @@ module Coal
     def self.extended(sub)
       sub.module_eval do
         @functions = {}
-        @function_builders = {}
         @translator = Translators::LibJIT.new(self)
       end
     end
@@ -36,16 +35,14 @@ module Coal
       end
     end
     
-    # Accepts the function name and a block which produces the function
-    def add_function! name, &block
-      if @function_builders.key? name
-        raise "function already defined: '#{name}'"
-      end
-      @function_builders[name] = block
+    def add_function! name, function
+      raise "function already added: '#{name}'" if @functions.key? name
+      @functions[name] = function
       module_exec name do |name|
         self.class.send :define_method, name do |*args|
-          @functions[name] ||= @function_builders[name].call
-          @functions[name].call(*args)
+          func = @functions[name]
+          @translator.prepare_function func
+          func.call(*args)
         end
       end
     end

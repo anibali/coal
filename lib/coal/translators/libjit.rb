@@ -9,6 +9,7 @@ module Coal::Translators
       @namespace = namespace
       @context = JIT::Context.new
       @prototypes = {}
+      @function_deps = {}
     end
     
     def translate root_node
@@ -33,9 +34,37 @@ module Coal::Translators
       assert_type node, FunctionDefinition
       
       proto = prototype(node.declaration_specifiers, node.declarator)
-      @namespace.add_function! proto.name do
-        compile_function(proto, node.statements)
-        proto.function
+      
+      @reg = {}
+      
+      begin
+        @context.build do |c|
+          @function = proto.function
+          @function_deps[@function] = []
+          proto.param_names.each_with_index do |name, i|
+            @reg[name] = @function.arg(i)
+          end
+          statements(node.statements)
+        end
+      rescue Exception => ex
+        @context.build_end
+        raise ex
+      end
+      
+      @reg = @function = nil
+      
+      @namespace.add_function! proto.name, proto.function
+    end
+    
+    # Prepare a function for calling
+    def prepare_function function
+      unless function.compiled?
+        # Prepare each other function which may be called by this function
+        @function_deps[function].each do |f|
+          prepare_function f
+        end
+        # Compile the function unless it is already compiled
+        function.compile
       end
     end
     
@@ -88,28 +117,6 @@ module Coal::Translators
           @function = trans.context.function(param_types, return_type)
         end
       end
-    end
-    
-    def compile_function(proto, statements)
-      assert_type proto, Prototype
-      
-      @reg = {}
-      
-      begin
-        @context.build do |c|
-          @function = proto.function
-          proto.param_names.each_with_index do |name, i|
-            @reg[name] = @function.arg(i)
-          end
-          statements(statements)
-          @function.compile
-        end
-      rescue Exception => ex
-        @context.build_end
-        raise ex
-      end
-      
-      @reg = @function = nil
     end
     
     def statements(array)
@@ -176,6 +183,22 @@ module Coal::Translators
         var
       when PrimaryExpression
         expression(node.expression)
+      when PostfixExpression
+        node.suffixes.inject(node.operand) do |operand, suffix|
+          case suffix
+          when PostfixFunctionCall
+            if operand.is_a? Identifier
+              proto = @prototypes[String(operand.name)]
+              @function_deps[@function] << proto.function
+              args = suffix.arguments.map {|arg| expression(arg)}
+              @function.call_other proto.function, *args
+            else
+              raise "calling function pointers currently unsupported"
+            end
+          else
+            raise "unrecognised postfix expression suffix: #{suffix}"
+          end
+        end
       when PrefixIncrement
         lvalue = expression(node.operand)
         lvalue.store(lvalue + @function.const(1, :intn))
@@ -228,7 +251,7 @@ module Coal::Translators
       ops = node.operations.dup
       a = expression(ops.slice! 0)
       until ops.empty?
-        operator, b = *ops.slice!(0..2)
+        operator, b = *ops.slice!(0..1)
         b = expression(b)
         a = case operator
         when *%w[* / % + - << >> < <= > >= & | ^]

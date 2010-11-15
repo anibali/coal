@@ -26,6 +26,14 @@ describe 'Probability' do
     it { Probability.choose(10, 5).should == 252 }
   end
   
+  it "should add the 'binom_pdf' method" do
+    Probability.should respond_to :choose
+  end
+  
+  describe ".binom_pdf(2, 0.5, 0)" do
+    it { Probability.binom_pdf(2, 0.5, 0).should be_within(1e-4).of(0.25) }
+  end
+  
   after(:all) do
     Coal.namespace = Cl
   end

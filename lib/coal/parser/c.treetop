@@ -126,12 +126,12 @@ grammar C
   end
   
   rule postfix_expression_end
-    '(' ws? (argument_expression_list ws?)? ')'
-    / '.' ws? identifier
-    / '->' ws? identifier
-    / '++'
-    / '--'
-    / '[' ws? expression ws? ']'
+    '(' ws? (argument_expression_list ws?)? ')' <PostfixFunctionCall>
+    / '.' ws? identifier <PostfixMember>
+    / '->' ws? identifier <PostfixPointerMember>
+    / '++' <PostfixIncrement>
+    / '--' <PostfixDecrement>
+    / '[' ws? expression ws? ']' <PostfixSubscript>
   end
   
   rule postfix_expression

@@ -19,3 +19,25 @@ int choose(int n, int r)
   
   return result / r;
 }
+
+/* Really dodgy power function */
+/* TODO: replace with an import */
+float pow(float base, int index)
+{
+  float value = 1.0f;
+  while(index > 0)
+  {
+    value *= base;
+    --index;
+  }
+  return value;
+}
+
+/*
+ * See http://algorithm.isgreat.org/doku.php?id=binomial_pdf for more details.
+ */
+float binom_pdf(int n, float p, int r)
+{
+  return choose(n, r) * pow(p, r) * pow(1 - p, n - r);
+}
+

@@ -2207,7 +2207,7 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+      r1 = instantiate_node(PostfixFunctionCall,input, i1...index, s1)
       r1.extend(PostfixExpressionEnd1)
     else
       @index = i1
@@ -2239,7 +2239,7 @@ module C
         end
       end
       if s11.last
-        r11 = instantiate_node(SyntaxNode,input, i11...index, s11)
+        r11 = instantiate_node(PostfixMember,input, i11...index, s11)
         r11.extend(PostfixExpressionEnd2)
       else
         @index = i11
@@ -2271,7 +2271,7 @@ module C
           end
         end
         if s16.last
-          r16 = instantiate_node(SyntaxNode,input, i16...index, s16)
+          r16 = instantiate_node(PostfixPointerMember,input, i16...index, s16)
           r16.extend(PostfixExpressionEnd3)
         else
           @index = i16
@@ -2281,7 +2281,7 @@ module C
           r0 = r16
         else
           if has_terminal?('++', false, index)
-            r21 = instantiate_node(SyntaxNode,input, index...(index + 2))
+            r21 = instantiate_node(PostfixIncrement,input, index...(index + 2))
             @index += 2
           else
             terminal_parse_failure('++')
@@ -2291,7 +2291,7 @@ module C
             r0 = r21
           else
             if has_terminal?('--', false, index)
-              r22 = instantiate_node(SyntaxNode,input, index...(index + 2))
+              r22 = instantiate_node(PostfixDecrement,input, index...(index + 2))
               @index += 2
             else
               terminal_parse_failure('--')
@@ -2342,7 +2342,7 @@ module C
                 end
               end
               if s23.last
-                r23 = instantiate_node(SyntaxNode,input, i23...index, s23)
+                r23 = instantiate_node(PostfixSubscript,input, i23...index, s23)
                 r23.extend(PostfixExpressionEnd4)
               else
                 @index = i23

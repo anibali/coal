@@ -8,11 +8,12 @@ I want to witness the parsing of C-style expressions
     Then it should parse successfully
     
     Examples:
-      | code      |
-      | 1++       |
-      | foo++--   |
-      | foo->bar  |
-      | point.x   |
+      | code              |
+      | 1++               |
+      | foo++--           |
+      | foo->bar          |
+      | point.x           |
+      | aphex[t](w)[i](n) |
     
     Scenario Outline: Invalid postfix expressions
       When I feed the parser an invalid postfix_expression, <code>
