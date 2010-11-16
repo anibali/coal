@@ -10,7 +10,7 @@ describe 'Probability' do
     
     begin
       require 'c_files/probability'
-    rescue Exception => @exception
+    #rescue Exception => @exception
     end
   end
   
@@ -30,8 +30,8 @@ describe 'Probability' do
     Probability.should respond_to :choose
   end
   
-  describe ".binom_pdf(2, 0.5, 0)" do
-    it { Probability.binom_pdf(2, 0.5, 0).should be_within(1e-4).of(0.25) }
+  describe ".binom_pdf(10, 0.3, 5)" do
+    it { Probability.binom_pdf(10, 0.3, 5).should be_within(1e-6).of(0.1029193) }
   end
   
   after(:all) do

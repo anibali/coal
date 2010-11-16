@@ -27,7 +27,7 @@ namespace :compile do
     grammar_file = File.join(*%w[lib coal parser c.treetop])
     output_file = File.join(*%w[lib coal parser treetop_parser.rb])
     
-    FileUtils.remove(output_file) if File.exists? output_file
+    rm output_file if File.exists? output_file
     Treetop::Compiler::GrammarCompiler.new.compile(grammar_file, output_file)
   end
 end

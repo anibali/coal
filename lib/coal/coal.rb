@@ -20,22 +20,29 @@ module Coal
       end
     end
     
-    def translate! root_node
-      @translator.translate root_node
-    end
-    
     def load! file
       code = File.read(file)
       parser = Parser.new
-      root_node = parser.parse code
-      if root_node.nil?
-        raise parser.failure_reason
+      
+      parser.root = 'preprocessing_file'
+      node = parser.parse code
+      if node.nil?
+        raise "Preprocessor syntax error:\n#{parser.failure_reason}"
       else
-        translate! root_node
+        code = @translator.preprocess node
+      end
+      
+      parser.root = 'translation_unit'
+      node = parser.parse code
+      if node.nil?
+        raise "Syntax error:\n#{parser.failure_reason}"
+      else
+        @translator.translate node
       end
     end
     
     def add_function! name, function
+      name = String(name)
       raise "function already added: '#{name}'" if @functions.key? name
       @functions[name] = function
       module_exec name do |name|

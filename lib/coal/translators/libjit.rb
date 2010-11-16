@@ -12,6 +12,58 @@ module Coal::Translators
       @function_deps = {}
     end
     
+    def preprocess node
+      code = ""
+      
+      unless node[1].empty?
+        group_parts = Helper.spaced_list(node[1][0])
+        group_parts.each do |gp|
+          case gp
+          when TextLine
+            code << gp.text_value
+          when IncludeDirective
+            if gp.tokens.one? and gp.tokens.first.is_a? HeaderName
+              header_name = gp.tokens.first.name
+              # TODO: formulate a nice way of doing this kind of thing, move
+              # this elsewhere
+              if header_name == "math.h"
+                [
+                  [
+                    "pow", [:float64, :float64], :float64, lambda do |f|
+                      f.return(f.arg(0) ** f.arg(1))
+                    end
+                  ],[
+                    "powf", [:float32, :float32], :float32, lambda do |f|
+                      f.return(f.arg(0) ** f.arg(1))
+                    end
+                  #],[
+                  #  "powl", [:floatn, :floatn], :floatn, lambda do |f|
+                  #    f.return(f.arg(0) ** f.arg(1))
+                  #  end
+                  ]
+                ].each do |name, param_types, return_type, llama|
+                  proto = Prototype.allocate
+                  proto.instance_variable_set :@name, name
+                  func = @context.build_function param_types, return_type, &llama
+                  proto.instance_variable_set :@function, func
+                  
+                  @prototypes[proto.name] = proto
+                  @function_deps[proto.function] = []
+                  @namespace.add_function! proto.name, proto.function
+                end
+              end
+            else
+              raise "unsupported preprocessor directive: #{gp.text_value.strip}"
+            end
+          else
+            raise "unsupported preprocessor directive: #{gp.text_value.strip}"
+          end
+        end
+      end
+      
+      return code
+    end
+    
     def translate root_node
       root_node.items.each do |item|
         if item.is_a? FunctionDefinition

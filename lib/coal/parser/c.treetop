@@ -108,8 +108,6 @@ grammar C
     'L'? '"' ([^"\\\n] / escape_sequence)* '"' <StringLiteral>
   end
   
-  # Skipped A.1.7 - 9 (preprocessor stuff)
-  
   ## Expressions
   
   rule primary_expression
@@ -585,8 +583,73 @@ grammar C
     declaration (ws? declaration)*
   end
   
-  # Preprocessing directives
+  ################
+  # Preprocessor #
+  ################
   
-  # TODO
+  rule gap
+    [\t ]+
+  end
+  
+  rule preprocessing_token
+    header_name
+    /
+    identifier
+    #/
+    #pp_number
+    /
+    character_constant
+    /
+    string_literal
+    #/
+    #punctuator
+    /
+    [^\s]
+  end
+  
+  # Skipped A.1.7
+  
+  rule header_name
+    '<' gap? [^>]+ gap? '>' <AngledHeaderName>
+    /
+    '"' gap? [^"]+ gap? '"' <QuotedHeaderName> #'Quoted header
+  end
+  
+  # Skipped A.1.9
+  
+  rule preprocessing_file
+    ws? (group ws?)?
+  end
+  
+  rule group
+    group_part (ws? group_part)*
+  end
+  
+  rule group_part
+    #if_section
+    #/
+    control_line
+    #/
+    #'#' gap? non_directive
+    /
+    text_line
+  end
+  
+  # ...
+  
+  rule control_line
+    '#' gap? 'include' gap? pp_tokens gap? "\n" <IncludeDirective>
+    # ...
+  end
+  
+  rule text_line
+    pp_tokens gap? "\n" <TextLine>
+  end
+  
+  # ...
+  
+  rule pp_tokens
+    preprocessing_token (gap? preprocessing_token)*
+  end
 end
 

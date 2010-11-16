@@ -11041,6 +11041,646 @@ module C
     r0
   end
 
+  def _nt_gap
+    start_index = index
+    if node_cache[:gap].has_key?(index)
+      cached = node_cache[:gap][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    s0, i0 = [], index
+    loop do
+      if has_terminal?('\G[\\t ]', true, index)
+        r1 = true
+        @index += 1
+      else
+        r1 = nil
+      end
+      if r1
+        s0 << r1
+      else
+        break
+      end
+    end
+    if s0.empty?
+      @index = i0
+      r0 = nil
+    else
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+    end
+
+    node_cache[:gap][start_index] = r0
+
+    r0
+  end
+
+  def _nt_preprocessing_token
+    start_index = index
+    if node_cache[:preprocessing_token].has_key?(index)
+      cached = node_cache[:preprocessing_token][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0 = index
+    r1 = _nt_header_name
+    if r1
+      r0 = r1
+    else
+      r2 = _nt_identifier
+      if r2
+        r0 = r2
+      else
+        r3 = _nt_character_constant
+        if r3
+          r0 = r3
+        else
+          r4 = _nt_string_literal
+          if r4
+            r0 = r4
+          else
+            if has_terminal?('\G[^\\s]', true, index)
+              r5 = true
+              @index += 1
+            else
+              r5 = nil
+            end
+            if r5
+              r0 = r5
+            else
+              @index = i0
+              r0 = nil
+            end
+          end
+        end
+      end
+    end
+
+    node_cache[:preprocessing_token][start_index] = r0
+
+    r0
+  end
+
+  module HeaderName0
+  end
+
+  module HeaderName1
+  end
+
+  def _nt_header_name
+    start_index = index
+    if node_cache[:header_name].has_key?(index)
+      cached = node_cache[:header_name][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0 = index
+    i1, s1 = index, []
+    if has_terminal?('<', false, index)
+      r2 = instantiate_node(SyntaxNode,input, index...(index + 1))
+      @index += 1
+    else
+      terminal_parse_failure('<')
+      r2 = nil
+    end
+    s1 << r2
+    if r2
+      r4 = _nt_gap
+      if r4
+        r3 = r4
+      else
+        r3 = instantiate_node(SyntaxNode,input, index...index)
+      end
+      s1 << r3
+      if r3
+        s5, i5 = [], index
+        loop do
+          if has_terminal?('\G[^>]', true, index)
+            r6 = true
+            @index += 1
+          else
+            r6 = nil
+          end
+          if r6
+            s5 << r6
+          else
+            break
+          end
+        end
+        if s5.empty?
+          @index = i5
+          r5 = nil
+        else
+          r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
+        end
+        s1 << r5
+        if r5
+          r8 = _nt_gap
+          if r8
+            r7 = r8
+          else
+            r7 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s1 << r7
+          if r7
+            if has_terminal?('>', false, index)
+              r9 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
+            else
+              terminal_parse_failure('>')
+              r9 = nil
+            end
+            s1 << r9
+          end
+        end
+      end
+    end
+    if s1.last
+      r1 = instantiate_node(AngledHeaderName,input, i1...index, s1)
+      r1.extend(HeaderName0)
+    else
+      @index = i1
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      i10, s10 = index, []
+      if has_terminal?('"', false, index)
+        r11 = instantiate_node(SyntaxNode,input, index...(index + 1))
+        @index += 1
+      else
+        terminal_parse_failure('"')
+        r11 = nil
+      end
+      s10 << r11
+      if r11
+        r13 = _nt_gap
+        if r13
+          r12 = r13
+        else
+          r12 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s10 << r12
+        if r12
+          s14, i14 = [], index
+          loop do
+            if has_terminal?('\G[^"]', true, index)
+              r15 = true
+              @index += 1
+            else
+              r15 = nil
+            end
+            if r15
+              s14 << r15
+            else
+              break
+            end
+          end
+          if s14.empty?
+            @index = i14
+            r14 = nil
+          else
+            r14 = instantiate_node(SyntaxNode,input, i14...index, s14)
+          end
+          s10 << r14
+          if r14
+            r17 = _nt_gap
+            if r17
+              r16 = r17
+            else
+              r16 = instantiate_node(SyntaxNode,input, index...index)
+            end
+            s10 << r16
+            if r16
+              if has_terminal?('"', false, index)
+                r18 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                @index += 1
+              else
+                terminal_parse_failure('"')
+                r18 = nil
+              end
+              s10 << r18
+            end
+          end
+        end
+      end
+      if s10.last
+        r10 = instantiate_node(QuotedHeaderName,input, i10...index, s10)
+        r10.extend(HeaderName1)
+      else
+        @index = i10
+        r10 = nil
+      end
+      if r10
+        r0 = r10
+      else
+        @index = i0
+        r0 = nil
+      end
+    end
+
+    node_cache[:header_name][start_index] = r0
+
+    r0
+  end
+
+  module PreprocessingFile0
+    def group
+      elements[0]
+    end
+
+  end
+
+  module PreprocessingFile1
+  end
+
+  def _nt_preprocessing_file
+    start_index = index
+    if node_cache[:preprocessing_file].has_key?(index)
+      cached = node_cache[:preprocessing_file][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0, s0 = index, []
+    r2 = _nt_ws
+    if r2
+      r1 = r2
+    else
+      r1 = instantiate_node(SyntaxNode,input, index...index)
+    end
+    s0 << r1
+    if r1
+      i4, s4 = index, []
+      r5 = _nt_group
+      s4 << r5
+      if r5
+        r7 = _nt_ws
+        if r7
+          r6 = r7
+        else
+          r6 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s4 << r6
+      end
+      if s4.last
+        r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+        r4.extend(PreprocessingFile0)
+      else
+        @index = i4
+        r4 = nil
+      end
+      if r4
+        r3 = r4
+      else
+        r3 = instantiate_node(SyntaxNode,input, index...index)
+      end
+      s0 << r3
+    end
+    if s0.last
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+      r0.extend(PreprocessingFile1)
+    else
+      @index = i0
+      r0 = nil
+    end
+
+    node_cache[:preprocessing_file][start_index] = r0
+
+    r0
+  end
+
+  module Group0
+    def group_part
+      elements[1]
+    end
+  end
+
+  module Group1
+    def group_part
+      elements[0]
+    end
+
+  end
+
+  def _nt_group
+    start_index = index
+    if node_cache[:group].has_key?(index)
+      cached = node_cache[:group][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0, s0 = index, []
+    r1 = _nt_group_part
+    s0 << r1
+    if r1
+      s2, i2 = [], index
+      loop do
+        i3, s3 = index, []
+        r5 = _nt_ws
+        if r5
+          r4 = r5
+        else
+          r4 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s3 << r4
+        if r4
+          r6 = _nt_group_part
+          s3 << r6
+        end
+        if s3.last
+          r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+          r3.extend(Group0)
+        else
+          @index = i3
+          r3 = nil
+        end
+        if r3
+          s2 << r3
+        else
+          break
+        end
+      end
+      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+      s0 << r2
+    end
+    if s0.last
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+      r0.extend(Group1)
+    else
+      @index = i0
+      r0 = nil
+    end
+
+    node_cache[:group][start_index] = r0
+
+    r0
+  end
+
+  def _nt_group_part
+    start_index = index
+    if node_cache[:group_part].has_key?(index)
+      cached = node_cache[:group_part][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0 = index
+    r1 = _nt_control_line
+    if r1
+      r0 = r1
+    else
+      r2 = _nt_text_line
+      if r2
+        r0 = r2
+      else
+        @index = i0
+        r0 = nil
+      end
+    end
+
+    node_cache[:group_part][start_index] = r0
+
+    r0
+  end
+
+  module ControlLine0
+    def pp_tokens
+      elements[4]
+    end
+
+  end
+
+  def _nt_control_line
+    start_index = index
+    if node_cache[:control_line].has_key?(index)
+      cached = node_cache[:control_line][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0, s0 = index, []
+    if has_terminal?('#', false, index)
+      r1 = instantiate_node(SyntaxNode,input, index...(index + 1))
+      @index += 1
+    else
+      terminal_parse_failure('#')
+      r1 = nil
+    end
+    s0 << r1
+    if r1
+      r3 = _nt_gap
+      if r3
+        r2 = r3
+      else
+        r2 = instantiate_node(SyntaxNode,input, index...index)
+      end
+      s0 << r2
+      if r2
+        if has_terminal?('include', false, index)
+          r4 = instantiate_node(SyntaxNode,input, index...(index + 7))
+          @index += 7
+        else
+          terminal_parse_failure('include')
+          r4 = nil
+        end
+        s0 << r4
+        if r4
+          r6 = _nt_gap
+          if r6
+            r5 = r6
+          else
+            r5 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s0 << r5
+          if r5
+            r7 = _nt_pp_tokens
+            s0 << r7
+            if r7
+              r9 = _nt_gap
+              if r9
+                r8 = r9
+              else
+                r8 = instantiate_node(SyntaxNode,input, index...index)
+              end
+              s0 << r8
+              if r8
+                if has_terminal?("\n", false, index)
+                  r10 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                  @index += 1
+                else
+                  terminal_parse_failure("\n")
+                  r10 = nil
+                end
+                s0 << r10
+              end
+            end
+          end
+        end
+      end
+    end
+    if s0.last
+      r0 = instantiate_node(IncludeDirective,input, i0...index, s0)
+      r0.extend(ControlLine0)
+    else
+      @index = i0
+      r0 = nil
+    end
+
+    node_cache[:control_line][start_index] = r0
+
+    r0
+  end
+
+  module TextLine0
+    def pp_tokens
+      elements[0]
+    end
+
+  end
+
+  def _nt_text_line
+    start_index = index
+    if node_cache[:text_line].has_key?(index)
+      cached = node_cache[:text_line][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0, s0 = index, []
+    r1 = _nt_pp_tokens
+    s0 << r1
+    if r1
+      r3 = _nt_gap
+      if r3
+        r2 = r3
+      else
+        r2 = instantiate_node(SyntaxNode,input, index...index)
+      end
+      s0 << r2
+      if r2
+        if has_terminal?("\n", false, index)
+          r4 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
+        else
+          terminal_parse_failure("\n")
+          r4 = nil
+        end
+        s0 << r4
+      end
+    end
+    if s0.last
+      r0 = instantiate_node(TextLine,input, i0...index, s0)
+      r0.extend(TextLine0)
+    else
+      @index = i0
+      r0 = nil
+    end
+
+    node_cache[:text_line][start_index] = r0
+
+    r0
+  end
+
+  module PpTokens0
+    def preprocessing_token
+      elements[1]
+    end
+  end
+
+  module PpTokens1
+    def preprocessing_token
+      elements[0]
+    end
+
+  end
+
+  def _nt_pp_tokens
+    start_index = index
+    if node_cache[:pp_tokens].has_key?(index)
+      cached = node_cache[:pp_tokens][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0, s0 = index, []
+    r1 = _nt_preprocessing_token
+    s0 << r1
+    if r1
+      s2, i2 = [], index
+      loop do
+        i3, s3 = index, []
+        r5 = _nt_gap
+        if r5
+          r4 = r5
+        else
+          r4 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s3 << r4
+        if r4
+          r6 = _nt_preprocessing_token
+          s3 << r6
+        end
+        if s3.last
+          r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+          r3.extend(PpTokens0)
+        else
+          @index = i3
+          r3 = nil
+        end
+        if r3
+          s2 << r3
+        else
+          break
+        end
+      end
+      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+      s0 << r2
+    end
+    if s0.last
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+      r0.extend(PpTokens1)
+    else
+      @index = i0
+      r0 = nil
+    end
+
+    node_cache[:pp_tokens][start_index] = r0
+
+    r0
+  end
+
 end
 
 class CParser < Treetop::Runtime::CompiledParser

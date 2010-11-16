@@ -593,6 +593,32 @@ module Coal
         @statements = e[4].statements
       end
     end
-  end
-end
+    
+    ################
+    # Preprocessor #
+    ################
+    
+    class HeaderName < BaseNode
+      attr_reader :name
+      
+      def init e
+        @name = e[2].text_value
+      end
+    end
+    
+    class AngledHeaderName < HeaderName ; end
+    class QuotedHeaderName < HeaderName ; end
+    
+    class TextLine < BaseNode ; end
+    
+    class IncludeDirective < BaseNode
+      attr_accessor :tokens
+      
+      def init e
+        @tokens = Helper.spaced_list e[4]
+      end
+    end
+    
+  end # End module Nodes
+end # End module Coal
 
