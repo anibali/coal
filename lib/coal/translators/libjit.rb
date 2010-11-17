@@ -64,7 +64,10 @@ module Coal::Translators
       return code
     end
     
-    def translate root_node
+    def translate node
+      return if node[1].empty?
+      root_node = node[1][0]
+      
       root_node.items.each do |item|
         if item.is_a? FunctionDefinition
           function(item)

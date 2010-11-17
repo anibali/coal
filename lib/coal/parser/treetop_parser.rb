@@ -5,15 +5,25 @@ module C
   include Treetop::Runtime
 
   def root
-    @root ||= :start
+    @root ||= :c_file
   end
 
   include Coal::Nodes
 
-  def _nt_start
+  module CFile0
+    def translation_unit
+      elements[0]
+    end
+
+  end
+
+  module CFile1
+  end
+
+  def _nt_c_file
     start_index = index
-    if node_cache[:start].has_key?(index)
-      cached = node_cache[:start][index]
+    if node_cache[:c_file].has_key?(index)
+      cached = node_cache[:c_file][index]
       if cached
         cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
         @index = cached.interval.end
@@ -21,9 +31,50 @@ module C
       return cached
     end
 
-    r0 = _nt_translation_unit
+    i0, s0 = index, []
+    r2 = _nt_ws
+    if r2
+      r1 = r2
+    else
+      r1 = instantiate_node(SyntaxNode,input, index...index)
+    end
+    s0 << r1
+    if r1
+      i4, s4 = index, []
+      r5 = _nt_translation_unit
+      s4 << r5
+      if r5
+        r7 = _nt_ws
+        if r7
+          r6 = r7
+        else
+          r6 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s4 << r6
+      end
+      if s4.last
+        r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+        r4.extend(CFile0)
+      else
+        @index = i4
+        r4 = nil
+      end
+      if r4
+        r3 = r4
+      else
+        r3 = instantiate_node(SyntaxNode,input, index...index)
+      end
+      s0 << r3
+    end
+    if s0.last
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+      r0.extend(CFile1)
+    else
+      @index = i0
+      r0 = nil
+    end
 
-    node_cache[:start][start_index] = r0
+    node_cache[:c_file][start_index] = r0
 
     r0
   end

@@ -3,6 +3,21 @@ When /^I feed the parser (a valid|an invalid) (\w+), (.+)$/ do |_, rule, code|
   @result = @parser.parse(code)
 end
 
+When /^I require "([^"]*)"$/ do |lib|
+  begin
+    in_current_dir { require lib }
+  rescue Exception => @exception
+  end
+end
+
+Then /^no exception should be raised$/ do
+  @exception.should be_nil
+end
+
+Then /^the Coal namespace should respond to "([^"]*)"$/ do |method|
+  Coal.namespace.should respond_to method
+end
+
 Then /^it should parse successfully$/ do
   puts @parser.failure_reason if @result.nil?
   @result.should_not be_nil

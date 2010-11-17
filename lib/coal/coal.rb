@@ -15,8 +15,7 @@ module Coal
   module Namespace
     def self.extended(sub)
       sub.module_eval do
-        @functions = {}
-        @translator = Translators::LibJIT.new(self)
+        clear!
       end
     end
     
@@ -32,7 +31,7 @@ module Coal
         code = @translator.preprocess node
       end
       
-      parser.root = 'translation_unit'
+      parser.root = 'c_file'
       node = parser.parse code
       if node.nil?
         raise "Syntax error:\n#{parser.failure_reason}"
@@ -52,6 +51,16 @@ module Coal
           func.call(*args)
         end
       end
+    end
+    
+    def clear!
+      if @functions
+        @functions.each do |k, v|
+          method(k).owner.send :remove_method, k
+        end
+      end
+      @functions = {}
+      @translator = Translators::LibJIT.new(self)
     end
   end
   

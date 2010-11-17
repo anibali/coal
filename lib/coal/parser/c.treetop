@@ -1,8 +1,9 @@
 grammar C
   include Coal::Nodes
   
-  rule start
-    translation_unit
+  # Rule for parsing a C file *after* preprocessing
+  rule c_file
+    ws? (translation_unit ws?)?
   end
   
   rule ws

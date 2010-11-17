@@ -1,4 +1,7 @@
-TODO
+Coal
+====
+
+TODO: Introduction
 
 Known issues
 ------------
