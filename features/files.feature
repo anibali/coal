@@ -42,4 +42,16 @@ Feature: C files
     When I require "function"
     Then no exception should be raised
     And the Coal namespace should respond to "do_stuff"
+  
+  Scenario: Functions
+    Given a file named "functions.c" with:
+      """
+      void foo() {}
+      void bar() {}
+      
+      """
+    When I require "functions"
+    Then no exception should be raised
+    And the Coal namespace should respond to "foo"
+    And the Coal namespace should respond to "bar"
 
