@@ -2,6 +2,7 @@ source 'http://rubygems.org'
 
 group(:runtime) do
   gem 'treetop', '~> 1.4'
+	gem 'polyglot', '~> 0.3'
   gem 'libjit-ffi', '0.0.0'
 end
 
