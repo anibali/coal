@@ -1,7 +1,12 @@
 Coal
 ====
 
-TODO: Introduction
+Coal is an implementation of the C programming language within a Ruby
+environment. Its goal is to enable Ruby developers to seamlessly integrate
+sections of low-level code within their software in a simple and portable
+manner. Coal's C implementation is based on the
+[September 7, 2007 Committee Draft](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf),
+but is not guaranteed to fully satisfy the specification.
 
 Installing
 ----------
