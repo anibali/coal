@@ -33,5 +33,4 @@ namespace :compile do
 end
 
 task :cucumber => ['compile:grammar']
-task :spec => ['compile:grammar']
 
