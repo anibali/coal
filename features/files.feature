@@ -10,7 +10,7 @@ Feature: C files
       
       """
     When I require "blank"
-    Then no exception should be raised
+    Then nothing exciting should happen
   
   Scenario: Comments
     Given a file named "comments.c" with:
@@ -20,7 +20,7 @@ Feature: C files
       
       """
     When I require "comments"
-    Then no exception should be raised
+    Then nothing exciting should happen
 
   Scenario: Include
     Given a file named "include.c" with:
@@ -29,7 +29,7 @@ Feature: C files
       
       """
     When I require "include"
-    Then no exception should be raised
+    Then nothing exciting should happen
   
   Scenario: Function
     Given a file named "function.c" with:
@@ -40,8 +40,7 @@ Feature: C files
       
       """
     When I require "function"
-    Then no exception should be raised
-    And the Coal namespace should respond to "do_stuff"
+    Then the "do_stuff" Coal function should work
   
   Scenario: Functions
     Given a file named "functions.c" with:
@@ -51,7 +50,87 @@ Feature: C files
       
       """
     When I require "functions"
-    Then no exception should be raised
-    And the Coal namespace should respond to "foo"
-    And the Coal namespace should respond to "bar"
+    Then the "foo" Coal function should work
+    And the "bar" Coal function should work
+  
+  Scenario: "is_close" function
+    Given a file named "is_close.c" with:
+      """
+      int is_close(float a, float b, float margin)
+      {
+        float diff = a > b ? a - b : b - a;
+        return diff < margin;
+      }
+      
+      """
+    When I require "is_close"
+    Then the "is_close" Coal function should work
+  
+  Scenario: Collatz function
+    Given a file named "collatz.c" with:
+      """
+      /* 
+       * Calculates the Collatz stopping time for a given number.
+       * See http://en.wikipedia.org/wiki/Collatz_conjecture for more details.
+       */
+      unsigned long collatz(int n)
+      {
+        unsigned long count = 0;
+        
+        while(n > 1)
+        {
+          count += 1;
+          
+          if(n % 2 == 0)
+            n /= 2;
+          else
+            n = n * 3 + 1;
+        }
+        
+        return count;
+      }
+      
+      """
+    When I require "collatz"
+    Then the "collatz" Coal function should work
+    
+    Scenario: Probability functions
+    Given a file named "probability.c" with:
+      """
+      #include "math.h"
+
+      /* 
+       * Calculates the number of ways to choose 'r' things from a group of 'n'.
+       * See http://algorithm.isgreat.org/doku.php?id=combinations for more details.
+       */
+      int choose(int n, int r)
+      {
+        /* Take advantage of symmetry to keep 'r' low */
+        if(n - r < r) r = n - r;
+        
+        if(r == 0) return 1;
+        
+        int result = n;
+        int i = 1;
+        while(i < r)
+        {
+          result = (result / i) * (n - i);
+          ++i;
+        }
+        
+        return result / r;
+      }
+
+      /*
+       * See http://algorithm.isgreat.org/doku.php?id=binomial_pdf for more details.
+       */
+      double binom_pdf(int n, double p, int r)
+      {
+        return choose(n, r) * pow(p, r) * pow(1 - p, n - r);
+      }
+      
+      """
+    When I require "probability"
+    Then the "choose" Coal function should work
+    And the "binom_pdf" Coal function should work
 

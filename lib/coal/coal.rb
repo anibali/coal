@@ -21,16 +21,22 @@ module Coal
     
     def load! file
       code = File.read(file)
+      
       parser = Parser.new
       
+      # Preprocess the code
       parser.root = 'preprocessing_file'
       node = parser.parse code
       if node.nil?
         raise "Preprocessor syntax error:\n#{parser.failure_reason}"
       else
+        # Add a trailing newline if appropriate
+        code << "\n" if code[-1] != ?\n
+        # Preprocess, my pretties, preprocess!
         code = @translator.preprocess node
       end
       
+      # Translate the preprocessed code
       parser.root = 'c_file'
       node = parser.parse code
       if node.nil?
