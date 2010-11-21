@@ -19,8 +19,6 @@ Burke.setup do
   clobber   %w[pkg doc html coverage]
 end
 
-Cucumber::Rake::Task.new
-
 namespace :compile do
   desc 'Compile Treetop grammar'
   task :grammar do
@@ -32,5 +30,10 @@ namespace :compile do
   end
 end
 
+Cucumber::Rake::Task.new
 task :cucumber => ['compile:grammar']
+
+task :benchmarks => ['compile:grammar'] do |t|
+  require 'benchmarks/run' 
+end
 
