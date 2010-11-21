@@ -133,4 +133,18 @@ Feature: C files
     When I require "probability"
     Then the "choose" Coal function should work
     And the "binom_pdf" Coal function should work
+  
+  Scenario: Function involving pointers
+    Given a file named "pointer_demo.c" with:
+      """
+      int forty_two()
+      {
+        int x = 0;
+        (*&x) = 42;
+        return x;
+      }
+      
+      """
+    When I require "pointer_demo"
+    Then the "forty_two" Coal function should work
 

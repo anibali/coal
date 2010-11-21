@@ -145,7 +145,8 @@ grammar C
   rule unary_expression
     '++' ws? unary_expression <PrefixIncrement>
     / '--' ws? unary_expression <PrefixDecrement>
-    / [\&\*\+\-\~\!] ws? cast_expression
+    / '*' ws? cast_expression <Dereference>
+    / [\&\+\-\~\!] ws? cast_expression <UnaryArithmetic>
     / 'sizeof' ws? '(' ws? type_name ws? ')' <SizeOf>
     / 'sizeof' ![\w] ws? unary_expression <SizeOf>
     / postfix_expression

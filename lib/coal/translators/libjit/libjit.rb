@@ -248,12 +248,29 @@ module Coal::Translators
             raise "unrecognised postfix expression suffix: #{suffix}"
           end
         end
-      when PrefixIncrement
-        lvalue = expression(node.operand)
-        lvalue.store(lvalue + @function.const(1, :intn))
-      when PrefixDecrement
-        lvalue = expression(node.operand)
-        lvalue.store(lvalue - @function.const(1, :intn))
+      when UnaryExpression
+        case node.operator
+        when '++'
+          lvalue = expression(node.operand)
+          lvalue.store(lvalue + @function.const(1, :intn))
+        when '--'
+          lvalue = expression(node.operand)
+          lvalue.store(lvalue - @function.const(1, :intn))
+        when '&'
+          expression(node.operand).address
+        when '*'
+          expression(node.operand).dereference
+        when '+'
+          expression(node.operand)
+        when '-'
+          -expression(node.operand)
+        when '~'
+          ~expression(node.operand)
+        when '!'
+          expression(node.operand).not
+        else
+          raise "unrecognised unary operator: #{node.operator}"
+        end
       when LTRBinaryExpression
         ltr_binary_expression(node)
       when ConditionalExpression
@@ -278,12 +295,27 @@ module Coal::Translators
         
         tmp
       when AssignmentExpression
-        if node.operator == '='
-          expression(node.lvalue).store expression(node.rvalue)
+        lvalue = nil
+        store = nil
+        
+        lvalue_node = node.lvalue
+        while lvalue_node.is_a? PrimaryExpression
+          lvalue_node = lvalue_node.expression
+        end
+        
+        if lvalue_node.is_a? Dereference
+          address = expression(lvalue_node.operand)
+          store = address.method :mstore
+          lvalue = address.dereference unless node.operator == '='
         else
-          lvalue = expression(node.lvalue)
-          rvalue = lvalue.send node.operator[0].chr, expression(node.rvalue)
-          lvalue.store rvalue
+          lvalue = expression(lvalue_node)
+          store = lvalue.method :store
+        end
+        
+        if node.operator == '='
+          store[expression(node.rvalue)]
+        else
+          store[lvalue.send node.operator[0].chr, expression(node.rvalue)]
         end
       when ExpressionList
         node.expressions.inject(nil) do |_, expr|

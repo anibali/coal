@@ -2613,13 +2613,19 @@ module C
   end
 
   module UnaryExpression3
+    def cast_expression
+      elements[2]
+    end
+  end
+
+  module UnaryExpression4
     def type_name
       elements[4]
     end
 
   end
 
-  module UnaryExpression4
+  module UnaryExpression5
     def unary_expression
       elements[3]
     end
@@ -2702,10 +2708,11 @@ module C
         r0 = r6
       else
         i11, s11 = index, []
-        if has_terminal?('\G[\\&\\*\\+\\-\\~\\!]', true, index)
-          r12 = true
+        if has_terminal?('*', false, index)
+          r12 = instantiate_node(SyntaxNode,input, index...(index + 1))
           @index += 1
         else
+          terminal_parse_failure('*')
           r12 = nil
         end
         s11 << r12
@@ -2723,7 +2730,7 @@ module C
           end
         end
         if s11.last
-          r11 = instantiate_node(SyntaxNode,input, i11...index, s11)
+          r11 = instantiate_node(Dereference,input, i11...index, s11)
           r11.extend(UnaryExpression2)
         else
           @index = i11
@@ -2733,11 +2740,10 @@ module C
           r0 = r11
         else
           i16, s16 = index, []
-          if has_terminal?('sizeof', false, index)
-            r17 = instantiate_node(SyntaxNode,input, index...(index + 6))
-            @index += 6
+          if has_terminal?('\G[\\&\\+\\-\\~\\!]', true, index)
+            r17 = true
+            @index += 1
           else
-            terminal_parse_failure('sizeof')
             r17 = nil
           end
           s16 << r17
@@ -2750,50 +2756,12 @@ module C
             end
             s16 << r18
             if r18
-              if has_terminal?('(', false, index)
-                r20 = instantiate_node(SyntaxNode,input, index...(index + 1))
-                @index += 1
-              else
-                terminal_parse_failure('(')
-                r20 = nil
-              end
+              r20 = _nt_cast_expression
               s16 << r20
-              if r20
-                r22 = _nt_ws
-                if r22
-                  r21 = r22
-                else
-                  r21 = instantiate_node(SyntaxNode,input, index...index)
-                end
-                s16 << r21
-                if r21
-                  r23 = _nt_type_name
-                  s16 << r23
-                  if r23
-                    r25 = _nt_ws
-                    if r25
-                      r24 = r25
-                    else
-                      r24 = instantiate_node(SyntaxNode,input, index...index)
-                    end
-                    s16 << r24
-                    if r24
-                      if has_terminal?(')', false, index)
-                        r26 = instantiate_node(SyntaxNode,input, index...(index + 1))
-                        @index += 1
-                      else
-                        terminal_parse_failure(')')
-                        r26 = nil
-                      end
-                      s16 << r26
-                    end
-                  end
-                end
-              end
             end
           end
           if s16.last
-            r16 = instantiate_node(SizeOf,input, i16...index, s16)
+            r16 = instantiate_node(UnaryArithmetic,input, i16...index, s16)
             r16.extend(UnaryExpression3)
           else
             @index = i16
@@ -2802,60 +2770,131 @@ module C
           if r16
             r0 = r16
           else
-            i27, s27 = index, []
+            i21, s21 = index, []
             if has_terminal?('sizeof', false, index)
-              r28 = instantiate_node(SyntaxNode,input, index...(index + 6))
+              r22 = instantiate_node(SyntaxNode,input, index...(index + 6))
               @index += 6
             else
               terminal_parse_failure('sizeof')
-              r28 = nil
+              r22 = nil
             end
-            s27 << r28
-            if r28
-              i29 = index
-              if has_terminal?('\G[\\w]', true, index)
-                r30 = true
-                @index += 1
+            s21 << r22
+            if r22
+              r24 = _nt_ws
+              if r24
+                r23 = r24
               else
-                r30 = nil
+                r23 = instantiate_node(SyntaxNode,input, index...index)
               end
-              if r30
-                r29 = nil
-              else
-                @index = i29
-                r29 = instantiate_node(SyntaxNode,input, index...index)
-              end
-              s27 << r29
-              if r29
-                r32 = _nt_ws
-                if r32
-                  r31 = r32
+              s21 << r23
+              if r23
+                if has_terminal?('(', false, index)
+                  r25 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                  @index += 1
                 else
-                  r31 = instantiate_node(SyntaxNode,input, index...index)
+                  terminal_parse_failure('(')
+                  r25 = nil
                 end
-                s27 << r31
-                if r31
-                  r33 = _nt_unary_expression
-                  s27 << r33
+                s21 << r25
+                if r25
+                  r27 = _nt_ws
+                  if r27
+                    r26 = r27
+                  else
+                    r26 = instantiate_node(SyntaxNode,input, index...index)
+                  end
+                  s21 << r26
+                  if r26
+                    r28 = _nt_type_name
+                    s21 << r28
+                    if r28
+                      r30 = _nt_ws
+                      if r30
+                        r29 = r30
+                      else
+                        r29 = instantiate_node(SyntaxNode,input, index...index)
+                      end
+                      s21 << r29
+                      if r29
+                        if has_terminal?(')', false, index)
+                          r31 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                          @index += 1
+                        else
+                          terminal_parse_failure(')')
+                          r31 = nil
+                        end
+                        s21 << r31
+                      end
+                    end
+                  end
                 end
               end
             end
-            if s27.last
-              r27 = instantiate_node(SizeOf,input, i27...index, s27)
-              r27.extend(UnaryExpression4)
+            if s21.last
+              r21 = instantiate_node(SizeOf,input, i21...index, s21)
+              r21.extend(UnaryExpression4)
             else
-              @index = i27
-              r27 = nil
+              @index = i21
+              r21 = nil
             end
-            if r27
-              r0 = r27
+            if r21
+              r0 = r21
             else
-              r34 = _nt_postfix_expression
-              if r34
-                r0 = r34
+              i32, s32 = index, []
+              if has_terminal?('sizeof', false, index)
+                r33 = instantiate_node(SyntaxNode,input, index...(index + 6))
+                @index += 6
               else
-                @index = i0
-                r0 = nil
+                terminal_parse_failure('sizeof')
+                r33 = nil
+              end
+              s32 << r33
+              if r33
+                i34 = index
+                if has_terminal?('\G[\\w]', true, index)
+                  r35 = true
+                  @index += 1
+                else
+                  r35 = nil
+                end
+                if r35
+                  r34 = nil
+                else
+                  @index = i34
+                  r34 = instantiate_node(SyntaxNode,input, index...index)
+                end
+                s32 << r34
+                if r34
+                  r37 = _nt_ws
+                  if r37
+                    r36 = r37
+                  else
+                    r36 = instantiate_node(SyntaxNode,input, index...index)
+                  end
+                  s32 << r36
+                  if r36
+                    r38 = _nt_unary_expression
+                    s32 << r38
+                  end
+                end
+              end
+              if s32.last
+                r32 = instantiate_node(SizeOf,input, i32...index, s32)
+                r32.extend(UnaryExpression5)
+              else
+                @index = i32
+                r32 = nil
+              end
+              if r32
+                r0 = r32
+              else
+                r39 = _nt_postfix_expression
+                if r39
+                  r0 = r39
+                else
+                  @index = i0
+                  r0 = nil
+                end
               end
             end
           end

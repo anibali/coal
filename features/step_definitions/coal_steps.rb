@@ -43,6 +43,8 @@ Then /^the "([^"]*)" Coal function should work$/ do |name|
     Coal.namespace.choose(10, 5).should == 252
   when "binom_pdf"
     Coal.namespace.binom_pdf(10, 0.3, 5).should be_within(1e-6).of(0.1029193)
+  when "forty_two"
+    Coal.namespace.forty_two().should == 42
   end
 end
 

@@ -236,20 +236,18 @@ module Coal
     end
     
     class UnaryExpression < BaseNode
-      attr_reader :operand
-    end
-    
-    class PrefixIncrement < UnaryExpression
+      attr_reader :operator, :operand
+      
       def init e
+        @operator = e[0].text_value
         @operand = e[2]
       end
     end
     
-    class PrefixDecrement < UnaryExpression
-      def init e
-        @operand = e[2]
-      end
-    end
+    class PrefixIncrement < UnaryExpression ; end
+    class PrefixDecrement < UnaryExpression ; end
+    class UnaryArithmetic < UnaryExpression ; end
+    class Dereference < UnaryArithmetic ; end
     
     class SizeOf < UnaryExpression
       def init e
