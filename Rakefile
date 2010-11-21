@@ -33,6 +33,7 @@ end
 Cucumber::Rake::Task.new
 task :cucumber => ['compile:grammar']
 
+desc "Run benchmarks"
 task :benchmarks => ['compile:grammar'] do |t|
   require 'benchmarks/run' 
 end
