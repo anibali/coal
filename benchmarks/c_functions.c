@@ -1,12 +1,21 @@
-long long arithmetic(int n)
+int prime(int n)
 {
-  int i = 1;
-  long long x = 1;
-  while(i <= n)
+  if(n == 1) return 2;
+  
+  int x = 1;
+  int y;
+  int m = 1;
+  
+  while(m < n)
   {
-    x = ((i + x * i) - i) / x;
-    ++i;
+    ++x;
+    y = 2;
+    while(x % y)
+    {
+      if(++y / x) ++m;
+    }
   }
+  
   return x;
 }
 
