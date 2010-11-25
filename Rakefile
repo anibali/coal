@@ -15,7 +15,7 @@ Burke.setup do
     d['libjit-ffi'] = '0.0.0'
   end
   
-  clean     %w[.yardoc]
+  clean     %w[.yardoc tmp]
   clobber   %w[pkg doc html coverage]
 end
 
