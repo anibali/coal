@@ -9,7 +9,11 @@ I want to witness the parsing of C-style declarations
     
     Examples:
       | code                              |
+      | int;                              |
+      | long int;                         |
       | int x;                            |
+      | int y = 5;                        |
+      | short *ptr;                       |
       | int arr[5];                       |
       | extern int *x;                    |
       | extern int y[];                   |
@@ -20,13 +24,16 @@ I want to witness the parsing of C-style declarations
       | enum colours {red, green, blue};  |
       | enum distros {ubuntu, fedora,};   |
       | struct mystruct a = {0};          |
+      | int foo(a, b);                    |
+      | int foo(int a, int b);            |
     
     Scenario Outline: Invalid declarations
       When I feed the parser an invalid declaration, <code>
       Then it should fail to parse
     
     Examples:
-      | code      |
-      | int x 5;  |
-      | intfoo;   |
+      | code            |
+      | int x 5;        |
+      | intfoo;         |
+      | int f(int a, b) |
 

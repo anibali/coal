@@ -1,11 +1,13 @@
 Feature: Constants
-In order to experience the awesomeness of Treetop 
-As a Rubyist
-I want to witness the parsing of C-style constants
+
+  In order to experience the awesomeness of Treetop 
+  As a Rubyist
+  I want to witness the parsing of C-style constants
   
   Scenario Outline: Valid integer constants
     When I feed the parser a valid integer_constant, <code>
-    Then it should parse successfully to a node with attributes {value: <value>}
+    Then it should parse successfully
+    And the produced tree node should have attributes {value: <value>}
     
     Examples:
       | code      | value     |
@@ -39,7 +41,8 @@ I want to witness the parsing of C-style constants
     
     Scenario Outline: Valid floating point constants
     When I feed the parser a valid floating_constant, <code>
-    Then it should parse successfully to a node with attributes {value: <value>}
+    Then it should parse successfully
+    And the produced tree node should have attributes {value: <value>}
     
     Examples:
       | code      | value   |
@@ -65,7 +68,7 @@ I want to witness the parsing of C-style constants
       
     Scenario Outline: Valid escape sequences
       When I feed the parser a valid escape_sequence, <code>
-      Then it should parse successfully to a node with attributes {value: <value>}
+      Then it should parse successfully
     
     Examples:
       | code      | value |
@@ -88,7 +91,8 @@ I want to witness the parsing of C-style constants
     
     Scenario Outline: Valid character constants
       When I feed the parser a valid character_constant, <code>
-      Then it should parse successfully to a node with attributes {value: <value>}
+      Then it should parse successfully
+      And the produced tree node should have attributes {value: <value>}
     
     Examples:
       | code      | value   |
@@ -110,7 +114,8 @@ I want to witness the parsing of C-style constants
       
     Scenario Outline: Valid strings
       When I feed the parser a valid string_literal, <code>
-      Then it should parse successfully to a node with attributes {value: <value>}
+      Then it should parse successfully
+      And the produced tree node should have attributes {value: <value>}
     
     Examples:
       | code      | value   |

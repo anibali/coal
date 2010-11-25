@@ -8,8 +8,6 @@ module C
     @root ||= :c_file
   end
 
-  include Coal::Nodes
-
   module CFile0
     def translation_unit
       elements[0]
@@ -18,6 +16,12 @@ module C
   end
 
   module CFile1
+  end
+
+  module CFile2
+    def tree
+      elements[1].empty? ? [] : elements[1][0].tree
+    end
   end
 
   def _nt_c_file
@@ -69,6 +73,7 @@ module C
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(CFile1)
+      r0.extend(CFile2)
     else
       @index = i0
       r0 = nil
@@ -319,6 +324,12 @@ module C
   module Identifier0
   end
 
+  module Identifier1
+    def tree
+      Coal::Nodes::Identifier.new(text_value)
+    end
+  end
+
   def _nt_identifier
     start_index = index
     if node_cache[:identifier].has_key?(index)
@@ -357,8 +368,9 @@ module C
       s0 << r2
     end
     if s0.last
-      r0 = instantiate_node(Identifier,input, i0...index, s0)
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(Identifier0)
+      r0.extend(Identifier1)
     else
       @index = i0
       r0 = nil
@@ -417,17 +429,38 @@ module C
   end
 
   module IntegerConstant1
+    def tree
+      suffix = elements[1].empty? ? [] : elements[1].tree
+      Coal::Nodes::IntegerConstant.new(decimal_constant.tree, 10, suffix)
+    end
+  end
+
+  module IntegerConstant2
     def hexadecimal_constant
       elements[0]
     end
 
   end
 
-  module IntegerConstant2
+  module IntegerConstant3
+    def tree
+      suffix = elements[1].empty? ? [] : elements[1].tree
+      Coal::Nodes::IntegerConstant.new(hexadecimal_constant.tree, 16, suffix)
+    end
+  end
+
+  module IntegerConstant4
     def octal_constant
       elements[0]
     end
 
+  end
+
+  module IntegerConstant5
+    def tree
+      suffix = elements[1].empty? ? [] : elements[1].tree
+      Coal::Nodes::IntegerConstant.new(octal_constant.tree, 8, suffix)
+    end
   end
 
   def _nt_integer_constant
@@ -455,8 +488,9 @@ module C
       s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(IntegerConstant,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(IntegerConstant0)
+      r1.extend(IntegerConstant1)
     else
       @index = i1
       r1 = nil
@@ -477,8 +511,9 @@ module C
         s5 << r7
       end
       if s5.last
-        r5 = instantiate_node(IntegerConstant,input, i5...index, s5)
-        r5.extend(IntegerConstant1)
+        r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
+        r5.extend(IntegerConstant2)
+        r5.extend(IntegerConstant3)
       else
         @index = i5
         r5 = nil
@@ -499,8 +534,9 @@ module C
           s9 << r11
         end
         if s9.last
-          r9 = instantiate_node(IntegerConstant,input, i9...index, s9)
-          r9.extend(IntegerConstant2)
+          r9 = instantiate_node(SyntaxNode,input, i9...index, s9)
+          r9.extend(IntegerConstant4)
+          r9.extend(IntegerConstant5)
         else
           @index = i9
           r9 = nil
@@ -520,6 +556,12 @@ module C
   end
 
   module DecimalConstant0
+  end
+
+  module DecimalConstant1
+    def tree
+      text_value.to_i
+    end
   end
 
   def _nt_decimal_constant
@@ -560,8 +602,9 @@ module C
       s0 << r2
     end
     if s0.last
-      r0 = instantiate_node(DecimalConstant,input, i0...index, s0)
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(DecimalConstant0)
+      r0.extend(DecimalConstant1)
     else
       @index = i0
       r0 = nil
@@ -573,6 +616,12 @@ module C
   end
 
   module OctalConstant0
+  end
+
+  module OctalConstant1
+    def tree
+      text_value.to_i(8)
+    end
   end
 
   def _nt_octal_constant
@@ -614,8 +663,9 @@ module C
       s0 << r2
     end
     if s0.last
-      r0 = instantiate_node(OctalConstant,input, i0...index, s0)
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(OctalConstant0)
+      r0.extend(OctalConstant1)
     else
       @index = i0
       r0 = nil
@@ -627,6 +677,12 @@ module C
   end
 
   module HexadecimalConstant0
+  end
+
+  module HexadecimalConstant1
+    def tree
+      text_value.to_i(16)
+    end
   end
 
   def _nt_hexadecimal_constant
@@ -682,8 +738,9 @@ module C
       end
     end
     if s0.last
-      r0 = instantiate_node(HexadecimalConstant,input, i0...index, s0)
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(HexadecimalConstant0)
+      r0.extend(HexadecimalConstant1)
     else
       @index = i0
       r0 = nil
@@ -698,6 +755,22 @@ module C
   end
 
   module IntegerSuffix1
+  end
+
+  module IntegerSuffix2
+    def tree
+      suffix = []
+      str = text_value.downcase
+      if str.include? 'll'
+        suffix << 'll'
+      elsif str.include? 'l'
+        suffix << 'l'
+      end
+      if str.include? 'u'
+        suffix << 'u'
+      end
+      suffix
+    end
   end
 
   def _nt_integer_suffix
@@ -757,6 +830,7 @@ module C
     end
     if r1
       r0 = r1
+      r0.extend(IntegerSuffix2)
     else
       i7, s7 = index, []
       if has_terminal?('\G[lL]', true, index)
@@ -803,6 +877,7 @@ module C
       end
       if r7
         r0 = r7
+        r0.extend(IntegerSuffix2)
       else
         @index = i0
         r0 = nil
@@ -858,6 +933,14 @@ module C
 
   end
 
+  module DecimalFloatingConstant2
+    def tree
+      suffix = elements[2].empty? ? [] : [elements[2].text_value]
+      guts = suffix.empty? ? text_value : text_value.chop
+      Coal::Nodes::FloatingConstant.new(guts.to_f, 10, suffix)
+    end
+  end
+
   def _nt_decimal_floating_constant
     start_index = index
     if node_cache[:decimal_floating_constant].has_key?(index)
@@ -897,7 +980,7 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(DecimalFloatingConstant,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(DecimalFloatingConstant0)
     else
       @index = i1
@@ -905,6 +988,7 @@ module C
     end
     if r1
       r0 = r1
+      r0.extend(DecimalFloatingConstant2)
     else
       i7, s7 = index, []
       s8, i8 = [], index
@@ -947,7 +1031,7 @@ module C
         end
       end
       if s7.last
-        r7 = instantiate_node(DecimalFloatingConstant,input, i7...index, s7)
+        r7 = instantiate_node(SyntaxNode,input, i7...index, s7)
         r7.extend(DecimalFloatingConstant1)
       else
         @index = i7
@@ -955,6 +1039,7 @@ module C
       end
       if r7
         r0 = r7
+        r0.extend(DecimalFloatingConstant2)
       else
         @index = i0
         r0 = nil
@@ -1169,10 +1254,6 @@ module C
   end
 
   module HexadecimalFloatingConstant0
-    def hexadecimal_fractional_constant
-      elements[2]
-    end
-
     def binary_exponent_part
       elements[3]
     end
@@ -1180,10 +1261,15 @@ module C
   end
 
   module HexadecimalFloatingConstant1
-    def binary_exponent_part
-      elements[3]
+    def tree
+      a, b = *elements[2].text_value.split('.')
+      value = a.to_i(16)
+      value += b.to_i(16).to_f / 16 ** b.size if b
+      bin_exp = elements[3].text_value[1..-1].to_i
+      value *= 2.0 ** bin_exp
+      suffix = elements[2].empty? ? [] : [elements[2].text_value]
+      Coal::Nodes::FloatingConstant.new(value, 16, suffix)
     end
-
   end
 
   def _nt_hexadecimal_floating_constant
@@ -1197,129 +1283,84 @@ module C
       return cached
     end
 
-    i0 = index
-    i1, s1 = index, []
+    i0, s0 = index, []
     if has_terminal?('0', false, index)
-      r2 = instantiate_node(SyntaxNode,input, index...(index + 1))
+      r1 = instantiate_node(SyntaxNode,input, index...(index + 1))
       @index += 1
     else
       terminal_parse_failure('0')
-      r2 = nil
-    end
-    s1 << r2
-    if r2
-      if has_terminal?('\G[xX]', true, index)
-        r3 = true
-        @index += 1
-      else
-        r3 = nil
-      end
-      s1 << r3
-      if r3
-        r4 = _nt_hexadecimal_fractional_constant
-        s1 << r4
-        if r4
-          r5 = _nt_binary_exponent_part
-          s1 << r5
-          if r5
-            if has_terminal?('\G[fFlL]', true, index)
-              r7 = true
-              @index += 1
-            else
-              r7 = nil
-            end
-            if r7
-              r6 = r7
-            else
-              r6 = instantiate_node(SyntaxNode,input, index...index)
-            end
-            s1 << r6
-          end
-        end
-      end
-    end
-    if s1.last
-      r1 = instantiate_node(HexadecimalFloatingConstant,input, i1...index, s1)
-      r1.extend(HexadecimalFloatingConstant0)
-    else
-      @index = i1
       r1 = nil
     end
+    s0 << r1
     if r1
-      r0 = r1
-    else
-      i8, s8 = index, []
-      if has_terminal?('0', false, index)
-        r9 = instantiate_node(SyntaxNode,input, index...(index + 1))
+      if has_terminal?('\G[xX]', true, index)
+        r2 = true
         @index += 1
       else
-        terminal_parse_failure('0')
-        r9 = nil
+        r2 = nil
       end
-      s8 << r9
-      if r9
-        if has_terminal?('\G[xX]', true, index)
-          r10 = true
-          @index += 1
+      s0 << r2
+      if r2
+        i3 = index
+        r4 = _nt_hexadecimal_fractional_constant
+        if r4
+          r3 = r4
         else
-          r10 = nil
-        end
-        s8 << r10
-        if r10
-          s11, i11 = [], index
+          s5, i5 = [], index
           loop do
             if has_terminal?('\G[\\da-fA-F]', true, index)
-              r12 = true
+              r6 = true
               @index += 1
             else
-              r12 = nil
+              r6 = nil
             end
-            if r12
-              s11 << r12
+            if r6
+              s5 << r6
             else
               break
             end
           end
-          if s11.empty?
-            @index = i11
-            r11 = nil
+          if s5.empty?
+            @index = i5
+            r5 = nil
           else
-            r11 = instantiate_node(SyntaxNode,input, i11...index, s11)
+            r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
           end
-          s8 << r11
-          if r11
-            r13 = _nt_binary_exponent_part
-            s8 << r13
-            if r13
-              if has_terminal?('\G[fFlL]', true, index)
-                r15 = true
-                @index += 1
-              else
-                r15 = nil
-              end
-              if r15
-                r14 = r15
-              else
-                r14 = instantiate_node(SyntaxNode,input, index...index)
-              end
-              s8 << r14
+          if r5
+            r3 = r5
+          else
+            @index = i3
+            r3 = nil
+          end
+        end
+        s0 << r3
+        if r3
+          r7 = _nt_binary_exponent_part
+          s0 << r7
+          if r7
+            if has_terminal?('\G[fFlL]', true, index)
+              r9 = true
+              @index += 1
+            else
+              r9 = nil
             end
+            if r9
+              r8 = r9
+            else
+              r8 = instantiate_node(SyntaxNode,input, index...index)
+            end
+            s0 << r8
           end
         end
       end
-      if s8.last
-        r8 = instantiate_node( HexadecimalFloatingConstant,input, i8...index, s8)
-        r8.extend(HexadecimalFloatingConstant1)
-      else
-        @index = i8
-        r8 = nil
-      end
-      if r8
-        r0 = r8
-      else
-        @index = i0
-        r0 = nil
-      end
+    end
+    if s0.last
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+      r0.extend(HexadecimalFloatingConstant0)
+      r0.extend(HexadecimalFloatingConstant1)
+    else
+      @index = i0
+      r0 = nil
     end
 
     node_cache[:hexadecimal_floating_constant][start_index] = r0
@@ -1363,11 +1404,11 @@ module C
     r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
     s1 << r2
     if r2
-      if index < input_length
+      if has_terminal?('.', false, index)
         r4 = instantiate_node(SyntaxNode,input, index...(index + 1))
         @index += 1
       else
-        terminal_parse_failure("any character")
+        terminal_parse_failure('.')
         r4 = nil
       end
       s1 << r4
@@ -1428,11 +1469,11 @@ module C
       end
       s7 << r8
       if r8
-        if index < input_length
+        if has_terminal?('.', false, index)
           r10 = instantiate_node(SyntaxNode,input, index...(index + 1))
           @index += 1
         else
-          terminal_parse_failure("any character")
+          terminal_parse_failure('.')
           r10 = nil
         end
         s7 << r10
@@ -1550,6 +1591,20 @@ module C
   module CharacterConstant0
   end
 
+  module CharacterConstant1
+    def tree
+      value = nil
+      wide = !elements[0].empty?
+      guts = elements[2][0]
+      if guts.respond_to? :tree
+        value = guts.tree
+      else
+        value = guts.text_value[0]
+      end
+      Coal::Nodes::CharacterConstant.new(value, wide)
+    end
+  end
+
   def _nt_character_constant
     start_index = index
     if node_cache[:character_constant].has_key?(index)
@@ -1631,8 +1686,9 @@ module C
       end
     end
     if s0.last
-      r0 = instantiate_node(CharacterConstant,input, i0...index, s0)
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(CharacterConstant0)
+      r0.extend(CharacterConstant1)
     else
       @index = i0
       r0 = nil
@@ -1647,9 +1703,39 @@ module C
   end
 
   module EscapeSequence1
+    def tree
+      {
+        '\''  => 39,
+        '"'   => 34,
+        '?'   => 63,
+        '\\'  => 92,
+        'a'   => 7,
+        'b'   => 8,
+        'f'   => 12,
+        'n'   => 10,
+        'r'   => 13,
+        't'   => 9,
+        'v'   => 11,
+      }[elements[1].text_value]
+    end
   end
 
   module EscapeSequence2
+  end
+
+  module EscapeSequence3
+    def tree
+      text_value[1..-1].to_i(16)
+    end
+  end
+
+  module EscapeSequence4
+  end
+
+  module EscapeSequence5
+    def tree
+      text_value.to_i(8)
+    end
   end
 
   def _nt_escape_sequence
@@ -1683,8 +1769,9 @@ module C
       s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(EscapeSequence,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(EscapeSequence0)
+      r1.extend(EscapeSequence1)
     else
       @index = i1
       r1 = nil
@@ -1739,8 +1826,9 @@ module C
         end
       end
       if s4.last
-        r4 = instantiate_node(EscapeSequence,input, i4...index, s4)
-        r4.extend(EscapeSequence1)
+        r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+        r4.extend(EscapeSequence2)
+        r4.extend(EscapeSequence3)
       else
         @index = i4
         r4 = nil
@@ -1781,8 +1869,9 @@ module C
           s11 << r13
         end
         if s11.last
-          r11 = instantiate_node(EscapeSequence,input, i11...index, s11)
-          r11.extend(EscapeSequence2)
+          r11 = instantiate_node(SyntaxNode,input, i11...index, s11)
+          r11.extend(EscapeSequence4)
+          r11.extend(EscapeSequence5)
         else
           @index = i11
           r11 = nil
@@ -1802,6 +1891,28 @@ module C
   end
 
   module StringLiteral0
+  end
+
+  module StringLiteral1
+    #'
+         def tree
+           value = nil
+           wide = !elements[0].empty?
+           guts = elements[2]
+           if guts.empty?
+             value = ""
+           else
+             arr = guts.map do |chr|
+               if chr.respond_to? :tree
+                 chr.tree
+               else
+                 chr.text_value[0]
+               end
+             end
+             value = arr.pack('c*')
+           end
+           Coal::Nodes::StringLiteral.new(value, wide)
+         end
   end
 
   def _nt_string_literal
@@ -1880,8 +1991,9 @@ module C
       end
     end
     if s0.last
-      r0 = instantiate_node(StringLiteral,input, i0...index, s0)
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(StringLiteral0)
+      r0.extend(StringLiteral1)
     else
       @index = i0
       r0 = nil
@@ -1897,6 +2009,12 @@ module C
       elements[2]
     end
 
+  end
+
+  module PrimaryExpression1
+    def tree
+      expression.tree
+    end
   end
 
   def _nt_primary_expression
@@ -1965,8 +2083,9 @@ module C
             end
           end
           if s4.last
-            r4 = instantiate_node(PrimaryExpression,input, i4...index, s4)
+            r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
             r4.extend(PrimaryExpression0)
+            r4.extend(PrimaryExpression1)
           else
             @index = i4
             r4 = nil
@@ -2172,8 +2291,9 @@ module C
   end
 
   module PostfixExpressionEnd2
-    def identifier
-      elements[2]
+    def tree(operand)
+      args = elements[2].empty? ? [] : elements[2][0].tree
+      Coal::Nodes::FunctionCall.new(operand, args)
     end
   end
 
@@ -2184,10 +2304,46 @@ module C
   end
 
   module PostfixExpressionEnd4
+    def tree(operand)
+      Coal::Nodes::StructMember.new(operand, identifier.tree, true)
+    end
+  end
+
+  module PostfixExpressionEnd5
+    def identifier
+      elements[2]
+    end
+  end
+
+  module PostfixExpressionEnd6
+    def tree(operand)
+      Coal::Nodes::StructMember.new(operand, identifier.tree, false)
+    end
+  end
+
+  module PostfixExpressionEnd7
+    def tree(operand)
+      Coal::Nodes::PostfixIncrement.new(operand)
+    end
+  end
+
+  module PostfixExpressionEnd8
+    def tree(operand)
+      Coal::Nodes::PostfixDecrement.new(operand)
+    end
+  end
+
+  module PostfixExpressionEnd9
     def expression
       elements[2]
     end
 
+  end
+
+  module PostfixExpressionEnd10
+    def tree(operand)
+      Coal::Nodes::Subscript.new(operand, expression.tree)
+    end
   end
 
   def _nt_postfix_expression_end
@@ -2258,8 +2414,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(PostfixFunctionCall,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(PostfixExpressionEnd1)
+      r1.extend(PostfixExpressionEnd2)
     else
       @index = i1
       r1 = nil
@@ -2290,8 +2447,9 @@ module C
         end
       end
       if s11.last
-        r11 = instantiate_node(PostfixMember,input, i11...index, s11)
-        r11.extend(PostfixExpressionEnd2)
+        r11 = instantiate_node(SyntaxNode,input, i11...index, s11)
+        r11.extend(PostfixExpressionEnd3)
+        r11.extend(PostfixExpressionEnd4)
       else
         @index = i11
         r11 = nil
@@ -2322,8 +2480,9 @@ module C
           end
         end
         if s16.last
-          r16 = instantiate_node(PostfixPointerMember,input, i16...index, s16)
-          r16.extend(PostfixExpressionEnd3)
+          r16 = instantiate_node(SyntaxNode,input, i16...index, s16)
+          r16.extend(PostfixExpressionEnd5)
+          r16.extend(PostfixExpressionEnd6)
         else
           @index = i16
           r16 = nil
@@ -2332,7 +2491,8 @@ module C
           r0 = r16
         else
           if has_terminal?('++', false, index)
-            r21 = instantiate_node(PostfixIncrement,input, index...(index + 2))
+            r21 = instantiate_node(SyntaxNode,input, index...(index + 2))
+            r21.extend(PostfixExpressionEnd7)
             @index += 2
           else
             terminal_parse_failure('++')
@@ -2342,7 +2502,8 @@ module C
             r0 = r21
           else
             if has_terminal?('--', false, index)
-              r22 = instantiate_node(PostfixDecrement,input, index...(index + 2))
+              r22 = instantiate_node(SyntaxNode,input, index...(index + 2))
+              r22.extend(PostfixExpressionEnd8)
               @index += 2
             else
               terminal_parse_failure('--')
@@ -2393,8 +2554,9 @@ module C
                 end
               end
               if s23.last
-                r23 = instantiate_node(PostfixSubscript,input, i23...index, s23)
-                r23.extend(PostfixExpressionEnd4)
+                r23 = instantiate_node(SyntaxNode,input, i23...index, s23)
+                r23.extend(PostfixExpressionEnd9)
+                r23.extend(PostfixExpressionEnd10)
               else
                 @index = i23
                 r23 = nil
@@ -2427,6 +2589,16 @@ module C
       elements[0]
     end
 
+  end
+
+  module PostfixExpression2
+    def tree
+      expr = postfix_expression_start.tree
+      elements[1].each do |e|
+        expr = e[1].tree(expr)
+      end
+      expr
+    end
   end
 
   def _nt_postfix_expression
@@ -2481,8 +2653,9 @@ module C
       s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(PostfixExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(PostfixExpression1)
+      r1.extend(PostfixExpression2)
     else
       @index = i1
       r1 = nil
@@ -2515,6 +2688,12 @@ module C
       elements[0]
     end
 
+  end
+
+  module ArgumentExpressionList2
+    def tree
+      [assignment_expression.tree].concat(elements[1].map {|e| e[3].tree})
+    end
   end
 
   def _nt_argument_expression_list
@@ -2584,6 +2763,7 @@ module C
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(ArgumentExpressionList1)
+      r0.extend(ArgumentExpressionList2)
     else
       @index = i0
       r0 = nil
@@ -2601,33 +2781,64 @@ module C
   end
 
   module UnaryExpression1
+    def tree
+      Coal::Nodes::PrefixIncrement.new(unary_expression.tree)
+    end
+  end
+
+  module UnaryExpression2
     def unary_expression
       elements[2]
     end
   end
 
-  module UnaryExpression2
-    def cast_expression
-      elements[2]
-    end
-  end
-
   module UnaryExpression3
-    def cast_expression
-      elements[2]
+    def tree
+      Coal::Nodes::PrefixDecrement.new(unary_expression.tree)
     end
   end
 
   module UnaryExpression4
+    def cast_expression
+      elements[2]
+    end
+  end
+
+  module UnaryExpression5
+    def tree
+      {
+        '*' => Coal::Nodes::Dereference,
+        '&' => Coal::Nodes::AddressOf,
+        '+' => Coal::Nodes::Positive,
+        '-' => Coal::Nodes::Negative,
+        '~' => Coal::Nodes::BitwiseComplement,
+        '!' => Coal::Nodes::LogicalNot,
+      }[elements[0].text_value].new(cast_expression.tree)
+    end
+  end
+
+  module UnaryExpression6
     def type_name
       elements[4]
     end
 
   end
 
-  module UnaryExpression5
+  module UnaryExpression7
+    def tree
+      Coal::Nodes::SizeOf.new(type_name.tree, true)
+    end
+  end
+
+  module UnaryExpression8
     def unary_expression
       elements[3]
+    end
+  end
+
+  module UnaryExpression9
+    def tree
+      Coal::Nodes::SizeOf.new(unary_expression.tree, false)
     end
   end
 
@@ -2666,8 +2877,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(PrefixIncrement,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(UnaryExpression0)
+      r1.extend(UnaryExpression1)
     else
       @index = i1
       r1 = nil
@@ -2698,8 +2910,9 @@ module C
         end
       end
       if s6.last
-        r6 = instantiate_node(PrefixDecrement,input, i6...index, s6)
-        r6.extend(UnaryExpression1)
+        r6 = instantiate_node(SyntaxNode,input, i6...index, s6)
+        r6.extend(UnaryExpression2)
+        r6.extend(UnaryExpression3)
       else
         @index = i6
         r6 = nil
@@ -2708,11 +2921,10 @@ module C
         r0 = r6
       else
         i11, s11 = index, []
-        if has_terminal?('*', false, index)
-          r12 = instantiate_node(SyntaxNode,input, index...(index + 1))
+        if has_terminal?('\G[\\*\\&\\+\\-\\~\\!]', true, index)
+          r12 = true
           @index += 1
         else
-          terminal_parse_failure('*')
           r12 = nil
         end
         s11 << r12
@@ -2730,8 +2942,9 @@ module C
           end
         end
         if s11.last
-          r11 = instantiate_node(Dereference,input, i11...index, s11)
-          r11.extend(UnaryExpression2)
+          r11 = instantiate_node(SyntaxNode,input, i11...index, s11)
+          r11.extend(UnaryExpression4)
+          r11.extend(UnaryExpression5)
         else
           @index = i11
           r11 = nil
@@ -2740,10 +2953,11 @@ module C
           r0 = r11
         else
           i16, s16 = index, []
-          if has_terminal?('\G[\\&\\+\\-\\~\\!]', true, index)
-            r17 = true
-            @index += 1
+          if has_terminal?('sizeof', false, index)
+            r17 = instantiate_node(SyntaxNode,input, index...(index + 6))
+            @index += 6
           else
+            terminal_parse_failure('sizeof')
             r17 = nil
           end
           s16 << r17
@@ -2756,13 +2970,52 @@ module C
             end
             s16 << r18
             if r18
-              r20 = _nt_cast_expression
+              if has_terminal?('(', false, index)
+                r20 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                @index += 1
+              else
+                terminal_parse_failure('(')
+                r20 = nil
+              end
               s16 << r20
+              if r20
+                r22 = _nt_ws
+                if r22
+                  r21 = r22
+                else
+                  r21 = instantiate_node(SyntaxNode,input, index...index)
+                end
+                s16 << r21
+                if r21
+                  r23 = _nt_type_name
+                  s16 << r23
+                  if r23
+                    r25 = _nt_ws
+                    if r25
+                      r24 = r25
+                    else
+                      r24 = instantiate_node(SyntaxNode,input, index...index)
+                    end
+                    s16 << r24
+                    if r24
+                      if has_terminal?(')', false, index)
+                        r26 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                        @index += 1
+                      else
+                        terminal_parse_failure(')')
+                        r26 = nil
+                      end
+                      s16 << r26
+                    end
+                  end
+                end
+              end
             end
           end
           if s16.last
-            r16 = instantiate_node(UnaryArithmetic,input, i16...index, s16)
-            r16.extend(UnaryExpression3)
+            r16 = instantiate_node(SyntaxNode,input, i16...index, s16)
+            r16.extend(UnaryExpression6)
+            r16.extend(UnaryExpression7)
           else
             @index = i16
             r16 = nil
@@ -2770,131 +3023,61 @@ module C
           if r16
             r0 = r16
           else
-            i21, s21 = index, []
+            i27, s27 = index, []
             if has_terminal?('sizeof', false, index)
-              r22 = instantiate_node(SyntaxNode,input, index...(index + 6))
+              r28 = instantiate_node(SyntaxNode,input, index...(index + 6))
               @index += 6
             else
               terminal_parse_failure('sizeof')
-              r22 = nil
+              r28 = nil
             end
-            s21 << r22
-            if r22
-              r24 = _nt_ws
-              if r24
-                r23 = r24
+            s27 << r28
+            if r28
+              i29 = index
+              if has_terminal?('\G[\\w]', true, index)
+                r30 = true
+                @index += 1
               else
-                r23 = instantiate_node(SyntaxNode,input, index...index)
+                r30 = nil
               end
-              s21 << r23
-              if r23
-                if has_terminal?('(', false, index)
-                  r25 = instantiate_node(SyntaxNode,input, index...(index + 1))
-                  @index += 1
+              if r30
+                r29 = nil
+              else
+                @index = i29
+                r29 = instantiate_node(SyntaxNode,input, index...index)
+              end
+              s27 << r29
+              if r29
+                r32 = _nt_ws
+                if r32
+                  r31 = r32
                 else
-                  terminal_parse_failure('(')
-                  r25 = nil
+                  r31 = instantiate_node(SyntaxNode,input, index...index)
                 end
-                s21 << r25
-                if r25
-                  r27 = _nt_ws
-                  if r27
-                    r26 = r27
-                  else
-                    r26 = instantiate_node(SyntaxNode,input, index...index)
-                  end
-                  s21 << r26
-                  if r26
-                    r28 = _nt_type_name
-                    s21 << r28
-                    if r28
-                      r30 = _nt_ws
-                      if r30
-                        r29 = r30
-                      else
-                        r29 = instantiate_node(SyntaxNode,input, index...index)
-                      end
-                      s21 << r29
-                      if r29
-                        if has_terminal?(')', false, index)
-                          r31 = instantiate_node(SyntaxNode,input, index...(index + 1))
-                          @index += 1
-                        else
-                          terminal_parse_failure(')')
-                          r31 = nil
-                        end
-                        s21 << r31
-                      end
-                    end
-                  end
+                s27 << r31
+                if r31
+                  r33 = _nt_unary_expression
+                  s27 << r33
                 end
               end
             end
-            if s21.last
-              r21 = instantiate_node(SizeOf,input, i21...index, s21)
-              r21.extend(UnaryExpression4)
+            if s27.last
+              r27 = instantiate_node(SyntaxNode,input, i27...index, s27)
+              r27.extend(UnaryExpression8)
+              r27.extend(UnaryExpression9)
             else
-              @index = i21
-              r21 = nil
+              @index = i27
+              r27 = nil
             end
-            if r21
-              r0 = r21
+            if r27
+              r0 = r27
             else
-              i32, s32 = index, []
-              if has_terminal?('sizeof', false, index)
-                r33 = instantiate_node(SyntaxNode,input, index...(index + 6))
-                @index += 6
+              r34 = _nt_postfix_expression
+              if r34
+                r0 = r34
               else
-                terminal_parse_failure('sizeof')
-                r33 = nil
-              end
-              s32 << r33
-              if r33
-                i34 = index
-                if has_terminal?('\G[\\w]', true, index)
-                  r35 = true
-                  @index += 1
-                else
-                  r35 = nil
-                end
-                if r35
-                  r34 = nil
-                else
-                  @index = i34
-                  r34 = instantiate_node(SyntaxNode,input, index...index)
-                end
-                s32 << r34
-                if r34
-                  r37 = _nt_ws
-                  if r37
-                    r36 = r37
-                  else
-                    r36 = instantiate_node(SyntaxNode,input, index...index)
-                  end
-                  s32 << r36
-                  if r36
-                    r38 = _nt_unary_expression
-                    s32 << r38
-                  end
-                end
-              end
-              if s32.last
-                r32 = instantiate_node(SizeOf,input, i32...index, s32)
-                r32.extend(UnaryExpression5)
-              else
-                @index = i32
-                r32 = nil
-              end
-              if r32
-                r0 = r32
-              else
-                r39 = _nt_postfix_expression
-                if r39
-                  r0 = r39
-                else
-                  @index = i0
-                  r0 = nil
-                end
+                @index = i0
+                r0 = nil
               end
             end
           end
@@ -2914,6 +3097,12 @@ module C
 
     def cast_expression
       elements[6]
+    end
+  end
+
+  module CastExpression1
+    def tree
+      Coal::Nodes::Cast.new(cast_expression.tree, type_name.tree)
     end
   end
 
@@ -2984,8 +3173,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(CastExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(CastExpression0)
+      r1.extend(CastExpression1)
     else
       @index = i1
       r1 = nil
@@ -3009,14 +3199,24 @@ module C
 
   module MultiplicativeExpression0
     def cast_expression
+      elements[3]
+    end
+  end
+
+  module MultiplicativeExpression1
+    def cast_expression
       elements[0]
     end
 
   end
 
-  module MultiplicativeExpression1
-    def cast_expression
-      elements[1]
+  module MultiplicativeExpression2
+    def tree
+      ltr_binomial_tree({
+        '*' => Coal::Nodes::Multiply,
+        '/' => Coal::Nodes::Divide,
+        '%' => Coal::Nodes::Modulo,
+      })
     end
   end
 
@@ -3033,19 +3233,19 @@ module C
 
     i0 = index
     i1, s1 = index, []
-    s2, i2 = [], index
-    loop do
-      i3, s3 = index, []
-      r4 = _nt_cast_expression
-      s3 << r4
-      if r4
+    r2 = _nt_cast_expression
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        i4, s4 = index, []
         r6 = _nt_ws
         if r6
           r5 = r6
         else
           r5 = instantiate_node(SyntaxNode,input, index...index)
         end
-        s3 << r5
+        s4 << r5
         if r5
           if has_terminal?('\G[\\*/%]', true, index)
             r7 = true
@@ -3053,7 +3253,7 @@ module C
           else
             r7 = nil
           end
-          s3 << r7
+          s4 << r7
           if r7
             r9 = _nt_ws
             if r9
@@ -3061,37 +3261,38 @@ module C
             else
               r8 = instantiate_node(SyntaxNode,input, index...index)
             end
-            s3 << r8
+            s4 << r8
+            if r8
+              r10 = _nt_cast_expression
+              s4 << r10
+            end
           end
         end
+        if s4.last
+          r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+          r4.extend(MultiplicativeExpression0)
+        else
+          @index = i4
+          r4 = nil
+        end
+        if r4
+          s3 << r4
+        else
+          break
+        end
       end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(MultiplicativeExpression0)
-      else
+      if s3.empty?
         @index = i3
         r3 = nil
-      end
-      if r3
-        s2 << r3
       else
-        break
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
       end
-    end
-    if s2.empty?
-      @index = i2
-      r2 = nil
-    else
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-    end
-    s1 << r2
-    if r2
-      r10 = _nt_cast_expression
-      s1 << r10
+      s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(MultiplicativeExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(MultiplicativeExpression1)
+      r1.extend(MultiplicativeExpression2)
     else
       @index = i1
       r1 = nil
@@ -3115,14 +3316,23 @@ module C
 
   module AdditiveExpression0
     def multiplicative_expression
+      elements[3]
+    end
+  end
+
+  module AdditiveExpression1
+    def multiplicative_expression
       elements[0]
     end
 
   end
 
-  module AdditiveExpression1
-    def multiplicative_expression
-      elements[1]
+  module AdditiveExpression2
+    def tree
+      ltr_binomial_tree({
+        '+' => Coal::Nodes::Add,
+        '-' => Coal::Nodes::Subtract,
+      })
     end
   end
 
@@ -3139,19 +3349,19 @@ module C
 
     i0 = index
     i1, s1 = index, []
-    s2, i2 = [], index
-    loop do
-      i3, s3 = index, []
-      r4 = _nt_multiplicative_expression
-      s3 << r4
-      if r4
+    r2 = _nt_multiplicative_expression
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        i4, s4 = index, []
         r6 = _nt_ws
         if r6
           r5 = r6
         else
           r5 = instantiate_node(SyntaxNode,input, index...index)
         end
-        s3 << r5
+        s4 << r5
         if r5
           if has_terminal?('\G[\\+\\-]', true, index)
             r7 = true
@@ -3159,7 +3369,7 @@ module C
           else
             r7 = nil
           end
-          s3 << r7
+          s4 << r7
           if r7
             r9 = _nt_ws
             if r9
@@ -3167,37 +3377,38 @@ module C
             else
               r8 = instantiate_node(SyntaxNode,input, index...index)
             end
-            s3 << r8
+            s4 << r8
+            if r8
+              r10 = _nt_multiplicative_expression
+              s4 << r10
+            end
           end
         end
+        if s4.last
+          r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+          r4.extend(AdditiveExpression0)
+        else
+          @index = i4
+          r4 = nil
+        end
+        if r4
+          s3 << r4
+        else
+          break
+        end
       end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(AdditiveExpression0)
-      else
+      if s3.empty?
         @index = i3
         r3 = nil
-      end
-      if r3
-        s2 << r3
       else
-        break
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
       end
-    end
-    if s2.empty?
-      @index = i2
-      r2 = nil
-    else
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-    end
-    s1 << r2
-    if r2
-      r10 = _nt_multiplicative_expression
-      s1 << r10
+      s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(AdditiveExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(AdditiveExpression1)
+      r1.extend(AdditiveExpression2)
     else
       @index = i1
       r1 = nil
@@ -3221,14 +3432,23 @@ module C
 
   module ShiftExpression0
     def additive_expression
+      elements[3]
+    end
+  end
+
+  module ShiftExpression1
+    def additive_expression
       elements[0]
     end
 
   end
 
-  module ShiftExpression1
-    def additive_expression
-      elements[1]
+  module ShiftExpression2
+    def tree
+      ltr_binomial_tree({
+        '<<' => Coal::Nodes::LeftBitshift,
+        '>>' => Coal::Nodes::RightBitshift,
+      })
     end
   end
 
@@ -3245,19 +3465,19 @@ module C
 
     i0 = index
     i1, s1 = index, []
-    s2, i2 = [], index
-    loop do
-      i3, s3 = index, []
-      r4 = _nt_additive_expression
-      s3 << r4
-      if r4
+    r2 = _nt_additive_expression
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        i4, s4 = index, []
         r6 = _nt_ws
         if r6
           r5 = r6
         else
           r5 = instantiate_node(SyntaxNode,input, index...index)
         end
-        s3 << r5
+        s4 << r5
         if r5
           i7 = index
           if has_terminal?('<<', false, index)
@@ -3284,7 +3504,7 @@ module C
               r7 = nil
             end
           end
-          s3 << r7
+          s4 << r7
           if r7
             r11 = _nt_ws
             if r11
@@ -3292,37 +3512,38 @@ module C
             else
               r10 = instantiate_node(SyntaxNode,input, index...index)
             end
-            s3 << r10
+            s4 << r10
+            if r10
+              r12 = _nt_additive_expression
+              s4 << r12
+            end
           end
         end
+        if s4.last
+          r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+          r4.extend(ShiftExpression0)
+        else
+          @index = i4
+          r4 = nil
+        end
+        if r4
+          s3 << r4
+        else
+          break
+        end
       end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(ShiftExpression0)
-      else
+      if s3.empty?
         @index = i3
         r3 = nil
-      end
-      if r3
-        s2 << r3
       else
-        break
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
       end
-    end
-    if s2.empty?
-      @index = i2
-      r2 = nil
-    else
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-    end
-    s1 << r2
-    if r2
-      r12 = _nt_additive_expression
-      s1 << r12
+      s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(ShiftExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(ShiftExpression1)
+      r1.extend(ShiftExpression2)
     else
       @index = i1
       r1 = nil
@@ -3346,14 +3567,25 @@ module C
 
   module RelationalExpression0
     def shift_expression
+      elements[3]
+    end
+  end
+
+  module RelationalExpression1
+    def shift_expression
       elements[0]
     end
 
   end
 
-  module RelationalExpression1
-    def shift_expression
-      elements[1]
+  module RelationalExpression2
+    def tree
+      ltr_binomial_tree({
+        '<=' => Coal::Nodes::LessOrEqual,
+        '<'  => Coal::Nodes::Less,
+        '>=' => Coal::Nodes::GreaterOrEqual,
+        '>'  => Coal::Nodes::Greater,
+      })
     end
   end
 
@@ -3370,19 +3602,19 @@ module C
 
     i0 = index
     i1, s1 = index, []
-    s2, i2 = [], index
-    loop do
-      i3, s3 = index, []
-      r4 = _nt_shift_expression
-      s3 << r4
-      if r4
+    r2 = _nt_shift_expression
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        i4, s4 = index, []
         r6 = _nt_ws
         if r6
           r5 = r6
         else
           r5 = instantiate_node(SyntaxNode,input, index...index)
         end
-        s3 << r5
+        s4 << r5
         if r5
           i7 = index
           if has_terminal?('<=', false, index)
@@ -3431,7 +3663,7 @@ module C
               end
             end
           end
-          s3 << r7
+          s4 << r7
           if r7
             r13 = _nt_ws
             if r13
@@ -3439,37 +3671,38 @@ module C
             else
               r12 = instantiate_node(SyntaxNode,input, index...index)
             end
-            s3 << r12
+            s4 << r12
+            if r12
+              r14 = _nt_shift_expression
+              s4 << r14
+            end
           end
         end
+        if s4.last
+          r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+          r4.extend(RelationalExpression0)
+        else
+          @index = i4
+          r4 = nil
+        end
+        if r4
+          s3 << r4
+        else
+          break
+        end
       end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(RelationalExpression0)
-      else
+      if s3.empty?
         @index = i3
         r3 = nil
-      end
-      if r3
-        s2 << r3
       else
-        break
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
       end
-    end
-    if s2.empty?
-      @index = i2
-      r2 = nil
-    else
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-    end
-    s1 << r2
-    if r2
-      r14 = _nt_shift_expression
-      s1 << r14
+      s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(RelationalExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(RelationalExpression1)
+      r1.extend(RelationalExpression2)
     else
       @index = i1
       r1 = nil
@@ -3493,14 +3726,23 @@ module C
 
   module EqualityExpression0
     def relational_expression
+      elements[3]
+    end
+  end
+
+  module EqualityExpression1
+    def relational_expression
       elements[0]
     end
 
   end
 
-  module EqualityExpression1
-    def relational_expression
-      elements[1]
+  module EqualityExpression2
+    def tree
+      ltr_binomial_tree({
+        '==' => Coal::Nodes::Equal,
+        '!=' => Coal::Nodes::NotEqual,
+      })
     end
   end
 
@@ -3517,19 +3759,19 @@ module C
 
     i0 = index
     i1, s1 = index, []
-    s2, i2 = [], index
-    loop do
-      i3, s3 = index, []
-      r4 = _nt_relational_expression
-      s3 << r4
-      if r4
+    r2 = _nt_relational_expression
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        i4, s4 = index, []
         r6 = _nt_ws
         if r6
           r5 = r6
         else
           r5 = instantiate_node(SyntaxNode,input, index...index)
         end
-        s3 << r5
+        s4 << r5
         if r5
           i7 = index
           if has_terminal?('==', false, index)
@@ -3556,7 +3798,7 @@ module C
               r7 = nil
             end
           end
-          s3 << r7
+          s4 << r7
           if r7
             r11 = _nt_ws
             if r11
@@ -3564,37 +3806,38 @@ module C
             else
               r10 = instantiate_node(SyntaxNode,input, index...index)
             end
-            s3 << r10
+            s4 << r10
+            if r10
+              r12 = _nt_relational_expression
+              s4 << r12
+            end
           end
         end
+        if s4.last
+          r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+          r4.extend(EqualityExpression0)
+        else
+          @index = i4
+          r4 = nil
+        end
+        if r4
+          s3 << r4
+        else
+          break
+        end
       end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(EqualityExpression0)
-      else
+      if s3.empty?
         @index = i3
         r3 = nil
-      end
-      if r3
-        s2 << r3
       else
-        break
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
       end
-    end
-    if s2.empty?
-      @index = i2
-      r2 = nil
-    else
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-    end
-    s1 << r2
-    if r2
-      r12 = _nt_relational_expression
-      s1 << r12
+      s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(EqualityExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(EqualityExpression1)
+      r1.extend(EqualityExpression2)
     else
       @index = i1
       r1 = nil
@@ -3618,14 +3861,20 @@ module C
 
   module AndExpression0
     def equality_expression
+      elements[3]
+    end
+  end
+
+  module AndExpression1
+    def equality_expression
       elements[0]
     end
 
   end
 
-  module AndExpression1
-    def equality_expression
-      elements[1]
+  module AndExpression2
+    def tree
+      ltr_binomial_tree '&' => Coal::Nodes::BitwiseAnd
     end
   end
 
@@ -3642,19 +3891,19 @@ module C
 
     i0 = index
     i1, s1 = index, []
-    s2, i2 = [], index
-    loop do
-      i3, s3 = index, []
-      r4 = _nt_equality_expression
-      s3 << r4
-      if r4
+    r2 = _nt_equality_expression
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        i4, s4 = index, []
         r6 = _nt_ws
         if r6
           r5 = r6
         else
           r5 = instantiate_node(SyntaxNode,input, index...index)
         end
-        s3 << r5
+        s4 << r5
         if r5
           if has_terminal?('&', false, index)
             r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
@@ -3663,7 +3912,7 @@ module C
             terminal_parse_failure('&')
             r7 = nil
           end
-          s3 << r7
+          s4 << r7
           if r7
             r9 = _nt_ws
             if r9
@@ -3671,37 +3920,38 @@ module C
             else
               r8 = instantiate_node(SyntaxNode,input, index...index)
             end
-            s3 << r8
+            s4 << r8
+            if r8
+              r10 = _nt_equality_expression
+              s4 << r10
+            end
           end
         end
+        if s4.last
+          r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+          r4.extend(AndExpression0)
+        else
+          @index = i4
+          r4 = nil
+        end
+        if r4
+          s3 << r4
+        else
+          break
+        end
       end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(AndExpression0)
-      else
+      if s3.empty?
         @index = i3
         r3 = nil
-      end
-      if r3
-        s2 << r3
       else
-        break
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
       end
-    end
-    if s2.empty?
-      @index = i2
-      r2 = nil
-    else
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-    end
-    s1 << r2
-    if r2
-      r10 = _nt_equality_expression
-      s1 << r10
+      s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(AndExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(AndExpression1)
+      r1.extend(AndExpression2)
     else
       @index = i1
       r1 = nil
@@ -3725,14 +3975,20 @@ module C
 
   module ExclusiveOrExpression0
     def and_expression
+      elements[3]
+    end
+  end
+
+  module ExclusiveOrExpression1
+    def and_expression
       elements[0]
     end
 
   end
 
-  module ExclusiveOrExpression1
-    def and_expression
-      elements[1]
+  module ExclusiveOrExpression2
+    def tree
+      ltr_binomial_tree '^' => Coal::Nodes::BitwiseXor
     end
   end
 
@@ -3749,19 +4005,19 @@ module C
 
     i0 = index
     i1, s1 = index, []
-    s2, i2 = [], index
-    loop do
-      i3, s3 = index, []
-      r4 = _nt_and_expression
-      s3 << r4
-      if r4
+    r2 = _nt_and_expression
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        i4, s4 = index, []
         r6 = _nt_ws
         if r6
           r5 = r6
         else
           r5 = instantiate_node(SyntaxNode,input, index...index)
         end
-        s3 << r5
+        s4 << r5
         if r5
           if has_terminal?('^', false, index)
             r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
@@ -3770,7 +4026,7 @@ module C
             terminal_parse_failure('^')
             r7 = nil
           end
-          s3 << r7
+          s4 << r7
           if r7
             r9 = _nt_ws
             if r9
@@ -3778,37 +4034,38 @@ module C
             else
               r8 = instantiate_node(SyntaxNode,input, index...index)
             end
-            s3 << r8
+            s4 << r8
+            if r8
+              r10 = _nt_and_expression
+              s4 << r10
+            end
           end
         end
+        if s4.last
+          r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+          r4.extend(ExclusiveOrExpression0)
+        else
+          @index = i4
+          r4 = nil
+        end
+        if r4
+          s3 << r4
+        else
+          break
+        end
       end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(ExclusiveOrExpression0)
-      else
+      if s3.empty?
         @index = i3
         r3 = nil
-      end
-      if r3
-        s2 << r3
       else
-        break
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
       end
-    end
-    if s2.empty?
-      @index = i2
-      r2 = nil
-    else
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-    end
-    s1 << r2
-    if r2
-      r10 = _nt_and_expression
-      s1 << r10
+      s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(ExclusiveOrExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(ExclusiveOrExpression1)
+      r1.extend(ExclusiveOrExpression2)
     else
       @index = i1
       r1 = nil
@@ -3832,14 +4089,20 @@ module C
 
   module InclusiveOrExpression0
     def exclusive_or_expression
+      elements[3]
+    end
+  end
+
+  module InclusiveOrExpression1
+    def exclusive_or_expression
       elements[0]
     end
 
   end
 
-  module InclusiveOrExpression1
-    def exclusive_or_expression
-      elements[1]
+  module InclusiveOrExpression2
+    def tree
+      ltr_binomial_tree '|' => Coal::Nodes::BitwiseOr
     end
   end
 
@@ -3856,19 +4119,19 @@ module C
 
     i0 = index
     i1, s1 = index, []
-    s2, i2 = [], index
-    loop do
-      i3, s3 = index, []
-      r4 = _nt_exclusive_or_expression
-      s3 << r4
-      if r4
+    r2 = _nt_exclusive_or_expression
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        i4, s4 = index, []
         r6 = _nt_ws
         if r6
           r5 = r6
         else
           r5 = instantiate_node(SyntaxNode,input, index...index)
         end
-        s3 << r5
+        s4 << r5
         if r5
           if has_terminal?('|', false, index)
             r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
@@ -3877,7 +4140,7 @@ module C
             terminal_parse_failure('|')
             r7 = nil
           end
-          s3 << r7
+          s4 << r7
           if r7
             r9 = _nt_ws
             if r9
@@ -3885,37 +4148,38 @@ module C
             else
               r8 = instantiate_node(SyntaxNode,input, index...index)
             end
-            s3 << r8
+            s4 << r8
+            if r8
+              r10 = _nt_exclusive_or_expression
+              s4 << r10
+            end
           end
         end
+        if s4.last
+          r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+          r4.extend(InclusiveOrExpression0)
+        else
+          @index = i4
+          r4 = nil
+        end
+        if r4
+          s3 << r4
+        else
+          break
+        end
       end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(InclusiveOrExpression0)
-      else
+      if s3.empty?
         @index = i3
         r3 = nil
-      end
-      if r3
-        s2 << r3
       else
-        break
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
       end
-    end
-    if s2.empty?
-      @index = i2
-      r2 = nil
-    else
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-    end
-    s1 << r2
-    if r2
-      r10 = _nt_exclusive_or_expression
-      s1 << r10
+      s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(InclusiveOrExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(InclusiveOrExpression1)
+      r1.extend(InclusiveOrExpression2)
     else
       @index = i1
       r1 = nil
@@ -3939,14 +4203,20 @@ module C
 
   module LogicalAndExpression0
     def inclusive_or_expression
+      elements[3]
+    end
+  end
+
+  module LogicalAndExpression1
+    def inclusive_or_expression
       elements[0]
     end
 
   end
 
-  module LogicalAndExpression1
-    def inclusive_or_expression
-      elements[1]
+  module LogicalAndExpression2
+    def tree
+      ltr_binomial_tree '&&' => Coal::Nodes::LogicalAnd
     end
   end
 
@@ -3963,19 +4233,19 @@ module C
 
     i0 = index
     i1, s1 = index, []
-    s2, i2 = [], index
-    loop do
-      i3, s3 = index, []
-      r4 = _nt_inclusive_or_expression
-      s3 << r4
-      if r4
+    r2 = _nt_inclusive_or_expression
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        i4, s4 = index, []
         r6 = _nt_ws
         if r6
           r5 = r6
         else
           r5 = instantiate_node(SyntaxNode,input, index...index)
         end
-        s3 << r5
+        s4 << r5
         if r5
           if has_terminal?('&&', false, index)
             r7 = instantiate_node(SyntaxNode,input, index...(index + 2))
@@ -3984,7 +4254,7 @@ module C
             terminal_parse_failure('&&')
             r7 = nil
           end
-          s3 << r7
+          s4 << r7
           if r7
             r9 = _nt_ws
             if r9
@@ -3992,37 +4262,38 @@ module C
             else
               r8 = instantiate_node(SyntaxNode,input, index...index)
             end
-            s3 << r8
+            s4 << r8
+            if r8
+              r10 = _nt_inclusive_or_expression
+              s4 << r10
+            end
           end
         end
+        if s4.last
+          r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+          r4.extend(LogicalAndExpression0)
+        else
+          @index = i4
+          r4 = nil
+        end
+        if r4
+          s3 << r4
+        else
+          break
+        end
       end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(LogicalAndExpression0)
-      else
+      if s3.empty?
         @index = i3
         r3 = nil
-      end
-      if r3
-        s2 << r3
       else
-        break
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
       end
-    end
-    if s2.empty?
-      @index = i2
-      r2 = nil
-    else
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-    end
-    s1 << r2
-    if r2
-      r10 = _nt_inclusive_or_expression
-      s1 << r10
+      s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(LogicalAndExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(LogicalAndExpression1)
+      r1.extend(LogicalAndExpression2)
     else
       @index = i1
       r1 = nil
@@ -4046,14 +4317,20 @@ module C
 
   module LogicalOrExpression0
     def logical_and_expression
+      elements[3]
+    end
+  end
+
+  module LogicalOrExpression1
+    def logical_and_expression
       elements[0]
     end
 
   end
 
-  module LogicalOrExpression1
-    def logical_and_expression
-      elements[1]
+  module LogicalOrExpression2
+    def tree
+      ltr_binomial_tree '||' => Coal::Nodes::LogicalOr
     end
   end
 
@@ -4070,19 +4347,19 @@ module C
 
     i0 = index
     i1, s1 = index, []
-    s2, i2 = [], index
-    loop do
-      i3, s3 = index, []
-      r4 = _nt_logical_and_expression
-      s3 << r4
-      if r4
+    r2 = _nt_logical_and_expression
+    s1 << r2
+    if r2
+      s3, i3 = [], index
+      loop do
+        i4, s4 = index, []
         r6 = _nt_ws
         if r6
           r5 = r6
         else
           r5 = instantiate_node(SyntaxNode,input, index...index)
         end
-        s3 << r5
+        s4 << r5
         if r5
           if has_terminal?('||', false, index)
             r7 = instantiate_node(SyntaxNode,input, index...(index + 2))
@@ -4091,7 +4368,7 @@ module C
             terminal_parse_failure('||')
             r7 = nil
           end
-          s3 << r7
+          s4 << r7
           if r7
             r9 = _nt_ws
             if r9
@@ -4099,37 +4376,38 @@ module C
             else
               r8 = instantiate_node(SyntaxNode,input, index...index)
             end
-            s3 << r8
+            s4 << r8
+            if r8
+              r10 = _nt_logical_and_expression
+              s4 << r10
+            end
           end
         end
+        if s4.last
+          r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+          r4.extend(LogicalOrExpression0)
+        else
+          @index = i4
+          r4 = nil
+        end
+        if r4
+          s3 << r4
+        else
+          break
+        end
       end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(LogicalOrExpression0)
-      else
+      if s3.empty?
         @index = i3
         r3 = nil
-      end
-      if r3
-        s2 << r3
       else
-        break
+        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
       end
-    end
-    if s2.empty?
-      @index = i2
-      r2 = nil
-    else
-      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
-    end
-    s1 << r2
-    if r2
-      r10 = _nt_logical_and_expression
-      s1 << r10
+      s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(LogicalOrExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(LogicalOrExpression1)
+      r1.extend(LogicalOrExpression2)
     else
       @index = i1
       r1 = nil
@@ -4162,6 +4440,13 @@ module C
 
     def conditional_expression
       elements[8]
+    end
+  end
+
+  module ConditionalExpression1
+    def tree
+      e = elements
+      Coal::Nodes::ConditionalExpression.new(e[0].tree, e[4].tree, e[8].tree)
     end
   end
 
@@ -4245,8 +4530,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(ConditionalExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(ConditionalExpression0)
+      r1.extend(ConditionalExpression1)
     else
       @index = i1
       r1 = nil
@@ -4279,6 +4565,28 @@ module C
 
     def assignment_expression
       elements[4]
+    end
+  end
+
+  module AssignmentExpression1
+    def tree
+      op = assignment_operator.text_value.chop
+      lvalue = unary_expression.tree
+      rvalue = assignment_expression.tree
+      rvalue = case op
+        when '*':  Coal::Nodes::Multiply.new(lvalue, rvalue)
+        when '/':  Coal::Nodes::Divide.new(lvalue, rvalue)
+        when '%':  Coal::Nodes::Modulo.new(lvalue, rvalue)
+        when '+':  Coal::Nodes::Add.new(lvalue, rvalue)
+        when '-':  Coal::Nodes::Subtract.new(lvalue, rvalue)
+        when '<<': Coal::Nodes::LeftBitshift.new(lvalue, rvalue)
+        when '>>': Coal::Nodes::RightBitshift.new(lvalue, rvalue)
+        when '&':  Coal::Nodes::BitwiseAnd.new(lvalue, rvalue)
+        when '^':  Coal::Nodes::BitwiseXor.new(lvalue, rvalue)
+        when '|':  Coal::Nodes::BitwiseOr.new(lvalue, rvalue)
+        else rvalue
+      end
+      Coal::Nodes::Assign.new(lvalue, rvalue)
     end
   end
 
@@ -4324,8 +4632,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(AssignmentExpression,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(AssignmentExpression0)
+      r1.extend(AssignmentExpression1)
     else
       @index = i1
       r1 = nil
@@ -4501,6 +4810,12 @@ module C
 
   end
 
+  module Expression2
+    def tree
+      [assignment_expression.tree].concat(elements[1].map {|e| e[3].tree})
+    end
+  end
+
   def _nt_expression
     start_index = index
     if node_cache[:expression].has_key?(index)
@@ -4572,8 +4887,9 @@ module C
       s1 << r3
     end
     if s1.last
-      r1 = instantiate_node(ExpressionList,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(Expression1)
+      r1.extend(Expression2)
     else
       @index = i1
       r1 = nil
@@ -4624,12 +4940,44 @@ module C
   end
 
   module DeclarationStart1
+    def tree
+      node = declaration_start.tree
+      node.specifiers << declaration_specifier.tree
+      node
+    end
+  end
+
+  module DeclarationStart2
+    def declaration_specifier
+      elements[0]
+    end
+
+    def unambiguous_declaration_specifier
+      elements[3]
+    end
+  end
+
+  module DeclarationStart3
+    def tree
+      specifiers = [elements[0].tree, elements[3].tree]
+      Coal::Nodes::Declaration.new(specifiers)
+    end
+  end
+
+  module DeclarationStart4
     def declaration_specifier
       elements[0]
     end
 
     def init_declarator_list
       elements[3]
+    end
+  end
+
+  module DeclarationStart5
+    def tree
+      specifiers = [declaration_specifier.tree]
+      Coal::Nodes::Declaration.new(specifiers, init_declarator_list.tree)
     end
   end
 
@@ -4678,8 +5026,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(DeclarationStart,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(DeclarationStart0)
+      r1.extend(DeclarationStart1)
     else
       @index = i1
       r1 = nil
@@ -4714,14 +5063,15 @@ module C
           end
           s8 << r12
           if r12
-            r14 = _nt_init_declarator_list
+            r14 = _nt_unambiguous_declaration_specifier
             s8 << r14
           end
         end
       end
       if s8.last
         r8 = instantiate_node(SyntaxNode,input, i8...index, s8)
-        r8.extend(DeclarationStart1)
+        r8.extend(DeclarationStart2)
+        r8.extend(DeclarationStart3)
       else
         @index = i8
         r8 = nil
@@ -4729,8 +5079,52 @@ module C
       if r8
         r0 = r8
       else
-        @index = i0
-        r0 = nil
+        i15, s15 = index, []
+        r16 = _nt_declaration_specifier
+        s15 << r16
+        if r16
+          i17 = index
+          if has_terminal?('\G[\\w]', true, index)
+            r18 = true
+            @index += 1
+          else
+            r18 = nil
+          end
+          if r18
+            r17 = nil
+          else
+            @index = i17
+            r17 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s15 << r17
+          if r17
+            r20 = _nt_ws
+            if r20
+              r19 = r20
+            else
+              r19 = instantiate_node(SyntaxNode,input, index...index)
+            end
+            s15 << r19
+            if r19
+              r21 = _nt_init_declarator_list
+              s15 << r21
+            end
+          end
+        end
+        if s15.last
+          r15 = instantiate_node(SyntaxNode,input, i15...index, s15)
+          r15.extend(DeclarationStart4)
+          r15.extend(DeclarationStart5)
+        else
+          @index = i15
+          r15 = nil
+        end
+        if r15
+          r0 = r15
+        else
+          @index = i0
+          r0 = nil
+        end
       end
     end
 
@@ -4747,10 +5141,22 @@ module C
   end
 
   module Declaration1
-    def declaration_specifiers
+    def tree
+      declaration_start.tree
+    end
+  end
+
+  module Declaration2
+    def declaration_specifier
       elements[0]
     end
 
+  end
+
+  module Declaration3
+    def tree
+      Coal::Nodes::Declaration.new([declaration_specifier.tree])
+    end
   end
 
   def _nt_declaration
@@ -4788,8 +5194,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(Declaration,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(Declaration0)
+      r1.extend(Declaration1)
     else
       @index = i1
       r1 = nil
@@ -4798,7 +5205,7 @@ module C
       r0 = r1
     else
       i6, s6 = index, []
-      r7 = _nt_declaration_specifiers
+      r7 = _nt_declaration_specifier
       s6 << r7
       if r7
         r9 = _nt_ws
@@ -4820,8 +5227,9 @@ module C
         end
       end
       if s6.last
-        r6 = instantiate_node(Declaration,input, i6...index, s6)
-        r6.extend(Declaration1)
+        r6 = instantiate_node(SyntaxNode,input, i6...index, s6)
+        r6.extend(Declaration2)
+        r6.extend(Declaration3)
       else
         @index = i6
         r6 = nil
@@ -4839,10 +5247,10 @@ module C
     r0
   end
 
-  def _nt_declaration_specifier
+  def _nt_unambiguous_declaration_specifier
     start_index = index
-    if node_cache[:declaration_specifier].has_key?(index)
-      cached = node_cache[:declaration_specifier][index]
+    if node_cache[:unambiguous_declaration_specifier].has_key?(index)
+      cached = node_cache[:unambiguous_declaration_specifier][index]
       if cached
         cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
         @index = cached.interval.end
@@ -4859,11 +5267,11 @@ module C
       if r2
         r0 = r2
       else
-        r3 = _nt_type_specifier
+        r3 = _nt_function_specifier
         if r3
           r0 = r3
         else
-          r4 = _nt_function_specifier
+          r4 = _nt_unambiguous_type_specifier
           if r4
             r0 = r4
           else
@@ -4874,28 +5282,15 @@ module C
       end
     end
 
-    node_cache[:declaration_specifier][start_index] = r0
+    node_cache[:unambiguous_declaration_specifier][start_index] = r0
 
     r0
   end
 
-  module DeclarationSpecifiers0
-    def declaration_specifiers
-      elements[2]
-    end
-  end
-
-  module DeclarationSpecifiers1
-    def declaration_specifier
-      elements[0]
-    end
-
-  end
-
-  def _nt_declaration_specifiers
+  def _nt_declaration_specifier
     start_index = index
-    if node_cache[:declaration_specifiers].has_key?(index)
-      cached = node_cache[:declaration_specifiers][index]
+    if node_cache[:declaration_specifier].has_key?(index)
+      cached = node_cache[:declaration_specifier][index]
       if cached
         cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
         @index = cached.interval.end
@@ -4903,61 +5298,21 @@ module C
       return cached
     end
 
-    i0, s0 = index, []
-    r1 = _nt_declaration_specifier
-    s0 << r1
+    i0 = index
+    r1 = _nt_unambiguous_type_specifier
     if r1
-      i3, s3 = index, []
-      i4 = index
-      if has_terminal?('\G[\\w]', true, index)
-        r5 = true
-        @index += 1
-      else
-        r5 = nil
-      end
-      if r5
-        r4 = nil
-      else
-        @index = i4
-        r4 = instantiate_node(SyntaxNode,input, index...index)
-      end
-      s3 << r4
-      if r4
-        r7 = _nt_ws
-        if r7
-          r6 = r7
-        else
-          r6 = instantiate_node(SyntaxNode,input, index...index)
-        end
-        s3 << r6
-        if r6
-          r8 = _nt_declaration_specifiers
-          s3 << r8
-        end
-      end
-      if s3.last
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-        r3.extend(DeclarationSpecifiers0)
-      else
-        @index = i3
-        r3 = nil
-      end
-      if r3
-        r2 = r3
-      else
-        r2 = instantiate_node(SyntaxNode,input, index...index)
-      end
-      s0 << r2
-    end
-    if s0.last
-      r0 = instantiate_node(DeclarationSpecifiers,input, i0...index, s0)
-      r0.extend(DeclarationSpecifiers1)
+      r0 = r1
     else
-      @index = i0
-      r0 = nil
+      r2 = _nt_typedef_name
+      if r2
+        r0 = r2
+      else
+        @index = i0
+        r0 = nil
+      end
     end
 
-    node_cache[:declaration_specifiers][start_index] = r0
+    node_cache[:declaration_specifier][start_index] = r0
 
     r0
   end
@@ -4973,6 +5328,12 @@ module C
       elements[0]
     end
 
+  end
+
+  module InitDeclaratorList2
+    def tree
+      [init_declarator.tree].concat(elements[1].map {|e| e[3].tree})
+    end
   end
 
   def _nt_init_declarator_list
@@ -5042,6 +5403,7 @@ module C
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(InitDeclaratorList1)
+      r0.extend(InitDeclaratorList2)
     else
       @index = i0
       r0 = nil
@@ -5059,6 +5421,12 @@ module C
 
     def initializer
       elements[4]
+    end
+  end
+
+  module InitDeclarator1
+    def tree
+      Coal::Nodes::InitDeclarator.new(declarator.tree, initializer.tree)
     end
   end
 
@@ -5110,8 +5478,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(InitDeclarator,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(InitDeclarator0)
+      r1.extend(InitDeclarator1)
     else
       @index = i1
       r1 = nil
@@ -5208,6 +5577,181 @@ module C
     r0
   end
 
+  module UnambiguousTypeSpecifier0
+    def tree
+      text_value
+    end
+  end
+
+  def _nt_unambiguous_type_specifier
+    start_index = index
+    if node_cache[:unambiguous_type_specifier].has_key?(index)
+      cached = node_cache[:unambiguous_type_specifier][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0 = index
+    i1 = index
+    if has_terminal?('void', false, index)
+      r2 = instantiate_node(SyntaxNode,input, index...(index + 4))
+      @index += 4
+    else
+      terminal_parse_failure('void')
+      r2 = nil
+    end
+    if r2
+      r1 = r2
+      r1.extend(UnambiguousTypeSpecifier0)
+    else
+      if has_terminal?('char', false, index)
+        r3 = instantiate_node(SyntaxNode,input, index...(index + 4))
+        @index += 4
+      else
+        terminal_parse_failure('char')
+        r3 = nil
+      end
+      if r3
+        r1 = r3
+        r1.extend(UnambiguousTypeSpecifier0)
+      else
+        if has_terminal?('short', false, index)
+          r4 = instantiate_node(SyntaxNode,input, index...(index + 5))
+          @index += 5
+        else
+          terminal_parse_failure('short')
+          r4 = nil
+        end
+        if r4
+          r1 = r4
+          r1.extend(UnambiguousTypeSpecifier0)
+        else
+          if has_terminal?('int', false, index)
+            r5 = instantiate_node(SyntaxNode,input, index...(index + 3))
+            @index += 3
+          else
+            terminal_parse_failure('int')
+            r5 = nil
+          end
+          if r5
+            r1 = r5
+            r1.extend(UnambiguousTypeSpecifier0)
+          else
+            if has_terminal?('long', false, index)
+              r6 = instantiate_node(SyntaxNode,input, index...(index + 4))
+              @index += 4
+            else
+              terminal_parse_failure('long')
+              r6 = nil
+            end
+            if r6
+              r1 = r6
+              r1.extend(UnambiguousTypeSpecifier0)
+            else
+              if has_terminal?('float', false, index)
+                r7 = instantiate_node(SyntaxNode,input, index...(index + 5))
+                @index += 5
+              else
+                terminal_parse_failure('float')
+                r7 = nil
+              end
+              if r7
+                r1 = r7
+                r1.extend(UnambiguousTypeSpecifier0)
+              else
+                if has_terminal?('double', false, index)
+                  r8 = instantiate_node(SyntaxNode,input, index...(index + 6))
+                  @index += 6
+                else
+                  terminal_parse_failure('double')
+                  r8 = nil
+                end
+                if r8
+                  r1 = r8
+                  r1.extend(UnambiguousTypeSpecifier0)
+                else
+                  if has_terminal?('signed', false, index)
+                    r9 = instantiate_node(SyntaxNode,input, index...(index + 6))
+                    @index += 6
+                  else
+                    terminal_parse_failure('signed')
+                    r9 = nil
+                  end
+                  if r9
+                    r1 = r9
+                    r1.extend(UnambiguousTypeSpecifier0)
+                  else
+                    if has_terminal?('unsigned', false, index)
+                      r10 = instantiate_node(SyntaxNode,input, index...(index + 8))
+                      @index += 8
+                    else
+                      terminal_parse_failure('unsigned')
+                      r10 = nil
+                    end
+                    if r10
+                      r1 = r10
+                      r1.extend(UnambiguousTypeSpecifier0)
+                    else
+                      if has_terminal?('_Bool', false, index)
+                        r11 = instantiate_node(SyntaxNode,input, index...(index + 5))
+                        @index += 5
+                      else
+                        terminal_parse_failure('_Bool')
+                        r11 = nil
+                      end
+                      if r11
+                        r1 = r11
+                        r1.extend(UnambiguousTypeSpecifier0)
+                      else
+                        if has_terminal?('_Complex', false, index)
+                          r12 = instantiate_node(SyntaxNode,input, index...(index + 8))
+                          @index += 8
+                        else
+                          terminal_parse_failure('_Complex')
+                          r12 = nil
+                        end
+                        if r12
+                          r1 = r12
+                          r1.extend(UnambiguousTypeSpecifier0)
+                        else
+                          @index = i1
+                          r1 = nil
+                        end
+                      end
+                    end
+                  end
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+    if r1
+      r0 = r1
+    else
+      r13 = _nt_struct_or_union_specifier
+      if r13
+        r0 = r13
+      else
+        r14 = _nt_enum_specifier
+        if r14
+          r0 = r14
+        else
+          @index = i0
+          r0 = nil
+        end
+      end
+    end
+
+    node_cache[:unambiguous_type_specifier][start_index] = r0
+
+    r0
+  end
+
   def _nt_type_specifier
     start_index = index
     if node_cache[:type_specifier].has_key?(index)
@@ -5220,142 +5764,16 @@ module C
     end
 
     i0 = index
-    if has_terminal?('void', false, index)
-      r1 = instantiate_node(VoidTypeSpecifier,input, index...(index + 4))
-      @index += 4
-    else
-      terminal_parse_failure('void')
-      r1 = nil
-    end
+    r1 = _nt_unambiguous_type_specifier
     if r1
       r0 = r1
     else
-      if has_terminal?('char', false, index)
-        r2 = instantiate_node(CharTypeSpecifier,input, index...(index + 4))
-        @index += 4
-      else
-        terminal_parse_failure('char')
-        r2 = nil
-      end
+      r2 = _nt_typedef_name
       if r2
         r0 = r2
       else
-        if has_terminal?('short', false, index)
-          r3 = instantiate_node(ShortTypeSpecifier,input, index...(index + 5))
-          @index += 5
-        else
-          terminal_parse_failure('short')
-          r3 = nil
-        end
-        if r3
-          r0 = r3
-        else
-          if has_terminal?('int', false, index)
-            r4 = instantiate_node(IntTypeSpecifier,input, index...(index + 3))
-            @index += 3
-          else
-            terminal_parse_failure('int')
-            r4 = nil
-          end
-          if r4
-            r0 = r4
-          else
-            if has_terminal?('long', false, index)
-              r5 = instantiate_node(LongTypeSpecifier,input, index...(index + 4))
-              @index += 4
-            else
-              terminal_parse_failure('long')
-              r5 = nil
-            end
-            if r5
-              r0 = r5
-            else
-              if has_terminal?('float', false, index)
-                r6 = instantiate_node(FloatTypeSpecifier,input, index...(index + 5))
-                @index += 5
-              else
-                terminal_parse_failure('float')
-                r6 = nil
-              end
-              if r6
-                r0 = r6
-              else
-                if has_terminal?('double', false, index)
-                  r7 = instantiate_node(DoubleTypeSpecifier,input, index...(index + 6))
-                  @index += 6
-                else
-                  terminal_parse_failure('double')
-                  r7 = nil
-                end
-                if r7
-                  r0 = r7
-                else
-                  if has_terminal?('signed', false, index)
-                    r8 = instantiate_node(SignedTypeSpecifier,input, index...(index + 6))
-                    @index += 6
-                  else
-                    terminal_parse_failure('signed')
-                    r8 = nil
-                  end
-                  if r8
-                    r0 = r8
-                  else
-                    if has_terminal?('unsigned', false, index)
-                      r9 = instantiate_node(UnsignedTypeSpecifier,input, index...(index + 8))
-                      @index += 8
-                    else
-                      terminal_parse_failure('unsigned')
-                      r9 = nil
-                    end
-                    if r9
-                      r0 = r9
-                    else
-                      if has_terminal?('_Bool', false, index)
-                        r10 = instantiate_node(SyntaxNode,input, index...(index + 5))
-                        @index += 5
-                      else
-                        terminal_parse_failure('_Bool')
-                        r10 = nil
-                      end
-                      if r10
-                        r0 = r10
-                      else
-                        if has_terminal?('_Complex', false, index)
-                          r11 = instantiate_node(SyntaxNode,input, index...(index + 8))
-                          @index += 8
-                        else
-                          terminal_parse_failure('_Complex')
-                          r11 = nil
-                        end
-                        if r11
-                          r0 = r11
-                        else
-                          r12 = _nt_struct_or_union_specifier
-                          if r12
-                            r0 = r12
-                          else
-                            r13 = _nt_enum_specifier
-                            if r13
-                              r0 = r13
-                            else
-                              r14 = _nt_typedef_name
-                              if r14
-                                r0 = r14
-                              else
-                                @index = i0
-                                r0 = nil
-                              end
-                            end
-                          end
-                        end
-                      end
-                    end
-                  end
-                end
-              end
-            end
-          end
-        end
+        @index = i0
+        r0 = nil
       end
     end
 
@@ -6514,7 +6932,7 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(PointerDeclarator,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(Declarator0)
     else
       @index = i1
@@ -6542,6 +6960,12 @@ module C
       elements[2]
     end
 
+  end
+
+  module DirectDeclaratorStart1
+    def tree
+      declarator.tree
+    end
   end
 
   def _nt_direct_declarator_start
@@ -6602,8 +7026,9 @@ module C
         end
       end
       if s2.last
-        r2 = instantiate_node(ParenthesizedDeclarator,input, i2...index, s2)
+        r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
         r2.extend(DirectDeclaratorStart0)
+        r2.extend(DirectDeclaratorStart1)
       else
         @index = i2
         r2 = nil
@@ -6639,20 +7064,36 @@ module C
   end
 
   module DirectDeclaratorEnd3
+    def tree(declarator)
+      tql = elements[2].empty? ? [] : elements[2][0].tree
+      ae = elements[3].empty? ? nil : elements[3][0].tree
+      Coal::Nodes::ArrayDeclarator.new(declarator, tql, ae, false)
+    end
+  end
+
+  module DirectDeclaratorEnd4
     def type_qualifier_list
       elements[0]
     end
 
   end
 
-  module DirectDeclaratorEnd4
+  module DirectDeclaratorEnd5
     def assignment_expression
       elements[6]
     end
 
   end
 
-  module DirectDeclaratorEnd5
+  module DirectDeclaratorEnd6
+    def tree(declarator)
+      tql = elements[5].empty? ? [] : elements[5][0].tree
+      ae = assignment_expression.tree
+      Coal::Nodes::ArrayDeclarator.new(declarator, tql, ae, true)
+    end
+  end
+
+  module DirectDeclaratorEnd7
     def type_qualifier_list
       elements[2]
     end
@@ -6667,31 +7108,52 @@ module C
 
   end
 
-  module DirectDeclaratorEnd6
+  module DirectDeclaratorEnd8
+    def tree(declarator)
+      tql = type_qualifier_list.tree
+      ae = assignment_expression.tree
+      Coal::Nodes::ArrayDeclarator.new(declarator, tql, ae, true)
+    end
+  end
+
+  module DirectDeclaratorEnd9
     def type_qualifier_list
       elements[0]
     end
 
   end
 
-  module DirectDeclaratorEnd7
+  module DirectDeclaratorEnd10
   end
 
-  module DirectDeclaratorEnd8
+  module DirectDeclaratorEnd11
     def parameter_type_list
       elements[2]
     end
 
   end
 
-  module DirectDeclaratorEnd9
+  module DirectDeclaratorEnd12
+    def tree(declarator)
+      Coal::Nodes::FunctionDeclarator.new(declarator, parameter_type_list.tree, nil)
+    end
+  end
+
+  module DirectDeclaratorEnd13
     def identifier_list
       elements[0]
     end
 
   end
 
-  module DirectDeclaratorEnd10
+  module DirectDeclaratorEnd14
+  end
+
+  module DirectDeclaratorEnd15
+    def tree(declarator)
+      ids = elements[2].empty? ? [] : elements[2][0].tree
+      Coal::Nodes::FunctionDeclarator.new(declarator, nil, ids)
+    end
   end
 
   def _nt_direct_declarator_end
@@ -6805,8 +7267,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(ArrayDeclaratorEnd,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(DirectDeclaratorEnd2)
+      r1.extend(DirectDeclaratorEnd3)
     else
       @index = i1
       r1 = nil
@@ -6894,7 +7357,7 @@ module C
                 end
                 if s28.last
                   r28 = instantiate_node(SyntaxNode,input, i28...index, s28)
-                  r28.extend(DirectDeclaratorEnd3)
+                  r28.extend(DirectDeclaratorEnd4)
                 else
                   @index = i28
                   r28 = nil
@@ -6934,8 +7397,9 @@ module C
         end
       end
       if s18.last
-        r18 = instantiate_node(ArrayDeclaratorEnd,input, i18...index, s18)
-        r18.extend(DirectDeclaratorEnd4)
+        r18 = instantiate_node(SyntaxNode,input, i18...index, s18)
+        r18.extend(DirectDeclaratorEnd5)
+        r18.extend(DirectDeclaratorEnd6)
       else
         @index = i18
         r18 = nil
@@ -7028,8 +7492,9 @@ module C
           end
         end
         if s38.last
-          r38 = instantiate_node(ArrayDeclaratorEnd,input, i38...index, s38)
-          r38.extend(DirectDeclaratorEnd5)
+          r38 = instantiate_node(SyntaxNode,input, i38...index, s38)
+          r38.extend(DirectDeclaratorEnd7)
+          r38.extend(DirectDeclaratorEnd8)
         else
           @index = i38
           r38 = nil
@@ -7069,7 +7534,7 @@ module C
               end
               if s58.last
                 r58 = instantiate_node(SyntaxNode,input, i58...index, s58)
-                r58.extend(DirectDeclaratorEnd6)
+                r58.extend(DirectDeclaratorEnd9)
               else
                 @index = i58
                 r58 = nil
@@ -7112,8 +7577,8 @@ module C
             end
           end
           if s53.last
-            r53 = instantiate_node(ArrayDeclaratorEnd,input, i53...index, s53)
-            r53.extend(DirectDeclaratorEnd7)
+            r53 = instantiate_node(SyntaxNode,input, i53...index, s53)
+            r53.extend(DirectDeclaratorEnd10)
           else
             @index = i53
             r53 = nil
@@ -7163,8 +7628,9 @@ module C
               end
             end
             if s66.last
-              r66 = instantiate_node(FunctionDeclaratorEnd,input, i66...index, s66)
-              r66.extend(DirectDeclaratorEnd8)
+              r66 = instantiate_node(SyntaxNode,input, i66...index, s66)
+              r66.extend(DirectDeclaratorEnd11)
+              r66.extend(DirectDeclaratorEnd12)
             else
               @index = i66
               r66 = nil
@@ -7204,7 +7670,7 @@ module C
                   end
                   if s79.last
                     r79 = instantiate_node(SyntaxNode,input, i79...index, s79)
-                    r79.extend(DirectDeclaratorEnd9)
+                    r79.extend(DirectDeclaratorEnd13)
                   else
                     @index = i79
                     r79 = nil
@@ -7228,8 +7694,9 @@ module C
                 end
               end
               if s74.last
-                r74 = instantiate_node(FunctionDeclaratorEnd,input, i74...index, s74)
-                r74.extend(DirectDeclaratorEnd10)
+                r74 = instantiate_node(SyntaxNode,input, i74...index, s74)
+                r74.extend(DirectDeclaratorEnd14)
+                r74.extend(DirectDeclaratorEnd15)
               else
                 @index = i74
                 r74 = nil
@@ -7252,10 +7719,26 @@ module C
   end
 
   module DirectDeclarator0
+    def direct_declarator_end
+      elements[1]
+    end
+  end
+
+  module DirectDeclarator1
     def direct_declarator_start
       elements[0]
     end
 
+  end
+
+  module DirectDeclarator2
+    def tree
+      decl = direct_declarator_start.tree
+      elements[1].each do |e|
+        decl = e[1].tree decl
+      end
+      decl
+    end
   end
 
   def _nt_direct_declarator
@@ -7269,54 +7752,47 @@ module C
       return cached
     end
 
-    i0 = index
-    i1, s1 = index, []
-    r2 = _nt_direct_declarator_start
-    s1 << r2
-    if r2
-      r4 = _nt_ws
-      if r4
-        r3 = r4
-      else
-        r3 = instantiate_node(SyntaxNode,input, index...index)
-      end
-      s1 << r3
-      if r3
-        s5, i5 = [], index
-        loop do
-          r6 = _nt_direct_declarator_end
-          if r6
-            s5 << r6
-          else
-            break
-          end
-        end
-        if s5.empty?
-          @index = i5
-          r5 = nil
-        else
-          r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
-        end
-        s1 << r5
-      end
-    end
-    if s1.last
-      r1 = instantiate_node(DirectDeclarator,input, i1...index, s1)
-      r1.extend(DirectDeclarator0)
-    else
-      @index = i1
-      r1 = nil
-    end
+    i0, s0 = index, []
+    r1 = _nt_direct_declarator_start
+    s0 << r1
     if r1
-      r0 = r1
-    else
-      r7 = _nt_direct_declarator_start
-      if r7
-        r0 = r7
-      else
-        @index = i0
-        r0 = nil
+      s2, i2 = [], index
+      loop do
+        i3, s3 = index, []
+        r5 = _nt_ws
+        if r5
+          r4 = r5
+        else
+          r4 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s3 << r4
+        if r4
+          r6 = _nt_direct_declarator_end
+          s3 << r6
+        end
+        if s3.last
+          r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+          r3.extend(DirectDeclarator0)
+        else
+          @index = i3
+          r3 = nil
+        end
+        if r3
+          s2 << r3
+        else
+          break
+        end
       end
+      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+      s0 << r2
+    end
+    if s0.last
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+      r0.extend(DirectDeclarator1)
+      r0.extend(DirectDeclarator2)
+    else
+      @index = i0
+      r0 = nil
     end
 
     node_cache[:direct_declarator][start_index] = r0
@@ -7459,6 +7935,12 @@ module C
 
   end
 
+  module TypeQualifierList2
+    def tree
+      [type_qualifier.tree].concat(elements[1].map {|e| e[1].tree})
+    end
+  end
+
   def _nt_type_qualifier_list
     start_index = index
     if node_cache[:type_qualifier_list].has_key?(index)
@@ -7502,6 +7984,7 @@ module C
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(TypeQualifierList1)
+      r0.extend(TypeQualifierList2)
     else
       @index = i0
       r0 = nil
@@ -7517,6 +8000,12 @@ module C
       elements[0]
     end
 
+  end
+
+  module ParameterTypeList1
+    def tree
+      parameter_list.tree << '...'
+    end
   end
 
   def _nt_parameter_type_list
@@ -7573,8 +8062,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(VariadicParameterTypeList,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(ParameterTypeList0)
+      r1.extend(ParameterTypeList1)
     else
       @index = i1
       r1 = nil
@@ -7607,6 +8097,12 @@ module C
       elements[0]
     end
 
+  end
+
+  module ParameterList2
+    def tree
+      [parameter_declaration.tree].concat(elements[1].map {|e| e[3].tree})
+    end
   end
 
   def _nt_parameter_list
@@ -7676,6 +8172,7 @@ module C
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(ParameterList1)
+      r0.extend(ParameterList2)
     else
       @index = i0
       r0 = nil
@@ -7697,10 +8194,25 @@ module C
   end
 
   module ParameterDeclaration1
+    def tree
+      pd = parameter_declaration.tree
+      pd.specifiers << declaration_specifier.tree
+      pd
+    end
+  end
+
+  module ParameterDeclaration2
     def declaration_specifier
       elements[0]
     end
 
+  end
+
+  module ParameterDeclaration3
+    def tree
+      specifiers = [declaration_specifier.tree]
+      Coal::Nodes::ParameterDeclaration.new(specifiers, elements[3].tree)
+    end
   end
 
   def _nt_parameter_declaration
@@ -7748,8 +8260,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(ParameterDeclaration,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(ParameterDeclaration0)
+      r1.extend(ParameterDeclaration1)
     else
       @index = i1
       r1 = nil
@@ -7802,8 +8315,9 @@ module C
         end
       end
       if s8.last
-        r8 = instantiate_node(ParameterDeclaration,input, i8...index, s8)
-        r8.extend(ParameterDeclaration1)
+        r8 = instantiate_node(SyntaxNode,input, i8...index, s8)
+        r8.extend(ParameterDeclaration2)
+        r8.extend(ParameterDeclaration3)
       else
         @index = i8
         r8 = nil
@@ -7834,6 +8348,12 @@ module C
 
   end
 
+  module IdentifierList2
+    def tree
+      [identifier.tree].concat(elements[1].map {|e| e[3].tree})
+    end
+  end
+
   def _nt_identifier_list
     start_index = index
     if node_cache[:identifier_list].has_key?(index)
@@ -7845,82 +8365,66 @@ module C
       return cached
     end
 
-    i0 = index
-    i1, s1 = index, []
-    r2 = _nt_identifier
-    s1 << r2
-    if r2
-      s3, i3 = [], index
+    i0, s0 = index, []
+    r1 = _nt_identifier
+    s0 << r1
+    if r1
+      s2, i2 = [], index
       loop do
-        i4, s4 = index, []
-        r6 = _nt_ws
-        if r6
-          r5 = r6
-        else
-          r5 = instantiate_node(SyntaxNode,input, index...index)
-        end
-        s4 << r5
+        i3, s3 = index, []
+        r5 = _nt_ws
         if r5
+          r4 = r5
+        else
+          r4 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s3 << r4
+        if r4
           if has_terminal?(',', false, index)
-            r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            r6 = instantiate_node(SyntaxNode,input, index...(index + 1))
             @index += 1
           else
             terminal_parse_failure(',')
-            r7 = nil
+            r6 = nil
           end
-          s4 << r7
-          if r7
-            r9 = _nt_ws
-            if r9
-              r8 = r9
-            else
-              r8 = instantiate_node(SyntaxNode,input, index...index)
-            end
-            s4 << r8
+          s3 << r6
+          if r6
+            r8 = _nt_ws
             if r8
-              r10 = _nt_identifier
-              s4 << r10
+              r7 = r8
+            else
+              r7 = instantiate_node(SyntaxNode,input, index...index)
+            end
+            s3 << r7
+            if r7
+              r9 = _nt_identifier
+              s3 << r9
             end
           end
         end
-        if s4.last
-          r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
-          r4.extend(IdentifierList0)
+        if s3.last
+          r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+          r3.extend(IdentifierList0)
         else
-          @index = i4
-          r4 = nil
+          @index = i3
+          r3 = nil
         end
-        if r4
-          s3 << r4
+        if r3
+          s2 << r3
         else
           break
         end
       end
-      if s3.empty?
-        @index = i3
-        r3 = nil
-      else
-        r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-      end
-      s1 << r3
+      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+      s0 << r2
     end
-    if s1.last
-      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-      r1.extend(IdentifierList1)
+    if s0.last
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+      r0.extend(IdentifierList1)
+      r0.extend(IdentifierList2)
     else
-      @index = i1
-      r1 = nil
-    end
-    if r1
-      r0 = r1
-    else
-      r11 = _nt_identifier
-      if r11
-        r0 = r11
-      else
-        @index = i0
-        r0 = nil
-      end
+      @index = i0
+      r0 = nil
     end
 
     node_cache[:identifier_list][start_index] = r0
@@ -8507,7 +9011,7 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(InitializerList,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(Initializer1)
     else
       @index = i1
@@ -8990,12 +9494,18 @@ module C
   end
 
   module LabeledStatement1
+    def tree
+      Coal::Nodes::CaseStatement.new(constant_expression.tree, statement.tree)
+    end
+  end
+
+  module LabeledStatement2
     def statement
       elements[4]
     end
   end
 
-  module LabeledStatement2
+  module LabeledStatement3
     def identifier
       elements[0]
     end
@@ -9090,6 +9600,7 @@ module C
     if s1.last
       r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(LabeledStatement0)
+      r1.extend(LabeledStatement1)
     else
       @index = i1
       r1 = nil
@@ -9140,7 +9651,7 @@ module C
       end
       if s14.last
         r14 = instantiate_node(SyntaxNode,input, i14...index, s14)
-        r14.extend(LabeledStatement1)
+        r14.extend(LabeledStatement2)
       else
         @index = i14
         r14 = nil
@@ -9185,7 +9696,7 @@ module C
         end
         if s22.last
           r22 = instantiate_node(SyntaxNode,input, i22...index, s22)
-          r22.extend(LabeledStatement2)
+          r22.extend(LabeledStatement3)
         else
           @index = i22
           r22 = nil
@@ -9212,6 +9723,12 @@ module C
   end
 
   module CompoundStatement1
+  end
+
+  module CompoundStatement2
+    def tree
+      elements[2].empty? ? [] : elements[2][0].tree
+    end
   end
 
   def _nt_compound_statement
@@ -9281,8 +9798,9 @@ module C
       end
     end
     if s0.last
-      r0 = instantiate_node(CompoundStatement,input, i0...index, s0)
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(CompoundStatement1)
+      r0.extend(CompoundStatement2)
     else
       @index = i0
       r0 = nil
@@ -9304,6 +9822,14 @@ module C
       elements[0]
     end
 
+  end
+
+  module BlockItemList2
+    def tree
+      arr = [block_item.tree]
+      arr.concat(elements[1].map {|e| e[1].tree}) unless elements[1].empty?
+      arr
+    end
   end
 
   def _nt_block_item_list
@@ -9354,6 +9880,7 @@ module C
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(BlockItemList1)
+      r0.extend(BlockItemList2)
     else
       @index = i0
       r0 = nil
@@ -9404,6 +9931,13 @@ module C
   module ExpressionStatement1
   end
 
+  module ExpressionStatement2
+    def tree
+      expr = elements[0].empty? ? nil : elements[0][0].tree
+      Coal::Nodes::ExpressionStatement.new(expr)
+    end
+  end
+
   def _nt_expression_statement
     start_index = index
     if node_cache[:expression_statement].has_key?(index)
@@ -9452,8 +9986,9 @@ module C
       s0 << r6
     end
     if s0.last
-      r0 = instantiate_node(ExpressionStatement,input, i0...index, s0)
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(ExpressionStatement1)
+      r0.extend(ExpressionStatement2)
     else
       @index = i0
       r0 = nil
@@ -9479,6 +10014,13 @@ module C
   end
 
   module SelectionStatement1
+    def tree
+      cond = expression.tree
+      Coal::Nodes::IfStatement.new(cond, elements[8].tree, elements[12].tree)
+    end
+  end
+
+  module SelectionStatement2
     def expression
       elements[4]
     end
@@ -9488,7 +10030,14 @@ module C
     end
   end
 
-  module SelectionStatement2
+  module SelectionStatement3
+    def tree
+      cond = expression.tree
+      Coal::Nodes::IfStatement.new(cond, statement.tree)
+    end
+  end
+
+  module SelectionStatement4
     def expression
       elements[4]
     end
@@ -9616,8 +10165,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(IfStatement,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(SelectionStatement0)
+      r1.extend(SelectionStatement1)
     else
       @index = i1
       r1 = nil
@@ -9699,8 +10249,9 @@ module C
         end
       end
       if s21.last
-        r21 = instantiate_node(IfStatement,input, i21...index, s21)
-        r21.extend(SelectionStatement1)
+        r21 = instantiate_node(SyntaxNode,input, i21...index, s21)
+        r21.extend(SelectionStatement2)
+        r21.extend(SelectionStatement3)
       else
         @index = i21
         r21 = nil
@@ -9783,7 +10334,7 @@ module C
         end
         if s35.last
           r35 = instantiate_node(SyntaxNode,input, i35...index, s35)
-          r35.extend(SelectionStatement2)
+          r35.extend(SelectionStatement4)
         else
           @index = i35
           r35 = nil
@@ -9813,6 +10364,12 @@ module C
   end
 
   module IterationStatement1
+    def tree
+      Coal::Nodes::WhileLoop.new(expression.tree, statement.tree)
+    end
+  end
+
+  module IterationStatement2
     def statement
       elements[3]
     end
@@ -9823,18 +10380,10 @@ module C
 
   end
 
-  module IterationStatement2
-    def expression
-      elements[0]
-    end
-
-  end
-
   module IterationStatement3
-    def expression
-      elements[0]
+    def tree
+     Coal::Nodes::DoWhileLoop.new(expression.tree, statement.tree)
     end
-
   end
 
   module IterationStatement4
@@ -9845,9 +10394,10 @@ module C
   end
 
   module IterationStatement5
-    def statement
-      elements[13]
+    def expression
+      elements[0]
     end
+
   end
 
   module IterationStatement6
@@ -9858,19 +10408,52 @@ module C
   end
 
   module IterationStatement7
+    def statement
+      elements[13]
+    end
+  end
+
+  module IterationStatement8
+    def tree
+      e = elements
+      initializer = e[4].empty? ? nil : e[4][0].tree 
+      condition = e[7].empty? ? nil : e[7][0].tree
+      incrementer = e[10].empty? ? nil : e[10][0].tree
+      Coal::Nodes::ForLoop.new(initializer, condition, incrementer, statement.tree)
+    end
+  end
+
+  module IterationStatement9
     def expression
       elements[0]
     end
 
   end
 
-  module IterationStatement8
+  module IterationStatement10
+    def expression
+      elements[0]
+    end
+
+  end
+
+  module IterationStatement11
     def declaration
       elements[4]
     end
 
     def statement
       elements[12]
+    end
+  end
+
+  module IterationStatement12
+    def tree
+      e = elements
+      initializer = declaration.tree 
+      condition = e[6].empty? ? nil : e[6][0].tree
+      incrementer = e[9].empty? ? nil : e[9][0].tree
+      Coal::Nodes::ForLoop.new(initializer, condition, incrementer, statement.tree)
     end
   end
 
@@ -9960,8 +10543,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(WhileLoop,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(IterationStatement0)
+      r1.extend(IterationStatement1)
     else
       @index = i1
       r1 = nil
@@ -10097,8 +10681,9 @@ module C
         end
       end
       if s15.last
-        r15 = instantiate_node(DoWhileLoop,input, i15...index, s15)
-        r15.extend(IterationStatement1)
+        r15 = instantiate_node(SyntaxNode,input, i15...index, s15)
+        r15.extend(IterationStatement2)
+        r15.extend(IterationStatement3)
       else
         @index = i15
         r15 = nil
@@ -10155,7 +10740,7 @@ module C
                 end
                 if s45.last
                   r45 = instantiate_node(SyntaxNode,input, i45...index, s45)
-                  r45.extend(IterationStatement2)
+                  r45.extend(IterationStatement4)
                 else
                   @index = i45
                   r45 = nil
@@ -10198,7 +10783,7 @@ module C
                       end
                       if s53.last
                         r53 = instantiate_node(SyntaxNode,input, i53...index, s53)
-                        r53.extend(IterationStatement3)
+                        r53.extend(IterationStatement5)
                       else
                         @index = i53
                         r53 = nil
@@ -10241,7 +10826,7 @@ module C
                             end
                             if s61.last
                               r61 = instantiate_node(SyntaxNode,input, i61...index, s61)
-                              r61.extend(IterationStatement4)
+                              r61.extend(IterationStatement6)
                             else
                               @index = i61
                               r61 = nil
@@ -10287,7 +10872,8 @@ module C
         end
         if s37.last
           r37 = instantiate_node(SyntaxNode,input, i37...index, s37)
-          r37.extend(IterationStatement5)
+          r37.extend(IterationStatement7)
+          r37.extend(IterationStatement8)
         else
           @index = i37
           r37 = nil
@@ -10355,7 +10941,7 @@ module C
                       end
                       if s80.last
                         r80 = instantiate_node(SyntaxNode,input, i80...index, s80)
-                        r80.extend(IterationStatement6)
+                        r80.extend(IterationStatement9)
                       else
                         @index = i80
                         r80 = nil
@@ -10398,7 +10984,7 @@ module C
                             end
                             if s88.last
                               r88 = instantiate_node(SyntaxNode,input, i88...index, s88)
-                              r88.extend(IterationStatement7)
+                              r88.extend(IterationStatement10)
                             else
                               @index = i88
                               r88 = nil
@@ -10443,7 +11029,8 @@ module C
           end
           if s69.last
             r69 = instantiate_node(SyntaxNode,input, i69...index, s69)
-            r69.extend(IterationStatement8)
+            r69.extend(IterationStatement11)
+            r69.extend(IterationStatement12)
           else
             @index = i69
             r69 = nil
@@ -10475,18 +11062,47 @@ module C
   end
 
   module JumpStatement1
+    def tree
+      Coal::Nodes::GoToStatement.new(identifier.tree)
+    end
   end
 
   module JumpStatement2
   end
 
   module JumpStatement3
-    def expression
-      elements[1]
+    def tree
+      Coal::Nodes::ContinueStatement.new(identifier.tree)
     end
   end
 
   module JumpStatement4
+  end
+
+  module JumpStatement5
+    def tree
+      Coal::Nodes::BreakStatement.new(identifier.tree)
+    end
+  end
+
+  module JumpStatement6
+    def expression
+      elements[0]
+    end
+
+  end
+
+  module JumpStatement7
+  end
+
+  module JumpStatement8
+    def tree
+      if elements[2].empty?
+        Coal::Nodes::ReturnStatement.new
+      else
+        Coal::Nodes::ReturnStatement.new(elements[3][0].tree)
+      end
+    end
   end
 
   def _nt_jump_statement
@@ -10538,8 +11154,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(GotoStatement,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(JumpStatement0)
+      r1.extend(JumpStatement1)
     else
       @index = i1
       r1 = nil
@@ -10576,8 +11193,9 @@ module C
         end
       end
       if s8.last
-        r8 = instantiate_node(ContinueStatement,input, i8...index, s8)
-        r8.extend(JumpStatement1)
+        r8 = instantiate_node(SyntaxNode,input, i8...index, s8)
+        r8.extend(JumpStatement2)
+        r8.extend(JumpStatement3)
       else
         @index = i8
         r8 = nil
@@ -10614,8 +11232,9 @@ module C
           end
         end
         if s13.last
-          r13 = instantiate_node(BreakStatement,input, i13...index, s13)
-          r13.extend(JumpStatement2)
+          r13 = instantiate_node(SyntaxNode,input, i13...index, s13)
+          r13.extend(JumpStatement4)
+          r13.extend(JumpStatement5)
         else
           @index = i13
           r13 = nil
@@ -10648,25 +11267,7 @@ module C
             end
             s18 << r20
             if r20
-              i23, s23 = index, []
-              r25 = _nt_ws
-              if r25
-                r24 = r25
-              else
-                r24 = instantiate_node(SyntaxNode,input, index...index)
-              end
-              s23 << r24
-              if r24
-                r26 = _nt_expression
-                s23 << r26
-              end
-              if s23.last
-                r23 = instantiate_node(SyntaxNode,input, i23...index, s23)
-                r23.extend(JumpStatement3)
-              else
-                @index = i23
-                r23 = nil
-              end
+              r23 = _nt_ws
               if r23
                 r22 = r23
               else
@@ -10674,14 +11275,32 @@ module C
               end
               s18 << r22
               if r22
-                r28 = _nt_ws
-                if r28
-                  r27 = r28
-                else
-                  r27 = instantiate_node(SyntaxNode,input, index...index)
+                i25, s25 = index, []
+                r26 = _nt_expression
+                s25 << r26
+                if r26
+                  r28 = _nt_ws
+                  if r28
+                    r27 = r28
+                  else
+                    r27 = instantiate_node(SyntaxNode,input, index...index)
+                  end
+                  s25 << r27
                 end
-                s18 << r27
-                if r27
+                if s25.last
+                  r25 = instantiate_node(SyntaxNode,input, i25...index, s25)
+                  r25.extend(JumpStatement6)
+                else
+                  @index = i25
+                  r25 = nil
+                end
+                if r25
+                  r24 = r25
+                else
+                  r24 = instantiate_node(SyntaxNode,input, index...index)
+                end
+                s18 << r24
+                if r24
                   if has_terminal?(';', false, index)
                     r29 = instantiate_node(SyntaxNode,input, index...(index + 1))
                     @index += 1
@@ -10695,8 +11314,9 @@ module C
             end
           end
           if s18.last
-            r18 = instantiate_node(ReturnStatement,input, i18...index, s18)
-            r18.extend(JumpStatement4)
+            r18 = instantiate_node(SyntaxNode,input, i18...index, s18)
+            r18.extend(JumpStatement7)
+            r18.extend(JumpStatement8)
           else
             @index = i18
             r18 = nil
@@ -10724,9 +11344,15 @@ module C
 
   module TranslationUnit1
     def external_declaration
-      elements[1]
+      elements[0]
     end
 
+  end
+
+  module TranslationUnit2
+    def tree
+      [external_declaration.tree].concat(elements[1].map {|e| e[1].tree})
+    end
   end
 
   def _nt_translation_unit
@@ -10741,60 +11367,43 @@ module C
     end
 
     i0, s0 = index, []
-    r2 = _nt_ws
-    if r2
-      r1 = r2
-    else
-      r1 = instantiate_node(SyntaxNode,input, index...index)
-    end
+    r1 = _nt_external_declaration
     s0 << r1
     if r1
-      r3 = _nt_external_declaration
-      s0 << r3
-      if r3
-        s4, i4 = [], index
-        loop do
-          i5, s5 = index, []
-          r7 = _nt_ws
-          if r7
-            r6 = r7
-          else
-            r6 = instantiate_node(SyntaxNode,input, index...index)
-          end
-          s5 << r6
-          if r6
-            r8 = _nt_external_declaration
-            s5 << r8
-          end
-          if s5.last
-            r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
-            r5.extend(TranslationUnit0)
-          else
-            @index = i5
-            r5 = nil
-          end
-          if r5
-            s4 << r5
-          else
-            break
-          end
+      s2, i2 = [], index
+      loop do
+        i3, s3 = index, []
+        r5 = _nt_ws
+        if r5
+          r4 = r5
+        else
+          r4 = instantiate_node(SyntaxNode,input, index...index)
         end
-        r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
-        s0 << r4
+        s3 << r4
         if r4
-          r10 = _nt_ws
-          if r10
-            r9 = r10
-          else
-            r9 = instantiate_node(SyntaxNode,input, index...index)
-          end
-          s0 << r9
+          r6 = _nt_external_declaration
+          s3 << r6
+        end
+        if s3.last
+          r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+          r3.extend(TranslationUnit0)
+        else
+          @index = i3
+          r3 = nil
+        end
+        if r3
+          s2 << r3
+        else
+          break
         end
       end
+      r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+      s0 << r2
     end
     if s0.last
-      r0 = instantiate_node(TranslationUnit,input, i0...index, s0)
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(TranslationUnit1)
+      r0.extend(TranslationUnit2)
     else
       @index = i0
       r0 = nil
@@ -10846,12 +11455,26 @@ module C
   end
 
   module FunctionDefinitionStart1
+    def tree
+      arr = function_definition_start.tree
+      arr[0] << declaration_specifier.tree
+      arr
+    end
+  end
+
+  module FunctionDefinitionStart2
     def declaration_specifier
       elements[0]
     end
 
     def declarator
       elements[3]
+    end
+  end
+
+  module FunctionDefinitionStart3
+    def tree
+      [[declaration_specifier.tree], declarator.tree]
     end
   end
 
@@ -10900,8 +11523,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(FunctionDefinitionStart,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(FunctionDefinitionStart0)
+      r1.extend(FunctionDefinitionStart1)
     else
       @index = i1
       r1 = nil
@@ -10943,7 +11567,8 @@ module C
       end
       if s8.last
         r8 = instantiate_node(SyntaxNode,input, i8...index, s8)
-        r8.extend(FunctionDefinitionStart1)
+        r8.extend(FunctionDefinitionStart2)
+        r8.extend(FunctionDefinitionStart3)
       else
         @index = i8
         r8 = nil
@@ -10963,8 +11588,9 @@ module C
 
   module FunctionDefinition0
     def declaration_list
-      elements[1]
+      elements[0]
     end
+
   end
 
   module FunctionDefinition1
@@ -10974,6 +11600,15 @@ module C
 
     def compound_statement
       elements[4]
+    end
+  end
+
+  module FunctionDefinition2
+    def tree
+      specs, declarator = *function_definition_start.tree
+      decls = elements[3].empty? ? [] : elements[3][0].tree
+      statement = compound_statement.tree
+      Coal::Nodes::FunctionDefinition.new(specs, declarator, decls, statement)
     end
   end
 
@@ -11007,25 +11642,7 @@ module C
       end
       s0 << r2
       if r2
-        i5, s5 = index, []
-        r7 = _nt_ws
-        if r7
-          r6 = r7
-        else
-          r6 = instantiate_node(SyntaxNode,input, index...index)
-        end
-        s5 << r6
-        if r6
-          r8 = _nt_declaration_list
-          s5 << r8
-        end
-        if s5.last
-          r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
-          r5.extend(FunctionDefinition0)
-        else
-          @index = i5
-          r5 = nil
-        end
+        r5 = _nt_ws
         if r5
           r4 = r5
         else
@@ -11033,14 +11650,32 @@ module C
         end
         s0 << r4
         if r4
-          r10 = _nt_ws
-          if r10
-            r9 = r10
-          else
-            r9 = instantiate_node(SyntaxNode,input, index...index)
+          i7, s7 = index, []
+          r8 = _nt_declaration_list
+          s7 << r8
+          if r8
+            r10 = _nt_ws
+            if r10
+              r9 = r10
+            else
+              r9 = instantiate_node(SyntaxNode,input, index...index)
+            end
+            s7 << r9
           end
-          s0 << r9
-          if r9
+          if s7.last
+            r7 = instantiate_node(SyntaxNode,input, i7...index, s7)
+            r7.extend(FunctionDefinition0)
+          else
+            @index = i7
+            r7 = nil
+          end
+          if r7
+            r6 = r7
+          else
+            r6 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s0 << r6
+          if r6
             r11 = _nt_compound_statement
             s0 << r11
           end
@@ -11048,8 +11683,9 @@ module C
       end
     end
     if s0.last
-      r0 = instantiate_node(FunctionDefinition,input, i0...index, s0)
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(FunctionDefinition1)
+      r0.extend(FunctionDefinition2)
     else
       @index = i0
       r0 = nil
@@ -11071,6 +11707,12 @@ module C
       elements[0]
     end
 
+  end
+
+  module DeclarationList2
+    def tree
+      [declaration.tree].concat(elements[1].map {|e| e[1].tree})
+    end
   end
 
   def _nt_declaration_list
@@ -11121,6 +11763,7 @@ module C
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(DeclarationList1)
+      r0.extend(DeclarationList2)
     else
       @index = i0
       r0 = nil
@@ -11222,6 +11865,19 @@ module C
   end
 
   module HeaderName1
+    def tree
+      Coal::Nodes::AngledHeaderName.new(elements[2].text_value)
+    end
+  end
+
+  module HeaderName2
+  end
+
+  module HeaderName3
+    #'
+         def tree
+           Coal::Nodes::QuotedHeaderName.new(elements[2].text_value)
+         end
   end
 
   def _nt_header_name
@@ -11297,8 +11953,9 @@ module C
       end
     end
     if s1.last
-      r1 = instantiate_node(AngledHeaderName,input, i1...index, s1)
+      r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
       r1.extend(HeaderName0)
+      r1.extend(HeaderName1)
     else
       @index = i1
       r1 = nil
@@ -11367,8 +12024,9 @@ module C
         end
       end
       if s10.last
-        r10 = instantiate_node(QuotedHeaderName,input, i10...index, s10)
-        r10.extend(HeaderName1)
+        r10 = instantiate_node(SyntaxNode,input, i10...index, s10)
+        r10.extend(HeaderName2)
+        r10.extend(HeaderName3)
       else
         @index = i10
         r10 = nil
@@ -11394,6 +12052,12 @@ module C
   end
 
   module PreprocessingFile1
+  end
+
+  module PreprocessingFile2
+    def tree
+      elements[1].empty? ? [] : elements[1][0].tree
+    end
   end
 
   def _nt_preprocessing_file
@@ -11445,6 +12109,7 @@ module C
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(PreprocessingFile1)
+      r0.extend(PreprocessingFile2)
     else
       @index = i0
       r0 = nil
@@ -11466,6 +12131,12 @@ module C
       elements[0]
     end
 
+  end
+
+  module Group2
+    def tree
+      [group_part.tree].concat(elements[1].map {|e| e[1].tree})
+    end
   end
 
   def _nt_group
@@ -11516,6 +12187,7 @@ module C
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(Group1)
+      r0.extend(Group2)
     else
       @index = i0
       r0 = nil
@@ -11561,6 +12233,12 @@ module C
       elements[4]
     end
 
+  end
+
+  module ControlLine1
+    def tree
+      Coal::Nodes::IncludeDirective.new(pp_tokens.tree)
+    end
   end
 
   def _nt_control_line
@@ -11635,8 +12313,9 @@ module C
       end
     end
     if s0.last
-      r0 = instantiate_node(IncludeDirective,input, i0...index, s0)
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(ControlLine0)
+      r0.extend(ControlLine1)
     else
       @index = i0
       r0 = nil
@@ -11652,6 +12331,12 @@ module C
       elements[0]
     end
 
+  end
+
+  module TextLine1
+    def tree
+      text_value
+    end
   end
 
   def _nt_text_line
@@ -11688,8 +12373,9 @@ module C
       end
     end
     if s0.last
-      r0 = instantiate_node(TextLine,input, i0...index, s0)
+      r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(TextLine0)
+      r0.extend(TextLine1)
     else
       @index = i0
       r0 = nil
@@ -11711,6 +12397,12 @@ module C
       elements[0]
     end
 
+  end
+
+  module PpTokens2
+    def tree
+      [preprocessing_token.tree].concat(elements[1].map {|e| e[1].tree})
+    end
   end
 
   def _nt_pp_tokens
@@ -11761,6 +12453,7 @@ module C
     if s0.last
       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
       r0.extend(PpTokens1)
+      r0.extend(PpTokens2)
     else
       @index = i0
       r0 = nil

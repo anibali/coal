@@ -9,6 +9,8 @@ I want to witness the parsing of C-style statements
     
     Examples:
       | code                        |
+      | ;                           |
+      | 2 + 2;                      |
       | case face: lol;             |
       | case/*hai*/face: lol;       |
       | { 1 * 3; 4 + 7; }           |

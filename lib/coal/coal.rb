@@ -33,7 +33,7 @@ module Coal
         # Add a trailing newline if appropriate
         code << "\n" if code[-1] != ?\n
         # Preprocess, my pretties, preprocess!
-        code = @translator.preprocess node
+        code = @translator.preprocess node.tree
       end
       
       # Translate the preprocessed code
@@ -42,7 +42,7 @@ module Coal
       if node.nil?
         raise "Syntax error:\n#{parser.failure_reason}"
       else
-        @translator.translate node
+        @translator.translate node.tree
       end
     end
     

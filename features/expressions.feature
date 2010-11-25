@@ -1,7 +1,18 @@
 Feature: Postfix expressions
-In order to experience the awesomeness of Treetop 
-As a Rubyist
-I want to witness the parsing of C-style expressions
+
+  In order to experience the awesomeness of Treetop 
+  As a Rubyist
+  I want to witness the parsing of C-style expressions
+  
+  Scenario Outline: Valid primary expressions
+    When I feed the parser a valid primary_expression, <code>
+    Then it should parse successfully
+    
+    Examples:
+      | code              |
+      | (34)              |
+      | 10.7              |
+      | ((lisp))          |
   
   Scenario Outline: Valid postfix expressions
     When I feed the parser a valid postfix_expression, <code>
@@ -9,10 +20,12 @@ I want to witness the parsing of C-style expressions
     
     Examples:
       | code              |
-      | 1++               |
-      | foo++--           |
+      | x++               |
+      | foo--             |
       | foo->bar          |
       | point.x           |
+      | hello[there]      |
+      | funky(ga, llo)    |
       | aphex[t](w)[i](n) |
     
     Scenario Outline: Invalid postfix expressions

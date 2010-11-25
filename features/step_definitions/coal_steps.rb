@@ -6,15 +6,15 @@ end
 Then /^it should parse successfully$/ do
   puts @parser.failure_reason if @result.nil?
   @result.should_not be_nil
+  #expect { @result.tree }.to_not raise_exception
 end
 
-Then /^it should parse successfully to a node with attributes {(.+)}$/ do |attrs|
-  puts @parser.failure_reason if @result.nil?
-  @result.should_not be_nil
-  attrs = attrs.split(', ').map {|e| i = e.index ':' ; [e[0...i], e[i+1..-1].strip]}
+Then /^the produced tree node should have attributes \{(.+)\}$/ do |attrs|
+  node = @result.tree
+  attrs = attrs.split(',').map {|e| i = e.index ':' ; [e[0...i], e[i+1..-1].strip]}
   attrs.each do |k, v|
-    @result.should respond_to k
-    @result.send(k).should == eval(v)
+    node.should respond_to k
+    node.send(k).should == eval(v)
   end
 end
 

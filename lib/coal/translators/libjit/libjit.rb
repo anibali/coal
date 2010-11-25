@@ -30,21 +30,18 @@ module Coal::Translators
     def preprocess node
       code = ""
       
-      unless node[1].empty?
-        group_parts = Helper.spaced_list(node[1][0])
-        group_parts.each do |gp|
-          case gp
-          when TextLine
-            code << gp.text_value
-          when IncludeDirective
-            if gp.tokens.one? and gp.tokens.first.is_a? HeaderName
-              Includes.add self, gp.tokens.first.name
-            else
-              raise "unsupported preprocessor directive: #{gp.text_value.strip}"
-            end
+      node.each do |gp|
+        case gp
+        when String
+          code << gp
+        when IncludeDirective
+          if gp.tokens.one? and gp.tokens.first.is_a? HeaderName
+            Includes.add self, gp.tokens.first.name
           else
-            raise "unsupported preprocessor directive: #{gp.text_value.strip}"
+            raise "unsupported preprocessor directive"
           end
+        else
+          raise "unsupported preprocessor directive"
         end
       end
       
@@ -52,29 +49,18 @@ module Coal::Translators
     end
     
     def translate node
-      return if node[1].empty?
-      root_node = node[1][0]
+      return if node.empty?
       
-      root_node.items.each do |item|
+      node.each do |item|
         if item.is_a? FunctionDefinition
           function(item)
         else
-          assert_type item, Declaration
-          
-          if item.inits[0].is_a? DirectDeclarator and item.inits[0].suffixes[0].is_a? FunctionDeclaratorEnd
-            specifiers = item.specifiers
-            declarator = item.inits[0]
-            prototype(specifiers, declarator)
-          else
-            raise "TODO: support global declarations"
-          end
+          raise "TODO: global declarations"
         end
       end
     end
     
     def function(node)
-      assert_type node, FunctionDefinition
-      
       proto = prototype(node.declaration_specifiers, node.declarator)
       
       @reg = {}
@@ -86,7 +72,7 @@ module Coal::Translators
           proto.param_names.each_with_index do |name, i|
             @reg[name] = @function.arg(i)
           end
-          statements(node.statements)
+          statement(node.statement)
         end
       rescue Exception => ex
         @context.build_end
@@ -123,36 +109,23 @@ module Coal::Translators
       attr_reader :name, :param_names, :function
       
       def initialize trans, specifiers, declarator
-        trans.assert_type declarator, DirectDeclarator
-        
-        # TODO: support other declarator types
-        trans.assert_type declarator.stem, Identifier
-        @name = String(declarator.stem.name)
+        # TODO: support non-Identifier declarator types
+        @name = String(declarator.declarator.name)
         
         param_types = []
         @param_names = []
-        if declarator.suffixes.one?
-          suffix = declarator.suffixes[0]
-          trans.assert_type suffix, FunctionDeclaratorEnd
-          
-          if suffix.parameter_declarations.nil?
-            unless suffix.identifiers.empty?
-              raise "identifier-list style function definitions not supported yet"
-            end
-          else
-            trans.assert_type suffix.parameter_declarations, Array
-            suffix.parameter_declarations.each do |decl|
-              trans.assert_type decl, ParameterDeclaration
-              param_types << trans.declaration_specifiers(decl.declaration_specifiers)
-              trans.assert_type decl.declarator, Identifier
-              @param_names << decl.declarator.name
-            end
+        if declarator.identifiers?
+          unless declarator.identifiers.empty?
+            raise "identifier-list style function definitions not supported yet"
           end
         else
-          raise "can't understand function definitions with multiple suffixes"
+          declarator.parameter_declarations.each do |decl|
+            param_types << trans.declaration_specifiers(decl.specifiers)
+            # TODO: support non-Identifier declarator types
+            @param_names << decl.declarator.name
+          end
         end
         
-        trans.assert_type specifiers, Array
         return_type = trans.declaration_specifiers(specifiers)
         
         trans.context.build do
@@ -161,18 +134,14 @@ module Coal::Translators
       end
     end
     
-    def statements(array)
-      array.each do |node|
-        statement(node)
-      end
-    end
-    
     def statement(node)
       case node
-      when CompoundStatement
-        statements(node.statements)
+      when Array
+        node.each do |node|
+          statement(node)
+        end
       when ExpressionStatement
-        expression(node.expression)
+        expression(node.expression) unless node.expression.nil?
       when IfStatement
         part = @function.if { expression(node.condition) }.do {
           statement(node.then_statement)
@@ -187,7 +156,7 @@ module Coal::Translators
           statement(node.statement)
         }.end
       when ReturnStatement
-        @function.return(expression(node.expression))
+        @function.return(expression(node.value))
       when Declaration
         declaration(node)
       else
@@ -204,7 +173,7 @@ module Coal::Translators
         name = String(declarator.name)
         @reg[name] = @function.declare(type)
         if init.is_a? InitDeclarator
-          if init.initializer.is_a? InitializerList
+          if init.initializer.is_a? Array
             raise "TODO: initializer lists"
           else
             @reg[name].store expression(init.initializer)
@@ -215,6 +184,10 @@ module Coal::Translators
     
     def expression(node)
       case node
+      when Array
+        node.inject(nil) do |_, expr|
+          expression(expr)
+        end
       when IntegerConstant
         integer_constant(node)
       when FloatingConstant
@@ -225,54 +198,39 @@ module Coal::Translators
         var
       when StringLiteral
         @function.stringz node.value
-      when PrimaryExpression
-        expression(node.expression)
-      when PostfixExpression
-        node.suffixes.inject(node.operand) do |operand, suffix|
-          case suffix
-          when PostfixFunctionCall
-            if operand.is_a? Identifier
-              name = String(operand.name)
-              args = suffix.arguments.map {|arg| expression(arg)}
-              if @special_functions[name]
-                @special_functions[name].call @function, *args
-              else
-                proto = @prototypes[name]
-                @function_deps[@function] << proto.function
-                @function.call_other proto.function, *args
-              end
-            else
-              raise "calling function pointers currently unsupported"
-            end
+      when FunctionCall
+        if node.operand.is_a? Identifier
+          name = String(node.operand.name)
+          args = node.arguments.map {|arg| expression(arg)}
+          if @special_functions[name]
+            @special_functions[name].call @function, *args
           else
-            raise "unrecognised postfix expression suffix: #{suffix}"
+            proto = @prototypes[name]
+            @function_deps[@function] << proto.function
+            @function.call_other proto.function, *args
           end
+        else
+          raise "calling function pointers currently unsupported"
         end
       when UnaryExpression
-        case node.operator
-        when '++'
+        case node
+        when PrefixIncrement
           lvalue = expression(node.operand)
           lvalue.store(lvalue + @function.const(1, :intn))
-        when '--'
+        when PrefixDecrement
           lvalue = expression(node.operand)
           lvalue.store(lvalue - @function.const(1, :intn))
-        when '&'
-          expression(node.operand).address
-        when '*'
-          expression(node.operand).dereference
-        when '+'
-          expression(node.operand)
-        when '-'
-          -expression(node.operand)
-        when '~'
-          ~expression(node.operand)
-        when '!'
-          expression(node.operand).not
+        when Dereference:       expression(node.operand).dereference
+        when AddressOf:         expression(node.operand).address
+        when Positive:          expression(node.operand)
+        when Negative:          -expression(node.operand)
+        when BitwiseComplement: ~expression(node.operand)
+        when LogicalNot:        expression(node.operand).not
         else
           raise "unrecognised unary operator: #{node.operator}"
         end
-      when LTRBinaryExpression
-        ltr_binary_expression(node)
+      when BinaryArithmeticExpression
+        binary_arithmetic_expression(node)
       when ConditionalExpression
         # TODO: Somehow do this with only one if statement
         t = f = nil
@@ -294,73 +252,55 @@ module Coal::Translators
         }.end
         
         tmp
-      when AssignmentExpression
-        lvalue = nil
-        store = nil
+      when Assign
+        rvalue = expression(node.rvalue)
         
-        lvalue_node = node.lvalue
-        while lvalue_node.is_a? PrimaryExpression
-          lvalue_node = lvalue_node.expression
-        end
-        
-        if lvalue_node.is_a? Dereference
-          address = expression(lvalue_node.operand)
-          store = address.method :mstore
-          lvalue = address.dereference unless node.operator == '='
+        if node.lvalue.is_a? Dereference
+          expression(node.lvalue.operand).mstore rvalue
         else
-          lvalue = expression(lvalue_node)
-          store = lvalue.method :store
-        end
-        
-        if node.operator == '='
-          store[expression(node.rvalue)]
-        else
-          store[lvalue.send node.operator[0].chr, expression(node.rvalue)]
-        end
-      when ExpressionList
-        node.expressions.inject(nil) do |_, expr|
-          expression(expr)
+          expression(node.lvalue).store rvalue
         end
       else
         raise "unrecognised expression node: #{node}"
       end
     end
     
-    def ltr_binary_expression(node)
-      assert_type node, LTRBinaryExpression
+    def binary_arithmetic_expression(node)
+      assert_type node, BinaryArithmeticExpression
       
-      ops = node.operations.dup
-      a = expression(ops.slice! 0)
-      until ops.empty?
-        operator, b = *ops.slice!(0..1)
-        b = expression(b)
-        a = case operator
-        when *%w[* / % + - << >> < <= > >= & | ^]
-          a.send(operator, b)
-        when '=='
-          a.eq b
-        when '!='
-          a.ne b
-        when '||'
-          a.or b
-        when '&&'
-          a.and b
-        else
-          raise "unrecognised left-to-right binary operator: #{operator}"
-        end
+      a, b = *(node.operands.map {|expr| expression(expr)})
+      
+      case node
+      when Multiply:        a * b
+      when Divide:          a / b
+      when Modulo:          a % b
+      when Add:             a + b
+      when Subtract:        a - b
+      when LeftBitshift:    a << b
+      when RightBitshift:   a >> b
+      when LessOrEqual:     a <= b
+      when Less:            a < b
+      when GreaterOrEqual:  a >= b
+      when Greater:         a > b
+      when Equal:           a.eq b
+      when NotEqual:        a.ne b
+      when BitwiseAnd:      a & b
+      when BitwiseXor:      a ^ b
+      when BitwiseOr:       a | b
+      when LogicalAnd:      a.and b
+      when LogicalOr:       a.or b
+      else
+        raise "unrecognised binary arithmetic expression: #{node}"
       end
-      a
     end
     
     def declaration_specifiers(array)
-      type_specifiers array.select {|s| s.is_a? TypeSpecifier}
+      #TODO: process qualifiers, etc
+      type_specifiers array
     end
     
     def type_specifiers(array)
-      array.each do |e|
-        assert_type e, TypeSpecifier
-      end
-      array = array.map {|s| s.text_value}.sort
+      array.sort!
       
       hash = {}
       [
