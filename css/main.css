@@ -70,7 +70,7 @@ a:hover {
 
   background: #D66B6B; /* for non-css3 browsers */
 
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#D66B6B', endColorstr='#8C3939'); /* for IE */
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#8C3939', endColorstr='#8C3939'); /* for IE */
   background: -webkit-gradient(linear, left top, left bottom, from(#D66B6B), to(#8C3939)); /* for webkit browsers */
   background: -moz-linear-gradient(top,  #D66B6B,  #8C3939); /* for firefox 3.6+ */
 }
@@ -79,7 +79,7 @@ a:hover {
   padding: 16px 0px 16px 0px;
 }
 
-code.ruby {
+code {
   display: block;
   padding: 16px;
   color: #f8f8f8;
@@ -98,31 +98,31 @@ code.ruby {
   border-bottom-left-radius: 0px; 
 }
 
-.ruby .n { color: #f8f8f8; }
-.ruby .k { color: #cda869; font-weight: bold; }
-.ruby .kp { color: #cda869; }
-.ruby .nn { color: #9b859d; }
-.ruby .nb { color: #cda869; }
-.ruby .o { color: #f8f8f8; }
-.ruby .mf { color: #cf6a4c; }
-.ruby .mh { color: #cf6a4c; }
-.ruby .mi { color: #cf6a4c; }
-.ruby .mo { color: #cf6a4c; }
-.ruby .s1 { color: #8f9d6a; }
-.ruby .s2 { color: #8f9d6a; }
-.ruby .sh { color: #8f9d6a; }
-.ruby .si { color: #8f9d6a; font-weight: bold; }
-.ruby .c { color: #665f57; font-style: italic; }
-.ruby .cm { color: #665f57; font-style: italic; }
-.ruby .cp { color: #665f57; font-style: italic; }
-.ruby .c1 { color: #665f57; font-style: italic; }
-.ruby .no { color: #7587a6; }
-.ruby .sr { color: #e9c062; }
-.ruby .nf { color: #f8f8f8; }
-.ruby .nc { color: #9b859d; }
-.ruby .ss { color: #cf6a4c; }
-.ruby .sc { color: #cf6a4c; }
-.ruby .vi { color: #7587a6; }
-.ruby .vc { color: #7587a6; }
-.ruby .vg { color: #7587a6; }
-.ruby .escape { color: #7587a6; }
+code .n { color: #f8f8f8; }
+code .k { color: #cda869; font-weight: bold; }
+code .kp { color: #cda869; }
+code .kt { color: #9b859d; }
+code .nn { color: #9b859d; }
+code .nb { color: #cda869; }
+code .o { color: #f8f8f8; }
+code .mf { color: #cf6a4c; }
+code .mh { color: #cf6a4c; }
+code .mi { color: #cf6a4c; }
+code .mo { color: #cf6a4c; }
+code .s1 { color: #8f9d6a; }
+code .s2 { color: #8f9d6a; }
+code .sh { color: #8f9d6a; }
+code .si { color: #8f9d6a; font-weight: bold; }
+code .c { color: #665f57; font-style: italic; }
+code .cm { color: #665f57; font-style: italic; }
+code .cp { color: #665f57; font-style: italic; }
+code .c1 { color: #665f57; font-style: italic; }
+code .no { color: #7587a6; }
+code .sr { color: #e9c062; }
+code .nf { color: #f8f8f8; }
+code .nc { color: #9b859d; }
+code .ss { color: #cf6a4c; }
+code .sc { color: #cf6a4c; }
+code .vi { color: #7587a6; }
+code .vc { color: #7587a6; }
+code .vg { color: #7587a6; }
