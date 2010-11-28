@@ -10,14 +10,6 @@ module Coal::Translators
       @special_functions = {}
     end
     
-    def add_function name, function
-      name = String(name)
-      proto = Prototype.allocate
-      proto.instance_variable_set :@name, name
-      proto.instance_variable_set :@function, function
-      @prototypes[name] = proto
-    end
-    
     def add_special_function name, method=nil, &block
       name = String(name)
       if block_given?
@@ -77,8 +69,8 @@ module Coal::Translators
         @context.build do |c|
           @function = proto.function
           @function_deps[@function] = []
-          proto.param_names.each_with_index do |name, i|
-            @reg[name] = @function.arg(i)
+          proto.param_names.each_with_index do |param_name, i|
+            @reg[param_name] = @function.arg(i)
           end
           statement(node.statement)
         end
@@ -105,40 +97,63 @@ module Coal::Translators
     end
     
     def prototype(specifiers, declarator)
-      proto = Prototype.new(self, specifiers, declarator)
-      # TODO: combine prototypes (make sure param names are there, etc)
-      # rather than keeping first prototype as concrete
-      @prototypes[proto.name] ||= proto
+      # TODO: support non-Identifier declarator types
+      name = String(declarator.declarator.name)
+      
+      param_types = []
+      param_names = []
+      if declarator.identifiers?
+        declarator.identifiers.each do |id|
+          param_names << id.name
+        end
+      else
+        declarator.parameter_declarations.each do |decl|
+          if decl.is_a? ParameterDeclaration
+            param_types << declaration_specifiers(decl.specifiers)
+            # TODO: support non-Identifier declarator types
+            if decl.declarator.is_a? Identifier
+              param_names << decl.declarator.name
+            else
+              raise trans_err "Unsupported parameter declaration: #{decl}"
+            end
+          else
+            param_types << declaration_specifiers(decl)
+          end
+        end
+      end
+      
+      old_proto = @prototypes[name]
+      func = nil
+      
+      if param_types.size >= param_names.size
+        return_type = declaration_specifiers(specifiers)
+        
+        context.build do |c|
+          func = c.function(param_types, return_type)
+        end
+      end
+      
+      new_proto = Prototype.new(name, param_names, func)
+      if old_proto.nil?
+        @prototypes[name] = new_proto
+      else
+        old_proto.merge! new_proto
+      end
+      
+      @prototypes[name]
     end
     
     class Prototype
-      include Coal::Nodes
-      
       attr_reader :name, :param_names, :function
       
-      def initialize trans, specifiers, declarator
-        # TODO: support non-Identifier declarator types
-        @name = String(declarator.declarator.name)
-        
-        param_types = []
-        @param_names = []
-        if declarator.identifiers?
-          unless declarator.identifiers.empty?
-            raise "Identifier-list style function definitions not supported yet"
-          end
-        else
-          declarator.parameter_declarations.each do |decl|
-            param_types << trans.declaration_specifiers(decl.specifiers)
-            # TODO: support non-Identifier declarator types
-            @param_names << decl.declarator.name
-          end
-        end
-        
-        return_type = trans.declaration_specifiers(specifiers)
-        
-        trans.context.build do
-          @function = trans.context.function(param_types, return_type)
-        end
+      def initialize name, param_names, function
+        @name, @param_names, @function = name, param_names, function
+      end
+      
+      def merge! other
+        @name ||= other.name
+        @param_names = other.param_names
+        @function ||= other.function
       end
     end
     
@@ -168,7 +183,7 @@ module Coal::Translators
       when Declaration
         declaration(node)
       else
-        raise "unrecognised statement node: #{node}"
+        raise trans_err "Unrecognised statement node: #{node}"
       end
     end
     
@@ -182,7 +197,7 @@ module Coal::Translators
         @reg[name] = @function.declare(type)
         if init.is_a? InitDeclarator
           if init.initializer.is_a? Array
-            raise "TODO: initializer lists"
+            raise trans_err "TODO: initializer lists"
           else
             @reg[name].store expression(init.initializer)
           end
@@ -202,7 +217,7 @@ module Coal::Translators
         floating_constant(node)
       when Identifier
         var = @reg[node.name]
-        raise trans_err "undeclared variable '#{node.name}'" if var.nil?
+        raise trans_err "Undeclared variable: #{node.name}" if var.nil?
         var
       when StringLiteral
         @function.stringz node.value

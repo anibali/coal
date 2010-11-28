@@ -48,7 +48,7 @@ module Coal
     
     def add_function! name, function
       name = String(name)
-      raise "function already added: '#{name}'" if @functions.key? name
+      raise "Function already added: '#{name}'" if @functions.key? name
       @functions[name] = function
       module_exec name do |name|
         self.class.send :define_method, name do |*args|

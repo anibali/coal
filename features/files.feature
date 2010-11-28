@@ -56,7 +56,9 @@ Feature: C files
   Scenario: "is_close" function
     Given a file named "is_close.c" with:
       """
-      int is_close(float a, float b, float margin)
+      int is_close(float, float, float);
+      
+      int is_close(a, b, margin)
       {
         float diff = a > b ? a - b : b - a;
         return diff < margin;

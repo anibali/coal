@@ -8183,7 +8183,7 @@ module C
     r0
   end
 
-  module ParameterDeclaration0
+  module ParameterDeclarationStart0
     def declaration_specifier
       elements[0]
     end
@@ -8193,7 +8193,7 @@ module C
     end
   end
 
-  module ParameterDeclaration1
+  module ParameterDeclarationStart1
     def tree
       pd = parameter_declaration.tree
       pd.specifiers << declaration_specifier.tree
@@ -8201,24 +8201,24 @@ module C
     end
   end
 
-  module ParameterDeclaration2
+  module ParameterDeclarationStart2
     def declaration_specifier
       elements[0]
     end
 
   end
 
-  module ParameterDeclaration3
+  module ParameterDeclarationStart3
     def tree
       specifiers = [declaration_specifier.tree]
       Coal::Nodes::ParameterDeclaration.new(specifiers, elements[3].tree)
     end
   end
 
-  def _nt_parameter_declaration
+  def _nt_parameter_declaration_start
     start_index = index
-    if node_cache[:parameter_declaration].has_key?(index)
-      cached = node_cache[:parameter_declaration][index]
+    if node_cache[:parameter_declaration_start].has_key?(index)
+      cached = node_cache[:parameter_declaration_start][index]
       if cached
         cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
         @index = cached.interval.end
@@ -8261,8 +8261,8 @@ module C
     end
     if s1.last
       r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-      r1.extend(ParameterDeclaration0)
-      r1.extend(ParameterDeclaration1)
+      r1.extend(ParameterDeclarationStart0)
+      r1.extend(ParameterDeclarationStart1)
     else
       @index = i1
       r1 = nil
@@ -8316,14 +8316,112 @@ module C
       end
       if s8.last
         r8 = instantiate_node(SyntaxNode,input, i8...index, s8)
-        r8.extend(ParameterDeclaration2)
-        r8.extend(ParameterDeclaration3)
+        r8.extend(ParameterDeclarationStart2)
+        r8.extend(ParameterDeclarationStart3)
       else
         @index = i8
         r8 = nil
       end
       if r8
         r0 = r8
+      else
+        @index = i0
+        r0 = nil
+      end
+    end
+
+    node_cache[:parameter_declaration_start][start_index] = r0
+
+    r0
+  end
+
+  module ParameterDeclaration0
+    def ws
+      elements[0]
+    end
+
+  end
+
+  module ParameterDeclaration1
+    def unambiguous_declaration_specifier
+      elements[0]
+    end
+
+  end
+
+  module ParameterDeclaration2
+    def tree
+      arr = [unambiguous_declaration_specifier.tree]
+      arr.concat(elements[1][1].map {|d| d.tree}) unless elements[1].empty?
+      arr
+    end
+  end
+
+  def _nt_parameter_declaration
+    start_index = index
+    if node_cache[:parameter_declaration].has_key?(index)
+      cached = node_cache[:parameter_declaration][index]
+      if cached
+        cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+        @index = cached.interval.end
+      end
+      return cached
+    end
+
+    i0 = index
+    r1 = _nt_parameter_declaration_start
+    if r1
+      r0 = r1
+    else
+      i2, s2 = index, []
+      r3 = _nt_unambiguous_declaration_specifier
+      s2 << r3
+      if r3
+        i5, s5 = index, []
+        r6 = _nt_ws
+        s5 << r6
+        if r6
+          s7, i7 = [], index
+          loop do
+            r8 = _nt_declaration_specifier
+            if r8
+              s7 << r8
+            else
+              break
+            end
+          end
+          if s7.empty?
+            @index = i7
+            r7 = nil
+          else
+            r7 = instantiate_node(SyntaxNode,input, i7...index, s7)
+          end
+          s5 << r7
+        end
+        if s5.last
+          r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
+          r5.extend(ParameterDeclaration0)
+        else
+          @index = i5
+          r5 = nil
+        end
+        if r5
+          r4 = r5
+        else
+          r4 = instantiate_node(SyntaxNode,input, index...index)
+        end
+        s2 << r4
+      end
+      if s2.last
+        r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+        r2.extend(ParameterDeclaration1)
+        r2.extend(ParameterDeclaration2)
+      else
+        @index = i2
+        r2 = nil
+      end
+      if r2
+        r0 = r2
       else
         @index = i0
         r0 = nil

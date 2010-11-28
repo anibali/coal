@@ -811,7 +811,7 @@ grammar C
     }
   end
   
-  rule parameter_declaration
+  rule parameter_declaration_start
     declaration_specifier ![\w] ws? parameter_declaration {
       def tree
         pd = parameter_declaration.tree
@@ -824,6 +824,18 @@ grammar C
       def tree
         specifiers = [declaration_specifier.tree]
         Coal::Nodes::ParameterDeclaration.new(specifiers, elements[3].tree)
+      end
+    }
+  end
+  
+  rule parameter_declaration
+    parameter_declaration_start
+    /
+    unambiguous_declaration_specifier (ws declaration_specifier+)? {
+      def tree
+        arr = [unambiguous_declaration_specifier.tree]
+        arr.concat(elements[1][1].map {|d| d.tree}) unless elements[1].empty?
+        arr
       end
     }
   end
