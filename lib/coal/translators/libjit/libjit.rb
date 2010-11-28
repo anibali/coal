@@ -38,10 +38,10 @@ module Coal::Translators
           if gp.tokens.one? and gp.tokens.first.is_a? HeaderName
             Includes.add self, gp.tokens.first.name
           else
-            raise "unsupported preprocessor directive"
+            raise trans_err "Unsupported preprocessor directive: #{gp}"
           end
         else
-          raise "unsupported preprocessor directive"
+          raise trans_err "Unsupported preprocessor directive: #{gp}"
         end
       end
       
@@ -54,8 +54,16 @@ module Coal::Translators
       node.each do |item|
         if item.is_a? FunctionDefinition
           function(item)
+        elsif item.is_a? Declaration
+          item.inits.each do |init|
+            if init.is_a? FunctionDeclarator
+              prototype(item.specifiers, init)
+            else
+              raise trans_err "Unsupported global declaration: #{init}"
+            end
+          end
         else
-          raise "TODO: global declarations"
+          raise trans_err "Unsupported global entity: #{item}"
         end
       end
     end
@@ -116,7 +124,7 @@ module Coal::Translators
         @param_names = []
         if declarator.identifiers?
           unless declarator.identifiers.empty?
-            raise "identifier-list style function definitions not supported yet"
+            raise "Identifier-list style function definitions not supported yet"
           end
         else
           declarator.parameter_declarations.each do |decl|
@@ -194,7 +202,7 @@ module Coal::Translators
         floating_constant(node)
       when Identifier
         var = @reg[node.name]
-        raise "undeclared variable '#{node.name}'" if var.nil?
+        raise trans_err "undeclared variable '#{node.name}'" if var.nil?
         var
       when StringLiteral
         @function.stringz node.value
@@ -206,11 +214,12 @@ module Coal::Translators
             @special_functions[name].call @function, *args
           else
             proto = @prototypes[name]
+            raise trans_err "Undeclared function: #{name}" if proto.nil?
             @function_deps[@function] << proto.function
             @function.call_other proto.function, *args
           end
         else
-          raise "calling function pointers currently unsupported"
+          raise trans_err "Calling function pointers currently unsupported"
         end
       when UnaryExpression
         case node
@@ -227,7 +236,7 @@ module Coal::Translators
         when BitwiseComplement: ~expression(node.operand)
         when LogicalNot:        expression(node.operand).not
         else
-          raise "unrecognised unary operator: #{node.operator}"
+          raise trans_err "Unrecognised unary operator: #{node.operator}"
         end
       when BinaryArithmeticExpression
         binary_arithmetic_expression(node)
@@ -261,7 +270,7 @@ module Coal::Translators
           expression(node.lvalue).store rvalue
         end
       else
-        raise "unrecognised expression node: #{node}"
+        raise trans_err "Unrecognised expression node: #{node}"
       end
     end
     
@@ -290,7 +299,7 @@ module Coal::Translators
       when LogicalAnd:      a.and b
       when LogicalOr:       a.or b
       else
-        raise "unrecognised binary arithmetic expression: #{node}"
+        raise trans_err "Unrecognised binary arithmetic expression: #{node}"
       end
     end
     
@@ -327,7 +336,7 @@ module Coal::Translators
         end
       end
       type = hash[array]
-      raise "unrecognised type: #{array.join ' '}" if type.nil?
+      raise trans_err "Unrecognised type: #{array.join ' '}" if type.nil?
       type
     end
     
@@ -385,7 +394,7 @@ module Coal::Translators
           :uint64
         end
       else
-        raise "unrecognised integer constant suffix: #{node.suffix.inspect}"
+        raise trans_err "Unrecognised integer constant suffix: #{node.suffix.inspect}"
       end
       @function.const(value, type)
     end
@@ -401,7 +410,7 @@ module Coal::Translators
         when nil, ""
           :float64
         else
-          raise "unrecognised floating constant suffix: #{node.suffix}"
+          raise trans_err "Unrecognised floating constant suffix: #{node.suffix}"
       end
       
       @function.const(value, type)

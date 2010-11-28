@@ -10,6 +10,12 @@ module Coal
           raise TypeError.new "expected a #{type}, but was a #{node.class}"
         end
       end
+      
+      def trans_err *args
+        TranslationError.new *args
+      end
     end
+    
+    class TranslationError < RuntimeError ; end
   end
 end
