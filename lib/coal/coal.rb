@@ -20,11 +20,16 @@ module Coal
     end
     
     def load! file
-      code = File.read(file)
-      
+      load_from_string! File.read(file)
+    end
+    
+    def load_from_string! code
       parser = Parser.new
       
-      # Preprocess the code
+      # Translation phase #2
+      code.gsub! "\\\n", ""
+      
+      # Translation phases #3 and #4
       parser.root = 'preprocessing_file'
       node = parser.parse code
       if node.nil?
@@ -36,7 +41,7 @@ module Coal
         code = @translator.preprocess node.tree
       end
       
-      # Translate the preprocessed code
+      # Translation phase #7
       parser.root = 'c_file'
       node = parser.parse code
       if node.nil?
