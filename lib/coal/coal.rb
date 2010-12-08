@@ -1,5 +1,4 @@
 require 'polyglot'
-require 'coal/utils'
 require 'coal/parser'
 require 'coal/translators/libjit'
 
@@ -73,13 +72,13 @@ module Coal
       name = String(name)
       raise "Function already added: '#{name}'" if @functions.key? name
       @functions[name] = function
-      module_exec name do |name|
-        self.class.send :define_method, name do |*args|
-          func = @functions[name]
+      module_eval <<-END
+        def self.#{name}(*args)
+          func = @functions[#{name.inspect}]
           @translator.prepare_function func
           func.call(*args)
         end
-      end
+      END
     end
     
     def clear!
