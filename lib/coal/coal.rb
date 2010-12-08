@@ -26,10 +26,28 @@ module Coal
     def load_from_string! code
       parser = Parser.new
       
-      # Translation phase #2
+      ## Translation phase #1
+      # Trigraph sequences
+      hash = {
+        '??='   => '#',
+        '??('   => '[',
+        '??/'   => '\\',
+        '??]'   => ']',
+        '??\''  => '^',
+        '??<'   => '{',
+        '??!'   => '|',
+        '??>'   => '}',
+        '??-'   => '~',
+      }
+      regexp = /(#{hash.keys.map { |tri| Regexp.escape(tri) }.join("|")})/
+      code.gsub! regexp do |tri|
+        hash[tri]
+      end
+      
+      ## Translation phase #2
       code.gsub! "\\\n", ""
       
-      # Translation phases #3 and #4
+      ## Translation phases #3 and #4
       parser.root = 'preprocessing_file'
       node = parser.parse code
       if node.nil?
@@ -41,7 +59,7 @@ module Coal
         code = @translator.preprocess node.tree
       end
       
-      # Translation phase #7
+      ## Translation phase #7
       parser.root = 'c_file'
       node = parser.parse code
       if node.nil?
