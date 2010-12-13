@@ -30,7 +30,7 @@ Feature: C files
       """
     When I require "include"
     Then nothing exciting should happen
-  
+
   Scenario: Function
     Given a file named "function.c" with:
       """

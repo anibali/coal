@@ -1104,6 +1104,10 @@ grammar C
     [\t ]+
   end
   
+  rule nl
+    gap? "\n" gap?
+  end
+  
   rule preprocessing_token
     header_name
     /
@@ -1155,8 +1159,8 @@ grammar C
   end
   
   rule group_part
-    #if_section
-    #/
+    if_section
+    /
     control_line
     #/
     #'#' gap? non_directive
@@ -1164,10 +1168,42 @@ grammar C
     text_line
   end
   
+  rule if_section
+    if_group elif_groups? else_group? endif_line {
+      def tree
+        raise "TODO: Preprocessor if section"
+      end
+    }
+  end
+  
+  rule if_group
+    '#' gap? 'if' ![\w] gap? constant_expression nl group?
+    /
+    '#' gap? 'ifdef' gap identifier nl group?
+    /
+    '#' gap? 'ifndef' gap identifier nl group?
+  end
+  
+  rule elif_groups
+    elif_group+
+  end
+  
+  rule elif_group
+    '#' gap? 'elif' ![\w] gap? constant_expression nl group?
+  end
+  
+  rule else_group
+    '#' gap? 'else' nl group?
+  end
+  
+  rule endif_line
+    '#' gap? 'endif' nl
+  end
+  
   # ...
   
   rule control_line
-    '#' gap? 'include' gap? pp_tokens gap? "\n" {
+    '#' gap? 'include' gap? pp_tokens nl {
       def tree
         Coal::Nodes::IncludeDirective.new(pp_tokens.tree)
       end
@@ -1175,8 +1211,15 @@ grammar C
     # ...
   end
   
+  rule part_of_if
+    if_group / elif_group / else_group / endif_line
+  end
+  
   rule text_line
-    pp_tokens gap? "\n" {
+    # Don't gobble up parts of an if statement
+    !(if_group / elif_group / else_group / endif_line)
+    # Match a sequence of preprocessor tokens followed by a newline
+    pp_tokens nl {
       def tree
         text_value
       end
